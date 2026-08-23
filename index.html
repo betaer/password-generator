@@ -3109,10 +3109,44 @@ const SECTION_HEADING_ICONS = Object.freeze({
 const GITHUB_REPOSITORY_URL = 'https://github.com/betaer/password-generator';
 const GITHUB_PAGES_URL = 'https://betaer.github.io/password-generator/';
 const GITHUB_STAR_DISPLAY = '999+';
-const SHARE_PROMOTION_TEXT = `我正在使用 Password Generator 生成复杂密码，专业又好用！
-支持随机密码、记忆短语和 PIN，所有内容都在浏览器本地生成，不会上传。
+const SHARE_PROMOTION_TEXTS = Object.freeze({
+    zh: `分享一个专业又好用的密码生成器 🔐
+支持随机密码、记忆短语和 PIN；所有内容都在浏览器本地生成，不会上传，更安全、更私密。
 立即体验：
-${GITHUB_PAGES_URL}`;
+${GITHUB_PAGES_URL}`,
+    en: `A privacy-first Password Generator for passwords, passphrases, and PINs.
+Everything is generated locally in your browser—nothing is uploaded.
+Try it now:
+${GITHUB_PAGES_URL}`,
+});
+const CHINESE_LOCALE_PATTERN = /^(?:zh|cmn|yue|wuu|hak|nan)(?:[-_]|$)/i;
+function isChineseLocale(locale) {
+    return CHINESE_LOCALE_PATTERN.test(String(locale || '').trim());
+}
+function collectShareLocales(navigatorLike = navigator, intlLike = Intl) {
+    const locales = [];
+    if (navigatorLike) {
+        locales.push(navigatorLike.language, navigatorLike.userLanguage);
+        if (Array.isArray(navigatorLike.languages))
+            locales.push(...navigatorLike.languages);
+    }
+    for (const Formatter of [intlLike?.DateTimeFormat, intlLike?.NumberFormat]) {
+        try {
+            if (typeof Formatter === 'function')
+                locales.push(new Formatter().resolvedOptions().locale);
+        }
+        catch {
+            // 某些隐私模式会限制区域信息；继续使用其余可用语言信号。
+        }
+    }
+    return locales.filter(Boolean);
+}
+function preferredShareLanguage(navigatorLike = navigator, intlLike = Intl) {
+    return collectShareLocales(navigatorLike, intlLike).some(isChineseLocale) ? 'zh' : 'en';
+}
+function getSharePromotionText(navigatorLike = navigator, intlLike = Intl) {
+    return SHARE_PROMOTION_TEXTS[preferredShareLanguage(navigatorLike, intlLike)];
+}
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -4894,7 +4928,7 @@ function PasswordGenerator() {
         setCopiedResultSignature(copied ? clipboardText : '');
     };
     const copySharePromotion = async () => {
-        await copyText(SHARE_PROMOTION_TEXT, '分享文案已复制');
+        await copyText(getSharePromotionText(), '本站分享文案已复制');
     };
     const switchMode = (mode) => {
         const next = structuredClone(stateRef.current);
@@ -5197,9 +5231,9 @@ function PasswordGenerator() {
                 React.createElement(Button, { className: "site-floating-button site-floating-github", href: GITHUB_REPOSITORY_URL, target: "_blank", rel: "noreferrer", icon: React.createElement(GitHubOutlined, null), "aria-label": `在 GitHub 查看源代码，${GITHUB_STAR_DISPLAY} Stars` },
                     React.createElement("span", { className: "site-floating-button-label" }, "GitHub"),
                     React.createElement("span", { className: "site-floating-star-badge", "aria-hidden": "true" }, GITHUB_STAR_DISPLAY))),
-            React.createElement(Tooltip, { title: "复制网站推荐文案", placement: "left", mouseEnterDelay: 0 },
-                React.createElement(Button, { className: "site-floating-button site-floating-copy", icon: React.createElement(CopyOutlined, null), onClick: copySharePromotion, "aria-label": "复制网站推荐文案" },
-                    React.createElement("span", { className: "site-floating-button-label" }, "复制分享"))))));
+            React.createElement(Tooltip, { title: "复制本站分享文案", placement: "left", mouseEnterDelay: 0 },
+                React.createElement(Button, { className: "site-floating-button site-floating-copy", icon: React.createElement(CopyOutlined, null), onClick: copySharePromotion, "aria-label": "复制本站分享文案" },
+                    React.createElement("span", { className: "site-floating-button-label" }, "分享本站"))))));
 }
 function RootApp() {
     return (React.createElement(ConfigProvider, { button: { autoInsertSpace: false }, theme: {

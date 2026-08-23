@@ -18,19 +18,62 @@ test('V1.7.5 顶部导航使用四种批准图标', () => {
   assert.ok(navigation.indexOf('"PIN 码"') < navigation.indexOf('"记忆短语"'), '记忆短语应位于 PIN 码之后');
 });
 
-test('右下角提供 GitHub 与固定文案复制按钮', () => {
+test('右下角提供 GitHub 与按语言选择文案的分享本站按钮', () => {
   assert.match(app, /const GitHubOutlined = createInlineIcon/);
   assert.match(app, /const GITHUB_REPOSITORY_URL = 'https:\/\/github\.com\/betaer\/password-generator'/);
   assert.match(app, /const GITHUB_PAGES_URL = 'https:\/\/betaer\.github\.io\/password-generator\/'/);
   assert.match(app, /const GITHUB_STAR_DISPLAY = '999\+'/);
-  assert.match(app, /const SHARE_PROMOTION_TEXT = `我正在使用 Password Generator 生成复杂密码/);
+  assert.match(app, /const SHARE_PROMOTION_TEXTS = Object\.freeze/);
+  assert.match(app, /分享一个专业又好用的密码生成器/);
+  assert.match(app, /A privacy-first Password Generator for passwords, passphrases, and PINs\./);
+  assert.match(app, /function preferredShareLanguage/);
   assert.match(app, /className: "site-floating-button site-floating-github"/);
   assert.match(app, /className: "site-floating-button site-floating-copy"/);
   assert.match(app, /className: "site-floating-star-badge"[\s\S]*?GITHUB_STAR_DISPLAY/);
-  assert.match(app, /copyText\(SHARE_PROMOTION_TEXT, '分享文案已复制'\)/);
+  assert.match(app, /copyText\(getSharePromotionText\(\), '本站分享文案已复制'\)/);
+  assert.match(app, /"分享本站"/);
   assert.match(html, /\.site-floating-actions \{[\s\S]*?position: fixed/);
   assert.match(html, /\.site-floating-github\.ant-btn,[\s\S]*?\.site-floating-copy\.ant-btn \{[\s\S]*?color: #172033/);
   assert.match(html, /\.site-floating-star-badge \{[\s\S]*?background: #172033/);
+});
+
+test('分享文案在浏览器或系统语言命中中文时使用中文，否则使用英文', () => {
+  const sourceStart = app.indexOf("const GITHUB_PAGES_URL =");
+  const sourceEnd = app.indexOf('const { Header', sourceStart);
+  assert.ok(sourceStart > -1 && sourceEnd > sourceStart, '缺少分享语言选择源码');
+  const shareSource = app.slice(sourceStart, sourceEnd);
+  const api = Function('navigator', 'Intl', `${shareSource}; return { preferredShareLanguage, getSharePromotionText };`)(
+    { language: 'en-US', languages: ['en-US'] },
+    Intl,
+  );
+  const intlFor = (locale) => ({
+    DateTimeFormat: function DateTimeFormat() {
+      return { resolvedOptions: () => ({ locale }) };
+    },
+    NumberFormat: function NumberFormat() {
+      return { resolvedOptions: () => ({ locale }) };
+    },
+  });
+  assert.equal(api.preferredShareLanguage(
+    { language: 'zh-CN', languages: ['zh-CN', 'en-US'] },
+    intlFor('en-US'),
+  ), 'zh');
+  assert.equal(api.preferredShareLanguage(
+    { language: 'en-US', languages: ['en-US'] },
+    intlFor('zh-Hant-TW'),
+  ), 'zh');
+  assert.equal(api.preferredShareLanguage(
+    { language: 'en-US', languages: ['en-US', 'fr-FR'] },
+    intlFor('en-US'),
+  ), 'en');
+  assert.match(api.getSharePromotionText(
+    { language: 'zh-TW', languages: ['zh-TW'] },
+    intlFor('en-US'),
+  ), /^分享一个专业又好用的密码生成器/);
+  assert.match(api.getSharePromotionText(
+    { language: 'en-US', languages: ['en-US'] },
+    intlFor('en-GB'),
+  ), /^A privacy-first Password Generator/);
 });
 
 test('三个模式共用立方体结果标题和主次按钮层级', () => {
