@@ -7,6 +7,13 @@ const appStart = html.indexOf('const React =');
 assert.ok(appStart > -1, '缺少 V1.7.5 应用脚本');
 const app = html.slice(appStart);
 
+test('完整应用脚本可以被 JavaScript 引擎解析', () => {
+  const scriptStart = html.lastIndexOf('\ntry {', appStart);
+  const scriptEnd = html.indexOf('</script>', appStart);
+  const runtimeScript = html.slice(scriptStart + 1, scriptEnd);
+  assert.doesNotThrow(() => new Function(runtimeScript));
+});
+
 test('V1.7.5 顶部导航使用四种批准图标', () => {
   for (const token of ['SparklesOutlined', 'BulbOutlined', 'DialPadOutlined', 'SafetyCertificateFilled']) {
     assert.match(app, new RegExp(token), `缺少 ${token}`);
