@@ -20,8 +20,8 @@ test('V1.7.5 顶部导航使用四种批准图标', () => {
 
 test('右下角提供 GitHub 与固定文案复制按钮', () => {
   assert.match(app, /const GitHubOutlined = createInlineIcon/);
-  assert.match(app, /const GITHUB_REPOSITORY_URL = 'https:\/\/github\.com\/betaer\/Password-Generator'/);
-  assert.match(app, /const GITHUB_PAGES_URL = 'https:\/\/betaer\.github\.io\/Password-Generator\/'/);
+  assert.match(app, /const GITHUB_REPOSITORY_URL = 'https:\/\/github\.com\/betaer\/password-generator'/);
+  assert.match(app, /const GITHUB_PAGES_URL = 'https:\/\/betaer\.github\.io\/password-generator\/'/);
   assert.match(app, /const SHARE_PROMOTION_TEXT = `我正在使用 Password Generator 生成复杂密码/);
   assert.match(app, /className: "site-floating-button site-floating-github"/);
   assert.match(app, /className: "site-floating-button site-floating-copy"/);

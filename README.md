@@ -2,7 +2,7 @@
 
 一个完全在浏览器本地运行的密码生成器，当前版本为 **V1.7.5**。
 
-在线使用：[https://betaer.github.io/Password-Generator/](https://betaer.github.io/Password-Generator/)
+在线使用：[https://betaer.github.io/password-generator/](https://betaer.github.io/password-generator/)
 
 ## 功能
 
