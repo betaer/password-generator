@@ -2465,6 +2465,50 @@ button, input, textarea { font: inherit; }
 .strength-score-icon { font-size: 21px; }
 .strength-score-ring { padding-top: 4px; }
 
+.site-floating-actions {
+  position: fixed;
+  right: max(18px, env(safe-area-inset-right));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+.site-floating-button.ant-btn {
+  min-width: 108px;
+  height: 42px;
+  padding-inline: 14px;
+  border: 1px solid rgba(148, 163, 184, .42);
+  border-radius: 999px !important;
+  color: #26344d;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .13);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.site-floating-button.ant-btn:hover {
+  border-color: #69a8ff;
+  color: #0958d9;
+  background: #fff;
+  transform: translateY(-1px);
+}
+.site-floating-button .anticon { font-size: 18px; }
+.site-floating-github.ant-btn { color: #172033; }
+.site-floating-copy.ant-btn { border-color: #91caff; color: #0958d9; }
+
+@media (max-width: 640px) {
+  .site-floating-actions { right: 12px; bottom: 12px; gap: 8px; }
+  .site-floating-button.ant-btn {
+    min-width: 44px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50% !important;
+  }
+  .site-floating-button-label { display: none; }
+}
+
 @media (min-width: 901px) {
   .password-surface { padding-block: 24px 20px !important; }
 }
@@ -2886,6 +2930,9 @@ const DialPadOutlined = createInlineIcon([
 const ResultCubeOutlined = createInlineIcon([
   { d: 'm12 2.8 8 4.4v9.6l-8 4.4-8-4.4V7.2l8-4.4Zm0 9.2 8-4.5M12 12 4 7.5M12 12v9M8 5l8 4.5', stroke: 'currentColor', strokeWidth: 1.65, strokeLinecap: 'round', strokeLinejoin: 'round' }
 ]);
+const GitHubOutlined = createInlineIcon([
+  { d: 'M12 .8a11.2 11.2 0 0 0-3.54 21.82c.56.1.77-.24.77-.54v-2.14c-3.14.68-3.8-1.34-3.8-1.34-.51-1.31-1.25-1.66-1.25-1.66-1.03-.7.08-.69.08-.69 1.13.08 1.73 1.16 1.73 1.16 1.01 1.72 2.64 1.23 3.28.94.1-.73.4-1.23.72-1.51-2.5-.29-5.14-1.26-5.14-5.54 0-1.22.44-2.22 1.16-3-.12-.29-.5-1.44.11-2.96 0 0 .95-.3 3.08 1.15a10.7 10.7 0 0 1 5.6 0c2.14-1.45 3.08-1.15 3.08-1.15.61 1.52.23 2.67.11 2.96.72.78 1.16 1.78 1.16 3 0 4.29-2.64 5.25-5.16 5.53.4.35.77 1.04.77 2.1v3.11c0 .3.2.65.78.54A11.2 11.2 0 0 0 12 .8Z', fill: 'currentColor' }
+]);
 const WarningTriangleFilled = createInlineIcon([
   { d: 'M10.3 3.2a2 2 0 0 1 3.4 0l8 13.9A2 2 0 0 1 20 20H4a2 2 0 0 1-1.7-2.9l8-13.9Z', stroke: 'currentColor', strokeWidth: 1.8, strokeLinejoin: 'round' },
   { d: 'M12 8.5v5M12 17h.01', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' }
@@ -2957,6 +3004,12 @@ const SECTION_HEADING_ICONS = Object.freeze({
   'PIN 长度': DialPadOutlined,
   'PIN 规则': SafetyCertificateFilled,
 });
+const GITHUB_REPOSITORY_URL = 'https://github.com/betaer/Password-Generator';
+const GITHUB_PAGES_URL = 'https://betaer.github.io/Password-Generator/';
+const SHARE_PROMOTION_TEXT = `我正在使用 Password Generator 生成复杂密码，专业又好用！
+支持随机密码、记忆短语和 PIN，所有内容都在浏览器本地生成，不会上传。
+立即体验：
+${GITHUB_PAGES_URL}`;
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -4737,6 +4790,9 @@ function PasswordGenerator() {
         const copied = await copyText(clipboardText);
         setCopiedResultSignature(copied ? clipboardText : '');
     };
+    const copySharePromotion = async () => {
+        await copyText(SHARE_PROMOTION_TEXT, '分享文案已复制');
+    };
     const switchMode = (mode) => {
         const next = structuredClone(stateRef.current);
         next.mode = mode;
@@ -5032,7 +5088,14 @@ function PasswordGenerator() {
                         React.createElement(Button, { className: "generate-action", type: "primary", size: "large", icon: React.createElement(ReloadOutlined, null), loading: state.mode === 'memorable' && wordPackState.status === 'loading', disabled: state.mode === 'memorable' && wordPackState.status === 'error', onClick: generateAndCopy },
                             "\u751F\u6210",
                             state.mode === 'pin' ? ' PIN' : state.mode === 'memorable' ? '记忆短语' : '密码')),
-                    renderResultPane())))));
+                    renderResultPane()))),
+        React.createElement("div", { className: "site-floating-actions", role: "group", "aria-label": "网站快捷操作" },
+            React.createElement(Tooltip, { title: "在 GitHub 查看源代码", placement: "left", mouseEnterDelay: 0 },
+                React.createElement(Button, { className: "site-floating-button site-floating-github", href: GITHUB_REPOSITORY_URL, target: "_blank", rel: "noreferrer", icon: React.createElement(GitHubOutlined, null), "aria-label": "在 GitHub 查看源代码" },
+                    React.createElement("span", { className: "site-floating-button-label" }, "GitHub"))),
+            React.createElement(Tooltip, { title: "复制网站推荐文案", placement: "left", mouseEnterDelay: 0 },
+                React.createElement(Button, { className: "site-floating-button site-floating-copy", icon: React.createElement(CopyOutlined, null), onClick: copySharePromotion, "aria-label": "复制网站推荐文案" },
+                    React.createElement("span", { className: "site-floating-button-label" }, "复制分享"))))));
 }
 function RootApp() {
     return (React.createElement(ConfigProvider, { button: { autoInsertSpace: false }, theme: {

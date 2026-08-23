@@ -18,6 +18,17 @@ test('V1.7.5 顶部导航使用四种批准图标', () => {
   assert.ok(navigation.indexOf('"PIN 码"') < navigation.indexOf('"记忆短语"'), '记忆短语应位于 PIN 码之后');
 });
 
+test('右下角提供 GitHub 与固定文案复制按钮', () => {
+  assert.match(app, /const GitHubOutlined = createInlineIcon/);
+  assert.match(app, /const GITHUB_REPOSITORY_URL = 'https:\/\/github\.com\/betaer\/Password-Generator'/);
+  assert.match(app, /const GITHUB_PAGES_URL = 'https:\/\/betaer\.github\.io\/Password-Generator\/'/);
+  assert.match(app, /const SHARE_PROMOTION_TEXT = `我正在使用 Password Generator 生成复杂密码/);
+  assert.match(app, /className: "site-floating-button site-floating-github"/);
+  assert.match(app, /className: "site-floating-button site-floating-copy"/);
+  assert.match(app, /copyText\(SHARE_PROMOTION_TEXT, '分享文案已复制'\)/);
+  assert.match(html, /\.site-floating-actions \{[\s\S]*?position: fixed/);
+});
+
 test('三个模式共用立方体结果标题和主次按钮层级', () => {
   assert.match(app, /ResultCubeOutlined/);
   assert.match(app, /className: "result-regenerate-button", type: "primary"/);
