@@ -6,9 +6,74 @@
   <meta name="color-scheme" content="light" />
   <meta name="referrer" content="no-referrer" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data: blob:; font-src data:; object-src 'none'; base-uri 'none'; form-action 'none'" />
-  <meta name="theme-color" content="#eaf3ff" />
+  <title>密码生成器 | Password Generator</title>
+  <meta name="application-name" content="密码生成器 | Password Generator" />
+  <meta name="description" content="免费、专业的本地密码生成器，支持随机密码、记忆短语和 PIN，可调长度、字符类型与符号比例，并实时分析密码强度。所有生成内容只在浏览器中处理，不上传服务器。" />
+  <meta name="keywords" content="密码生成器,随机密码,强密码,记忆短语,PIN生成器,密码强度,Password Generator,Passphrase Generator" />
+  <meta name="author" content="betaer" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="theme-color" content="#1677ff" />
+  <link rel="canonical" href="https://betaer.github.io/password-generator/" />
   <link rel="icon" type="image/png" sizes="512x512" href="./password-generator-icon.png" />
-  <title>密码生成器 V1.7.5</title>
+  <link rel="sitemap" type="application/xml" href="https://betaer.github.io/password-generator/sitemap.xml" />
+  <link rel="alternate" type="text/plain" href="https://betaer.github.io/password-generator/llms.txt" title="生成式搜索与 AI 助手说明" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="密码生成器 | Password Generator" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:title" content="密码生成器 | Password Generator" />
+  <meta property="og:description" content="浏览器本地生成随机密码、记忆短语和 PIN，实时分析密码强度；所有生成内容不上传服务器。" />
+  <meta property="og:url" content="https://betaer.github.io/password-generator/" />
+  <meta property="og:image" content="https://betaer.github.io/password-generator/assets/social-preview.png" />
+  <meta property="og:image:secure_url" content="https://betaer.github.io/password-generator/assets/social-preview.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="密码生成器 Password Generator：本地生成、不上传" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="密码生成器 | Password Generator" />
+  <meta name="twitter:description" content="浏览器本地生成随机密码、记忆短语和 PIN，实时分析密码强度；所有生成内容不上传服务器。" />
+  <meta name="twitter:image" content="https://betaer.github.io/password-generator/assets/social-preview.png" />
+  <meta name="twitter:image:alt" content="密码生成器 Password Generator：本地生成、不上传" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "@id": "https://betaer.github.io/password-generator/#application",
+    "name": "密码生成器",
+    "alternateName": "Password Generator",
+    "url": "https://betaer.github.io/password-generator/",
+    "description": "免费、专业的本地密码生成器，支持随机密码、记忆短语、PIN、密码强度分析与常用密码方案。所有生成内容只在浏览器中处理，不上传服务器。",
+    "inLanguage": ["zh-CN", "en"],
+    "applicationCategory": "SecurityApplication",
+    "operatingSystem": "Web",
+    "browserRequirements": "需要支持 JavaScript 与 Web Crypto API 的现代浏览器",
+    "softwareVersion": "1.7.5",
+    "image": "https://betaer.github.io/password-generator/assets/social-preview.png",
+    "screenshot": "https://betaer.github.io/password-generator/assets/social-preview.png",
+    "isAccessibleForFree": true,
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "betaer",
+      "url": "https://github.com/betaer"
+    },
+    "sameAs": "https://github.com/betaer/password-generator",
+    "featureList": [
+      "随机密码生成",
+      "记忆短语与记忆故事",
+      "PIN 生成",
+      "密码强度与预计破解时间分析",
+      "浏览器本地生成，不上传服务器"
+    ]
+  }
+  </script>
   <!-- 内置 React、Ant Design 及其必要依赖；运行时不加载任何外部资源。相关开源组件遵循各自的 MIT 许可证。 -->
   <style>
 :root {
@@ -2476,26 +2541,54 @@ button, input, textarea { font: inherit; }
   gap: 10px;
 }
 .site-floating-button.ant-btn {
+  position: relative;
+  overflow: visible;
   min-width: 108px;
   height: 42px;
   padding-inline: 14px;
-  border: 1px solid rgba(148, 163, 184, .42);
+  border: 1px solid rgba(23, 32, 51, .2);
   border-radius: 999px !important;
-  color: #26344d;
+  color: #172033;
   background: rgba(255, 255, 255, .94);
   box-shadow: 0 8px 24px rgba(15, 23, 42, .13);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 .site-floating-button.ant-btn:hover {
-  border-color: #69a8ff;
-  color: #0958d9;
-  background: #fff;
+  border-color: #172033;
+  color: #172033;
+  background: #f7f8fa;
   transform: translateY(-1px);
 }
+.site-floating-button.ant-btn:focus-visible {
+  border-color: #172033;
+  outline: 2px solid rgba(23, 32, 51, .22);
+  outline-offset: 2px;
+}
 .site-floating-button .anticon { font-size: 18px; }
-.site-floating-github.ant-btn { color: #172033; }
-.site-floating-copy.ant-btn { border-color: #91caff; color: #0958d9; }
+.site-floating-github.ant-btn,
+.site-floating-copy.ant-btn { border-color: rgba(23, 32, 51, .2); color: #172033; }
+.site-floating-star-badge {
+  position: absolute;
+  top: -10px;
+  right: -11px;
+  z-index: 2;
+  display: inline-grid;
+  min-width: 36px;
+  height: 22px;
+  padding-inline: 6px;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  color: #fff;
+  background: #172033;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, .2);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 18px;
+  letter-spacing: -.02em;
+  pointer-events: none;
+}
 
 @media (max-width: 640px) {
   .site-floating-actions { right: 12px; bottom: 12px; gap: 8px; }
@@ -2507,6 +2600,15 @@ button, input, textarea { font: inherit; }
     border-radius: 50% !important;
   }
   .site-floating-button-label { display: none; }
+  .site-floating-star-badge {
+    top: -7px;
+    right: -9px;
+    min-width: 30px;
+    height: 20px;
+    padding-inline: 5px;
+    font-size: 9px;
+    line-height: 16px;
+  }
 }
 
 @media (min-width: 901px) {
@@ -3006,6 +3108,7 @@ const SECTION_HEADING_ICONS = Object.freeze({
 });
 const GITHUB_REPOSITORY_URL = 'https://github.com/betaer/password-generator';
 const GITHUB_PAGES_URL = 'https://betaer.github.io/password-generator/';
+const GITHUB_STAR_DISPLAY = '999+';
 const SHARE_PROMOTION_TEXT = `我正在使用 Password Generator 生成复杂密码，专业又好用！
 支持随机密码、记忆短语和 PIN，所有内容都在浏览器本地生成，不会上传。
 立即体验：
@@ -5090,9 +5193,10 @@ function PasswordGenerator() {
                             state.mode === 'pin' ? ' PIN' : state.mode === 'memorable' ? '记忆短语' : '密码')),
                     renderResultPane()))),
         React.createElement("div", { className: "site-floating-actions", role: "group", "aria-label": "网站快捷操作" },
-            React.createElement(Tooltip, { title: "在 GitHub 查看源代码", placement: "left", mouseEnterDelay: 0 },
-                React.createElement(Button, { className: "site-floating-button site-floating-github", href: GITHUB_REPOSITORY_URL, target: "_blank", rel: "noreferrer", icon: React.createElement(GitHubOutlined, null), "aria-label": "在 GitHub 查看源代码" },
-                    React.createElement("span", { className: "site-floating-button-label" }, "GitHub"))),
+            React.createElement(Tooltip, { title: `GitHub 仓库 · ${GITHUB_STAR_DISPLAY} Stars`, placement: "left", mouseEnterDelay: 0 },
+                React.createElement(Button, { className: "site-floating-button site-floating-github", href: GITHUB_REPOSITORY_URL, target: "_blank", rel: "noreferrer", icon: React.createElement(GitHubOutlined, null), "aria-label": `在 GitHub 查看源代码，${GITHUB_STAR_DISPLAY} Stars` },
+                    React.createElement("span", { className: "site-floating-button-label" }, "GitHub"),
+                    React.createElement("span", { className: "site-floating-star-badge", "aria-hidden": "true" }, GITHUB_STAR_DISPLAY))),
             React.createElement(Tooltip, { title: "复制网站推荐文案", placement: "left", mouseEnterDelay: 0 },
                 React.createElement(Button, { className: "site-floating-button site-floating-copy", icon: React.createElement(CopyOutlined, null), onClick: copySharePromotion, "aria-label": "复制网站推荐文案" },
                     React.createElement("span", { className: "site-floating-button-label" }, "复制分享"))))));

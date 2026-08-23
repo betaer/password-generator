@@ -22,11 +22,15 @@ test('右下角提供 GitHub 与固定文案复制按钮', () => {
   assert.match(app, /const GitHubOutlined = createInlineIcon/);
   assert.match(app, /const GITHUB_REPOSITORY_URL = 'https:\/\/github\.com\/betaer\/password-generator'/);
   assert.match(app, /const GITHUB_PAGES_URL = 'https:\/\/betaer\.github\.io\/password-generator\/'/);
+  assert.match(app, /const GITHUB_STAR_DISPLAY = '999\+'/);
   assert.match(app, /const SHARE_PROMOTION_TEXT = `我正在使用 Password Generator 生成复杂密码/);
   assert.match(app, /className: "site-floating-button site-floating-github"/);
   assert.match(app, /className: "site-floating-button site-floating-copy"/);
+  assert.match(app, /className: "site-floating-star-badge"[\s\S]*?GITHUB_STAR_DISPLAY/);
   assert.match(app, /copyText\(SHARE_PROMOTION_TEXT, '分享文案已复制'\)/);
   assert.match(html, /\.site-floating-actions \{[\s\S]*?position: fixed/);
+  assert.match(html, /\.site-floating-github\.ant-btn,[\s\S]*?\.site-floating-copy\.ant-btn \{[\s\S]*?color: #172033/);
+  assert.match(html, /\.site-floating-star-badge \{[\s\S]*?background: #172033/);
 });
 
 test('三个模式共用立方体结果标题和主次按钮层级', () => {

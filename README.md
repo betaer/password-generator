@@ -56,6 +56,13 @@ npm test
 - 词包由项目本地加载，不调用第三方随机词 API。
 - 项目为静态网页，不需要后端服务。
 
+## SEO、GEO 与社交分享
+
+- 页面规范标题为“密码生成器 | Password Generator”，并提供唯一 canonical 地址。
+- Open Graph 与 Twitter Card 共用 `assets/social-preview.png`（1200 × 630）。
+- `WebApplication` JSON-LD 用于描述应用类别、版本、功能、价格与隐私特征。
+- `robots.txt`、`sitemap.xml` 与 `llms.txt` 分别服务搜索抓取、站点发现和生成式搜索理解。
+
 ## 词库来源
 
 - 简单词库与标准词库基于 [EFF Diceware 词表](https://www.eff.org/dice)，按 CC BY 3.0 US 标注来源。
