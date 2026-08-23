@@ -118,6 +118,14 @@ test('密码方案按常用顺序排列', () => {
   assert.ok(schemes.indexOf("id: 'tron-address'") < schemes.indexOf("id: 'btc-legacy'"), 'ETH、TRON 应位于三种 BTC 地址之前');
 });
 
+test('钱包地址文案按协议区分前缀与实际字符数', () => {
+  assert.match(app, /title: 'ETH 地址', detail: '42 字符 · 0x \+ 40 Hex', length: 42/);
+  assert.match(app, /title: 'TRON 地址', detail: '34 字符 · T 开头 · Base58', length: 34/);
+  assert.match(app, /title: 'BTC Legacy', detail: '34 字符示例 · 1 开头', length: 34/);
+  assert.match(app, /title: 'BTC P2SH', detail: '34 字符示例 · 3 开头', length: 34/);
+  assert.match(app, /title: 'BTC Bech32', detail: '42 字符 · bc1q · P2WPKH', length: 42/);
+});
+
 test('密码方案生成器遵守各格式长度、前缀和字符集', () => {
   const constants = app.match(/const SCHEME_HEX_LOWER[\s\S]*?(?=\nconst SETTINGS_KEY)/)?.[0];
   const randomIndex = app.match(/function secureRandomIndex[\s\S]*?(?=\nfunction secureShuffle)/)?.[0];
