@@ -35,6 +35,8 @@ test('右下角提供 GitHub 与按语言选择文案的分享本站按钮', () 
   assert.match(html, /\.site-floating-actions \{[\s\S]*?position: fixed/);
   assert.match(html, /\.site-floating-github\.ant-btn,[\s\S]*?\.site-floating-copy\.ant-btn \{[\s\S]*?color: #172033/);
   assert.match(html, /\.site-floating-star-badge \{[\s\S]*?background: #172033/);
+  const floatingActions = app.slice(app.indexOf('className: "site-floating-actions"'), app.indexOf('function RootApp'));
+  assert.doesNotMatch(floatingActions, /React\.createElement\(Tooltip/, '右下角两个按钮不应显示黑色气泡提示');
 });
 
 test('分享文案在浏览器或系统语言命中中文时使用中文，否则使用英文', () => {
