@@ -60,9 +60,8 @@ test('静态 SEO Shell 整体默认折叠并在全站底部提供相关工具互
   assert.match(html, /<details id="security-verification" class="seo-shell-overview">/);
   assert.doesNotMatch(html, /<details id="security-verification" class="seo-shell-overview" open>/);
   assert.match(html, /<summary class="seo-shell-overview-summary">/);
-  assert.match(html, /<span class="seo-shell-title">密码生成器 Password Generator<\/span>/);
-  assert.match(html, /<h2 id="seo-features-title">核心功能<\/h2>/);
-  assert.match(html, /<h2 id="seo-security-title">安全与可验证性<\/h2>/);
+  assert.match(html, /<h1 id="seo-security-title">安全与可验证性<\/h1>/);
+  assert.doesNotMatch(html, /本地安全工具 · Local Security Tool|id="seo-features-title"|class="seo-shell-card"/);
   assert.doesNotMatch(html, /id="seo-faq-title"|class="seo-shell-faq"/);
   assert.match(html, /访问统计不包含密码、PIN、记忆短语或输入内容/);
   assert.match(html, /Web Crypto API/);

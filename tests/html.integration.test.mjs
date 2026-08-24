@@ -452,9 +452,11 @@ test('本地生成入口会展开并滚动到底部安全说明', () => {
   assert.match(app, /本地安全运行时加载失败/);
 });
 
-test('网站底部整体折叠展示功能、安全边界、会话历史与自行验证方法', () => {
+test('网站底部整体折叠展示安全边界、会话历史与自行验证方法', () => {
   assert.match(html, /<details id="security-verification" class="seo-shell-overview">/);
   assert.doesNotMatch(html, /<details id="security-verification" class="seo-shell-overview" open>/);
+  assert.match(html, /<h1 id="seo-security-title">安全与可验证性<\/h1>/);
+  assert.doesNotMatch(html, /本地安全工具 · Local Security Tool|id="seo-features-title"|class="seo-shell-card"/);
   assert.match(html, /\.seo-shell-overview-summary::after/);
   assert.match(html, /\.seo-shell-overview\[open\] > \.seo-shell-overview-summary::after/);
   assert.match(html, /id="seo-security-title">安全与可验证性</);
@@ -466,4 +468,12 @@ test('网站底部整体折叠展示功能、安全边界、会话历史与自�
   assert.match(html, /DevTools → Network/);
   assert.match(app, /sessionStorage/);
   assert.doesNotMatch(app, /localStorage\.setItem\(HISTORY_SESSION_KEY/);
+});
+
+test('三个生成模式按实际内容高度收尾且不再强制撑满视口', () => {
+  assert.match(html, /#root \{ min-height: 0; \}/);
+  assert.match(html, /\.app-shell \{ min-height: 0; background: #fff; \}/);
+  assert.match(html, /\.workspace \{[\s\S]*?min-height: 0;[\s\S]*?align-items: start;\s*\}/);
+  assert.doesNotMatch(html, /min-height: calc\(100vh - 120px\);/);
+  assert.doesNotMatch(html, /\n\s*height: calc\(100vh - var\(--sticky-top\) - 16px\);/);
 });

@@ -161,9 +161,9 @@ body {
 }
 button, input, textarea { font: inherit; }
 
-#root { min-height: 100vh; }
+#root { min-height: 0; }
 
-.app-shell { min-height: 100vh; background: #fff; }
+.app-shell { min-height: 0; background: #fff; }
 
 .sticky-header {
   position: sticky;
@@ -246,7 +246,7 @@ button, input, textarea { font: inherit; }
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
   gap: 30px;
-  min-height: calc(100vh - 120px);
+  min-height: 0;
   align-items: start;
 }
 
@@ -1701,7 +1701,7 @@ button, input, textarea { font: inherit; }
   position: sticky;
   top: var(--sticky-top);
   align-self: start;
-  height: calc(100vh - var(--sticky-top) - 16px);
+  height: auto;
   max-height: calc(100vh - var(--sticky-top) - 16px);
   overflow-x: hidden;
   overflow-y: auto;
@@ -2616,7 +2616,7 @@ button, input, textarea { font: inherit; }
 
 .seo-shell {
   width: min(var(--page-max), calc(100% - 48px));
-  margin: 28px auto 40px;
+  margin: 12px auto 40px;
   padding: 0;
   overflow: hidden;
   border: 1px solid #e2e8f0;
@@ -2661,47 +2661,17 @@ button, input, textarea { font: inherit; }
 .seo-shell-overview-content {
   padding: 24px 28px 30px;
   border-top: 1px dashed #d8e0eb;
+  background: #f6f9ff;
 }
-.seo-shell-overview-intro { max-width: 860px; margin-top: 0 !important; }
-.seo-shell-eyebrow {
-  display: block;
-  margin: 0 0 8px;
-  color: var(--blue-deep);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-.seo-shell-title { display: block; }
 .seo-shell h1,
 .seo-shell h2 { margin: 0; color: #101828; }
 .seo-shell h1 { font-size: clamp(24px, 3vw, 34px); line-height: 1.25; }
 .seo-shell h2 { font-size: 17px; line-height: 1.4; }
 .seo-shell p { margin: 8px 0 0; color: #526079; font-size: 14px; line-height: 1.75; }
-.seo-shell-features { margin-top: 24px; }
-.seo-shell-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 12px;
-}
-.seo-shell-card {
-  padding: 18px;
-  border: 1px solid #e6ebf2;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, .9);
-}
-.seo-shell-card a,
 .site-global-footer a { color: var(--blue-deep); font-weight: 700; text-decoration: none; }
-.seo-shell-card a { display: inline-block; margin-top: 12px; font-size: 13px; }
-.seo-shell-card a:hover,
 .site-global-footer a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .seo-shell-security {
-  margin-top: 24px;
-  padding: 20px;
-  border: 1px solid #cfe2ff;
-  border-radius: 14px;
-  background: #f2f7ff;
+  margin: 0;
 }
 .seo-shell-security-content {
   padding: 0;
@@ -2775,14 +2745,12 @@ button, input, textarea { font: inherit; }
   border-top: 1px dashed #d8e0eb;
 }
 @media (max-width: 760px) {
-  .seo-shell { width: calc(100% - 24px); margin-block: 18px 24px; border-radius: 16px; }
+  .seo-shell { width: calc(100% - 24px); margin-block: 10px 24px; border-radius: 16px; }
   .seo-shell-overview-summary { min-height: 88px; padding: 18px 52px 18px 18px; }
   .seo-shell-overview-summary::after { right: 20px; }
   .seo-shell-overview-content { padding: 20px 18px 22px; }
-  .seo-shell-grid { grid-template-columns: 1fr; }
   .seo-shell-security-list { grid-template-columns: 1fr; }
   .seo-shell-security-grid { grid-template-columns: 1fr; }
-  .seo-shell-security { padding: 16px; }
   .site-global-footer { width: calc(100% - 24px); margin-bottom: 24px; }
   .site-global-footer-inner { align-items: flex-start; flex-direction: column; gap: 8px; }
 }
@@ -2792,40 +2760,13 @@ button, input, textarea { font: inherit; }
 </head>
 <body>
   <div id="root"></div>
-  <main id="seo-content" class="seo-shell" aria-labelledby="seo-shell-title">
+  <main id="seo-content" class="seo-shell" aria-labelledby="seo-security-title">
     <details id="security-verification" class="seo-shell-overview">
       <summary class="seo-shell-overview-summary">
-        <h1 id="seo-shell-title">
-          <span class="seo-shell-eyebrow">本地安全工具 · Local Security Tool</span>
-          <span class="seo-shell-title">密码生成器 Password Generator</span>
-        </h1>
+        <h1 id="seo-security-title">安全与可验证性</h1>
       </summary>
       <div class="seo-shell-overview-content">
-        <p class="seo-shell-overview-intro">免费、专业的浏览器本地密码生成器，支持随机密码、记忆短语（助记词式口令）、PIN 和动态密码强度分析。可根据每次实际生成结果分析字符多样性、理论熵、穷举次数与预计破解时间。</p>
-
-        <section class="seo-shell-features" aria-labelledby="seo-features-title">
-          <h2 id="seo-features-title">核心功能</h2>
-          <div class="seo-shell-grid">
-            <article class="seo-shell-card">
-              <h2>随机密码生成器</h2>
-              <p>自定义密码长度、字符类型、符号比例、开头与结尾规则，适合账号密码、主密码、API Token 和测试字符串。</p>
-              <a href="#password">生成随机密码</a>
-            </article>
-            <article class="seo-shell-card">
-              <h2>记忆短语生成器</h2>
-              <p>从安全随机词库生成便于记忆的 Passphrase，可选择词数、词库、大小写和分隔方式，并显示实际理论熵。</p>
-              <a href="#words">生成记忆短语</a>
-            </article>
-            <article class="seo-shell-card">
-              <h2>PIN 码生成器</h2>
-              <p>生成 4 位、6 位或自定义长度的纯数字 PIN，可过滤明显弱 PIN、重复数字和连续数字组合。</p>
-              <a href="#pin">生成 PIN 码</a>
-            </article>
-          </div>
-        </section>
-
-        <section class="seo-shell-security" aria-labelledby="seo-security-title">
-          <h2 id="seo-security-title">安全与可验证性</h2>
+        <section class="seo-shell-security" aria-label="安全与可验证性详细说明">
           <div class="seo-shell-security-content">
             <p>随机密码、记忆短语、PIN 和输入内容均在当前设备中生成与分析，不会作为生成数据发送到服务器。</p>
             <div class="seo-shell-security-flow" aria-label="密码安全生成流程">
@@ -5585,7 +5526,7 @@ function PasswordGenerator() {
                             { label: React.createElement("span", { className: "mode-option-label" }, React.createElement(DialPadOutlined, null), React.createElement("span", null, "PIN 码")), value: 'pin' },
                             { label: React.createElement("span", { className: "mode-option-label" }, React.createElement(BulbOutlined, null), React.createElement("span", null, "记忆短语")), value: 'memorable' },
                         ], onChange: switchMode })),
-                React.createElement("button", { type: "button", className: "privacy-pill", onClick: openSecurityDetails, "aria-label": "展开并查看网站底部本地安全工具说明" },
+                React.createElement("button", { type: "button", className: "privacy-pill", onClick: openSecurityDetails, "aria-label": "展开并查看网站底部安全与可验证性说明" },
                     React.createElement(SafetyCertificateFilled, { style: { color: '#1677ff', marginRight: 6 } }),
                     "\u672C\u5730\u751F\u6210\uFF0C\u4E0D\u4E0A\u4F20"))),
         React.createElement("div", { className: "page-main" },
