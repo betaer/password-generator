@@ -31,20 +31,23 @@ test('社交缩略图使用绝对 HTTPS 地址且尺寸为 1200×630', () => {
   assert.equal(socialPreview.readUInt32BE(20), 630);
 });
 
-test('WebSite、WebApplication 与 FAQPage JSON-LD 可解析并描述本地安全工具', () => {
+test('WebSite、SoftwareApplication、BreadcrumbList 与 FAQPage JSON-LD 可解析', () => {
   const payload = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
   assert.ok(payload, '缺少 JSON-LD');
   const data = JSON.parse(payload);
   assert.ok(Array.isArray(data['@graph']), 'JSON-LD 应使用 @graph');
   const website = data['@graph'].find((entry) => entry['@type'] === 'WebSite');
-  const application = data['@graph'].find((entry) => entry['@type'] === 'WebApplication');
+  const application = data['@graph'].find((entry) => entry['@type'] === 'SoftwareApplication');
+  const breadcrumb = data['@graph'].find((entry) => entry['@type'] === 'BreadcrumbList');
   const faq = data['@graph'].find((entry) => entry['@type'] === 'FAQPage');
-  assert.equal(website.name, '密码生成器 Password Generator');
+  assert.equal(website.url, 'https://betaer.github.io/');
   assert.equal(application.name, '密码生成器 Password Generator');
   assert.ok(application.alternateName.includes('Password Generator'));
   assert.equal(application.applicationCategory, 'SecurityApplication');
   assert.equal(application.url, 'https://betaer.github.io/password-generator/');
   assert.equal(application.isAccessibleForFree, true);
+  assert.equal(breadcrumb.itemListElement.length, 2);
+  assert.equal(breadcrumb.itemListElement[0].item, 'https://betaer.github.io/');
   assert.equal(faq.mainEntity.length, 3);
 });
 
@@ -60,11 +63,12 @@ test('静态 SEO Shell 在应用根节点之外提供功能说明、FAQ 与相�
   assert.match(html, /href="https:\/\/betaer\.github\.io\/AiSignalGuard\/" title="AI Signal Guard"/);
 });
 
-test('robots、sitemap 与 llms 信息使用同一规范地址', () => {
+test('项目页引用 Host 根级 robots Sitemap，项目 sitemap 与 llms 保持规范地址', () => {
   const canonical = 'https://betaer.github.io/password-generator/';
   assert.match(robots, /User-agent: \*/);
   assert.match(robots, /Allow: \//);
-  assert.match(robots, /Sitemap: https:\/\/betaer\.github\.io\/password-generator\/sitemap\.xml/);
+  assert.match(robots, /Sitemap: https:\/\/betaer\.github\.io\/sitemap\.xml/);
+  assert.match(html, /<link rel="sitemap" type="application\/xml" href="https:\/\/betaer\.github\.io\/sitemap\.xml"/);
   assert.ok(sitemap.includes(`<loc>${canonical}</loc>`));
   assert.ok(llms.includes(`规范地址：${canonical}`));
   assert.match(llms, /浏览器 Web Crypto API/);

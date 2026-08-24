@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://betaer.github.io/password-generator/sitemap.xml
+Sitemap: https://betaer.github.io/sitemap.xml

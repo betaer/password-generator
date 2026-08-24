@@ -23,7 +23,7 @@
   <link rel="alternate" hreflang="en" href="https://betaer.github.io/password-generator/" />
   <link rel="alternate" hreflang="x-default" href="https://betaer.github.io/password-generator/" />
   <link rel="icon" type="image/png" sizes="512x512" href="./password-generator-icon.png" />
-  <link rel="sitemap" type="application/xml" href="https://betaer.github.io/password-generator/sitemap.xml" />
+  <link rel="sitemap" type="application/xml" href="https://betaer.github.io/sitemap.xml" />
   <link rel="alternate" type="text/plain" href="https://betaer.github.io/password-generator/llms.txt" title="生成式搜索与 AI 助手说明" />
 
   <meta property="og:type" content="website" />
@@ -64,22 +64,22 @@
     "@graph": [
       {
         "@type": "WebSite",
-        "@id": "https://betaer.github.io/password-generator/#website",
-        "url": "https://betaer.github.io/password-generator/",
-        "name": "密码生成器 Password Generator",
-        "alternateName": "随机密码、记忆短语与 PIN 生成器",
-        "description": "浏览器本地运行的随机密码、记忆短语（助记词式口令）与 PIN 生成器。",
+        "@id": "https://betaer.github.io/#website",
+        "url": "https://betaer.github.io/",
+        "name": "betaer 项目主页",
+        "alternateName": "betaer Projects",
+        "description": "betaer 的公开项目与浏览器端工具集合。",
         "inLanguage": ["zh-CN", "en"],
-        "publisher": { "@id": "https://betaer.github.io/password-generator/#author" }
+        "publisher": { "@id": "https://betaer.github.io/#author" }
       },
       {
         "@type": "Person",
-        "@id": "https://betaer.github.io/password-generator/#author",
+        "@id": "https://betaer.github.io/#author",
         "name": "betaer",
         "url": "https://github.com/betaer"
       },
       {
-        "@type": "WebApplication",
+        "@type": "SoftwareApplication",
         "@id": "https://betaer.github.io/password-generator/#application",
         "name": "密码生成器 Password Generator",
         "alternateName": ["Password Generator", "随机密码生成器", "Passphrase Generator", "PIN Generator"],
@@ -95,8 +95,8 @@
         "image": "https://betaer.github.io/password-generator/assets/social-preview.png",
         "screenshot": "https://betaer.github.io/password-generator/assets/social-preview.png",
         "isAccessibleForFree": true,
-        "isPartOf": { "@id": "https://betaer.github.io/password-generator/#website" },
-        "author": { "@id": "https://betaer.github.io/password-generator/#author" },
+        "isPartOf": { "@id": "https://betaer.github.io/#website" },
+        "author": { "@id": "https://betaer.github.io/#author" },
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "sameAs": "https://github.com/betaer/password-generator",
         "featureList": [
@@ -105,6 +105,24 @@
           "PIN 码生成与弱 PIN 过滤",
           "密码强度、理论熵、穷举次数与预计破解时间分析",
           "浏览器 Web Crypto API 本地生成，敏感内容不上传"
+        ]
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://betaer.github.io/password-generator/#breadcrumb",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "项目主页",
+            "item": "https://betaer.github.io/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "密码生成器 Password Generator",
+            "item": "https://betaer.github.io/password-generator/"
+          }
         ]
       },
       {
