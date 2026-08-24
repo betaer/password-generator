@@ -25,6 +25,33 @@ test('V1.7.5 顶部导航使用四种批准图标', () => {
   assert.ok(navigation.indexOf('"PIN 码"') < navigation.indexOf('"记忆短语"'), '记忆短语应位于 PIN 码之后');
 });
 
+test('顶部 Tab 与 URL 锚点双向同步且内容垂直居中', () => {
+  const helperSource = app.match(/const MODE_HASH_BY_MODE[\s\S]*?(?=\nconst SHARE_PROMOTION_TEXTS)/)?.[0];
+  assert.ok(helperSource, '缺少 Tab 与 URL 锚点映射');
+  const { modeHashFor, modeFromHash } = Function(`${helperSource}; return { modeHashFor, modeFromHash };`)();
+
+  assert.equal(modeHashFor('random'), '#password');
+  assert.equal(modeHashFor('pin'), '#pin');
+  assert.equal(modeHashFor('memorable'), '#words');
+  assert.equal(modeFromHash('#password'), 'random');
+  assert.equal(modeFromHash('#pin'), 'pin');
+  assert.equal(modeFromHash('#words'), 'memorable');
+  assert.equal(modeFromHash('#unknown'), 'random');
+  assert.equal(modeFromHash(''), 'random');
+
+  assert.match(app, /next\.mode = modeFromHash\(window\.location\.hash\)/);
+  assert.match(app, /catch \{[\s\S]*?fallback\.mode = modeFromHash\(window\.location\.hash\);[\s\S]*?return fallback;/);
+  assert.match(app, /window\.history\.pushState\(null, '', nextHash\)/);
+  assert.match(app, /window\.history\.replaceState\(null, '', nextHash\)/);
+  assert.match(app, /window\.addEventListener\('popstate', syncModeFromHash\)/);
+  assert.match(app, /window\.addEventListener\('hashchange', syncModeFromHash\)/);
+  assert.match(app, /switchMode\(mode, \{ syncHash: false \}\)/);
+
+  assert.match(html, /\.mode-nav \.ant-segmented-item \{[\s\S]*?display: flex;[\s\S]*?align-items: stretch;/);
+  assert.match(html, /\.mode-nav \.ant-segmented-item-label \{[\s\S]*?display: flex;[\s\S]*?align-items: center;[\s\S]*?justify-content: center;[\s\S]*?line-height: 1\.2;/);
+  assert.match(html, /\.mode-option-label \{[\s\S]*?height: 100%;[\s\S]*?align-items: center;[\s\S]*?line-height: 1\.2;/);
+});
+
 test('右下角提供 GitHub 与按语言选择文案的分享本站按钮', () => {
   assert.match(app, /const GitHubOutlined = createInlineIcon/);
   assert.match(app, /const GITHUB_REPOSITORY_URL = 'https:\/\/github\.com\/betaer\/password-generator'/);

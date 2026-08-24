@@ -151,10 +151,19 @@ button, input, textarea { font: inherit; }
 .mode-nav { width: 100%; }
 .mode-nav .ant-segmented { width: 100%; padding: 4px; }
 .mode-nav .ant-segmented-group { width: 100%; }
-.mode-nav .ant-segmented-item { flex: 1; min-width: 0; }
+.mode-nav .ant-segmented-item {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: stretch;
+}
 .mode-nav .ant-segmented-item-label {
+  display: flex;
+  width: 100%;
   min-height: 38px;
-  line-height: 38px;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
   padding-inline: 12px;
   font-weight: 650;
   white-space: nowrap;
@@ -2271,16 +2280,24 @@ button, input, textarea { font: inherit; }
 /* ===== V1.7.5：图标、结果区、密码方案与高密度表单统一 ===== */
 .mode-option-label {
   display: inline-flex;
+  width: 100%;
+  height: 100%;
   align-items: center;
   justify-content: center;
   gap: 7px;
   min-width: 0;
+  line-height: 1.2;
 }
 .mode-option-label .anticon {
+  display: inline-flex;
   flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
   color: #475467;
   font-size: 17px;
+  line-height: 0;
 }
+.mode-option-label > span:last-child { line-height: 1.2; }
 .mode-nav .ant-segmented-item-selected .mode-option-label .anticon { color: var(--blue); }
 
 .password-scheme-panel {
@@ -3113,6 +3130,34 @@ const SECTION_HEADING_ICONS = Object.freeze({
 const GITHUB_REPOSITORY_URL = 'https://github.com/betaer/password-generator';
 const GITHUB_PAGES_URL = 'https://betaer.github.io/password-generator/';
 const GITHUB_STAR_DISPLAY = '999+';
+const MODE_HASH_BY_MODE = Object.freeze({
+    random: '#password',
+    pin: '#pin',
+    memorable: '#words',
+});
+const MODE_BY_HASH = Object.freeze(Object.fromEntries(
+    Object.entries(MODE_HASH_BY_MODE).map(([mode, hash]) => [hash, mode]),
+));
+function modeHashFor(mode) {
+    return MODE_HASH_BY_MODE[mode] || MODE_HASH_BY_MODE.random;
+}
+function modeFromHash(hash) {
+    return MODE_BY_HASH[String(hash || '').trim().toLowerCase()] || 'random';
+}
+function writeModeHash(mode, { replace = false } = {}) {
+    const nextHash = modeHashFor(mode);
+    if (window.location.hash === nextHash)
+        return;
+    try {
+        if (replace)
+            window.history.replaceState(null, '', nextHash);
+        else
+            window.history.pushState(null, '', nextHash);
+    }
+    catch {
+        window.location.hash = nextHash;
+    }
+}
 const SHARE_PROMOTION_TEXTS = Object.freeze({
     zh: `分享一个专业又好用的密码生成器 🔐
 支持随机密码、记忆短语和 PIN；所有内容都在浏览器本地生成，不会上传，更安全、更私密。
@@ -3448,10 +3493,13 @@ function loadSettings() {
             next.memorable.themePack = 'technology';
         next.pin.length = clamp(next.pin.length, 4, MAX_LENGTH);
         next.historyConfig = { enabled: true, retention: 'session', visible: true };
+        next.mode = modeFromHash(window.location.hash);
         return next;
     }
     catch {
-        return structuredClone(DEFAULT_STATE);
+        const fallback = structuredClone(DEFAULT_STATE);
+        fallback.mode = modeFromHash(window.location.hash);
+        return fallback;
     }
 }
 function clamp(value, min, max) {
@@ -4977,12 +5025,14 @@ function PasswordGenerator() {
         const behavior = reduceMotion ? 'auto' : 'smooth';
         window.scrollTo({ top: 0, left: 0, behavior });
     };
-    const switchMode = (mode) => {
+    const switchMode = (mode, { syncHash = true } = {}) => {
         const next = structuredClone(stateRef.current);
         next.mode = mode;
         next.quantity = 1;
         commitState(next);
         setCopiedResultSignature('');
+        if (syncHash)
+            writeModeHash(mode);
         if (mode === 'memorable') {
             setResults([]);
             loadSelectedWordPack(next.memorable, true);
@@ -4991,6 +5041,23 @@ function PasswordGenerator() {
             generateAll(next);
         }
     };
+    useEffect(() => {
+        const syncModeFromHash = () => {
+            const mode = modeFromHash(window.location.hash);
+            const expectedHash = modeHashFor(mode);
+            if (window.location.hash !== expectedHash)
+                writeModeHash(mode, { replace: true });
+            if (stateRef.current.mode !== mode)
+                switchMode(mode, { syncHash: false });
+        };
+        syncModeFromHash();
+        window.addEventListener('popstate', syncModeFromHash);
+        window.addEventListener('hashchange', syncModeFromHash);
+        return () => {
+            window.removeEventListener('popstate', syncModeFromHash);
+            window.removeEventListener('hashchange', syncModeFromHash);
+        };
+    }, []);
     const renderQuantitySettings = () => (React.createElement("section", { className: "section-block preset-slider-section" },
         React.createElement(SectionHeading, { title: "\u751F\u6210\u6570\u91CF", info: tooltipCopy('生成数量', '滑块提供常用的批量生成数量。', [`右侧可自定义 1～${MAX_QUANTITY} 个`, '生成数量较多时，结果列表会在区域内滚动']) }),
         React.createElement("div", { className: "control-row" },
