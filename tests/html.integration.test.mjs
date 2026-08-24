@@ -127,7 +127,9 @@ test('PIN 规则使用四张响应式卡片并移除重复的推荐长度区块'
   assert.match(html, /\.pin-rule-grid[\s\S]*?grid-template-columns: repeat\(2/);
   assert.match(html, /@media \(max-width: 760px\)[\s\S]*?\.pin-rule-grid \{ grid-template-columns: 1fr/);
   assert.match(app, /title: "连续数字限制"/);
-  assert.match(app, /limitSequential: false/);
+  assert.match(app, /limitSequential: true/);
+  assert.match(app, /const SETTINGS_SCHEMA_VERSION = 12/);
+  assert.match(app, /if \(!saved \|\| Number\(saved\.settingsVersion \|\| 0\) < 12\)[\s\S]*?next\.pin\.limitSequential = true/);
   assert.match(app, /checked: state\.pin\.limitSequential/);
   assert.doesNotMatch(app, /pin-scenario-panel|推荐长度/);
 });
@@ -286,7 +288,7 @@ test('所有 H3 标题使用透明底简洁 SVG 图标', () => {
 });
 
 test('随机密码默认使用 L8、生成 1 个、32 位及 20%～80% 符号范围', () => {
-  assert.match(app, /const SETTINGS_SCHEMA_VERSION = 11/);
+  assert.match(app, /const SETTINGS_SCHEMA_VERSION = 12/);
   assert.match(app, /const SETTINGS_KEY = 'password-generator-settings-v175'/);
   assert.match(app, /const HISTORY_SESSION_KEY = 'password-generator-history-session-v175'/);
   assert.match(app, /mode: 'random',[\s\S]*?quantity: 1,[\s\S]*?length: 32/);
