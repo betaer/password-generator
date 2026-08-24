@@ -2,11 +2,10 @@
 
 [简体中文](README.md) · [English](docs/readme-en.md)
 
-[![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.password-generator)](https://github.com/betaer/password-generator)
 
 浏览器本地运行的专业密码生成器，支持**随机密码、记忆短语与 PIN**，并提供细粒度生成规则、格式测试方案和基于每次实际结果的量化强度分析。
 
-[在线使用](https://betaer.github.io/password-generator/) · [随机密码](https://betaer.github.io/password-generator/#password) · [PIN](https://betaer.github.io/password-generator/#pin) · [记忆短语](https://betaer.github.io/password-generator/#words)
+[在线使用](https://betaer.github.io/password-generator/) · [随机密码](https://betaer.github.io/password-generator/#password) · [PIN](https://betaer.github.io/password-generator/#pin) · [记忆短语](https://betaer.github.io/password-generator/#words) · [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.password-generator)](https://github.com/betaer/password-generator)
 
 ![Password Generator 社交预览](assets/social-preview.png)
 
