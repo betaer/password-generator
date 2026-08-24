@@ -51,6 +51,15 @@ test('说明气泡在触摸设备首次点击后保持展开并支持点击外�
   assert.match(infoTipSource, /onOpenChange: touchTooltip \? setTouchOpen : undefined/);
 });
 
+test('页面不调用 WebAudio 且不生成浏览器的主要内容跳转入口', () => {
+  assert.doesNotMatch(app, /\b(?:AudioContext|webkitAudioContext|OfflineAudioContext|createOscillator)\b/);
+  const pageRender = app.slice(app.indexOf('return (React.createElement(Layout'), app.indexOf('\nfunction RootApp'));
+  assert.ok(pageRender, '缺少页面主体渲染代码');
+  assert.doesNotMatch(pageRender, /React\.createElement\(Content/);
+  assert.doesNotMatch(pageRender, /React\.createElement\("main"/);
+  assert.match(pageRender, /React\.createElement\("div", \{ className: "page-main" \}/);
+});
+
 test('V1.7.5 顶部导航使用四种批准图标', () => {
   for (const token of ['SparklesOutlined', 'BulbOutlined', 'DialPadOutlined', 'SafetyCertificateFilled']) {
     assert.match(app, new RegExp(token), `缺少 ${token}`);

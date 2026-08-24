@@ -3075,7 +3075,7 @@ function preferredShareLanguage(navigatorLike = navigator, intlLike = Intl) {
 function getSharePromotionText(navigatorLike = navigator, intlLike = Intl) {
     return SHARE_PROMOTION_TEXTS[preferredShareLanguage(navigatorLike, intlLike)];
 }
-const { Header, Content } = Layout;
+const { Header } = Layout;
 const { Title, Text } = Typography;
 const LOWER = 'abcdefghijklmnopqrstuvwxyz';
 const UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -5173,18 +5173,17 @@ function PasswordGenerator() {
                 React.createElement("div", { className: "privacy-pill" },
                     React.createElement(SafetyCertificateFilled, { style: { color: '#1677ff', marginRight: 6 } }),
                     "\u672C\u5730\u751F\u6210\uFF0C\u4E0D\u4E0A\u4F20"))),
-        React.createElement(Content, null,
-            React.createElement("main", { className: "page-main" },
-                React.createElement("div", { className: "workspace" },
-                    React.createElement("div", { className: "settings-pane" },
-                        state.mode === 'random' ? renderRandomSettings() : React.createElement(React.Fragment, null,
-                            renderQuantitySettings(),
-                            React.createElement(Divider, { className: "compact-divider" }),
-                            state.mode === 'memorable' ? renderMemorableSettings() : renderPinSettings()),
-                        React.createElement(Button, { className: "generate-action", type: "primary", size: "large", icon: React.createElement(ReloadOutlined, null), loading: state.mode === 'memorable' && wordPackState.status === 'loading', disabled: state.mode === 'memorable' && wordPackState.status === 'error', onClick: generateAndCopy },
-                            "\u751F\u6210",
-                            state.mode === 'pin' ? ' PIN' : state.mode === 'memorable' ? '记忆短语' : '密码')),
-                    renderResultPane()))),
+        React.createElement("div", { className: "page-main" },
+            React.createElement("div", { className: "workspace" },
+                React.createElement("div", { className: "settings-pane" },
+                    state.mode === 'random' ? renderRandomSettings() : React.createElement(React.Fragment, null,
+                        renderQuantitySettings(),
+                        React.createElement(Divider, { className: "compact-divider" }),
+                        state.mode === 'memorable' ? renderMemorableSettings() : renderPinSettings()),
+                    React.createElement(Button, { className: "generate-action", type: "primary", size: "large", icon: React.createElement(ReloadOutlined, null), loading: state.mode === 'memorable' && wordPackState.status === 'loading', disabled: state.mode === 'memorable' && wordPackState.status === 'error', onClick: generateAndCopy },
+                        "\u751F\u6210",
+                        state.mode === 'pin' ? ' PIN' : state.mode === 'memorable' ? '记忆短语' : '密码')),
+                renderResultPane())),
         React.createElement("div", { className: "site-floating-actions", role: "group", "aria-label": "网站快捷操作" },
             showBackToTop ? React.createElement(Button, { className: "site-floating-button site-floating-backtop", icon: React.createElement(ArrowUpOutlined, null), onClick: scrollPageToTop, "aria-label": "回到顶部" },
                 React.createElement("span", { className: "site-floating-button-label" }, "回到顶部")) : null,
