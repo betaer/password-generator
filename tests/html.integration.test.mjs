@@ -452,12 +452,13 @@ test('本地生成入口会展开并滚动到底部安全说明', () => {
   assert.match(app, /本地安全运行时加载失败/);
 });
 
-test('网站底部公开展示安全边界、会话历史与自行验证方法', () => {
-  assert.match(html, /<details id="security-verification" class="seo-shell-security">/);
-  assert.doesNotMatch(html, /<details id="security-verification" class="seo-shell-security" open>/);
-  assert.match(html, /\.seo-shell-security-summary::after/);
-  assert.match(html, /\.seo-shell-security\[open\] > \.seo-shell-security-summary::after/);
+test('网站底部整体折叠展示功能、安全边界、会话历史与自行验证方法', () => {
+  assert.match(html, /<details id="security-verification" class="seo-shell-overview">/);
+  assert.doesNotMatch(html, /<details id="security-verification" class="seo-shell-overview" open>/);
+  assert.match(html, /\.seo-shell-overview-summary::after/);
+  assert.match(html, /\.seo-shell-overview\[open\] > \.seo-shell-overview-summary::after/);
   assert.match(html, /id="seo-security-title">安全与可验证性</);
+  assert.doesNotMatch(html, /id="seo-faq-title"|class="seo-shell-faq"/);
   assert.match(html, /Web Crypto API/);
   assert.match(html, /拒绝采样/);
   assert.match(html, /历史记录不会跨浏览器会话持久保存/);

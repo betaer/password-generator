@@ -124,28 +124,6 @@
             "item": "https://betaer.github.io/password-generator/"
           }
         ]
-      },
-      {
-        "@type": "FAQPage",
-        "@id": "https://betaer.github.io/password-generator/#faq",
-        "inLanguage": "zh-CN",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "密码和助记词会上传到服务器吗？",
-            "acceptedAnswer": { "@type": "Answer", "text": "不会。密码、助记词（记忆短语）和 PIN 码都在当前浏览器中处理，生成内容不会发送到服务器。历史记录只保存在当前标签页会话，不会跨浏览器会话持久保存，可随时清空。" }
-          },
-          {
-            "@type": "Question",
-            "name": "随机密码是否使用安全随机数？",
-            "acceptedAnswer": { "@type": "Answer", "text": "是。工具使用浏览器 Web Crypto API 生成密码学安全随机数，不使用 Math.random()。" }
-          },
-          {
-            "@type": "Question",
-            "name": "助记词和记忆短语适合什么用途？",
-            "acceptedAnswer": { "@type": "Answer", "text": "本工具的助记词功能用于生成便于记忆的随机口令，不等同于 BIP39 钱包恢复短语；钱包相关测试方案仅用于格式演示。" }
-          }
-        ]
       }
     ]
   }
@@ -2639,15 +2617,54 @@ button, input, textarea { font: inherit; }
 .seo-shell {
   width: min(var(--page-max), calc(100% - 48px));
   margin: 28px auto 40px;
-  padding: 28px;
+  padding: 0;
+  overflow: hidden;
   border: 1px solid #e2e8f0;
   border-radius: 20px;
   color: var(--text);
   background: linear-gradient(145deg, #f8fbff 0%, #fff 62%);
   box-shadow: 0 10px 30px rgba(15, 23, 42, .05);
+  scroll-margin-top: 92px;
 }
-.seo-shell-header { max-width: 860px; }
+.seo-shell-overview { margin: 0; }
+.seo-shell-overview-summary {
+  position: relative;
+  display: flex;
+  min-height: 104px;
+  align-items: center;
+  padding: 24px 68px 24px 28px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition: background-color .2s ease;
+}
+.seo-shell-overview-summary::-webkit-details-marker { display: none; }
+.seo-shell-overview-summary::after {
+  position: absolute;
+  top: 50%;
+  right: 30px;
+  width: 11px;
+  height: 11px;
+  border-right: 2px solid #667085;
+  border-bottom: 2px solid #667085;
+  content: "";
+  transform: translateY(-65%) rotate(45deg);
+  transition: transform .2s ease;
+}
+.seo-shell-overview[open] > .seo-shell-overview-summary::after {
+  transform: translateY(-30%) rotate(225deg);
+}
+.seo-shell-overview-summary:hover,
+.seo-shell-overview-summary:focus-visible { background: rgba(255, 255, 255, .56); }
+.seo-shell-overview-summary:focus-visible { outline: 3px solid rgba(22, 119, 255, .18); outline-offset: -3px; }
+.seo-shell-overview-summary h1 { margin: 0; }
+.seo-shell-overview-content {
+  padding: 24px 28px 30px;
+  border-top: 1px dashed #d8e0eb;
+}
+.seo-shell-overview-intro { max-width: 860px; margin-top: 0 !important; }
 .seo-shell-eyebrow {
+  display: block;
   margin: 0 0 8px;
   color: var(--blue-deep);
   font-size: 12px;
@@ -2655,6 +2672,7 @@ button, input, textarea { font: inherit; }
   letter-spacing: .08em;
   text-transform: uppercase;
 }
+.seo-shell-title { display: block; }
 .seo-shell h1,
 .seo-shell h2 { margin: 0; color: #101828; }
 .seo-shell h1 { font-size: clamp(24px, 3vw, 34px); line-height: 1.25; }
@@ -2674,54 +2692,19 @@ button, input, textarea { font: inherit; }
   background: rgba(255, 255, 255, .9);
 }
 .seo-shell-card a,
-.seo-shell-footer a { color: var(--blue-deep); font-weight: 700; text-decoration: none; }
+.site-global-footer a { color: var(--blue-deep); font-weight: 700; text-decoration: none; }
 .seo-shell-card a { display: inline-block; margin-top: 12px; font-size: 13px; }
 .seo-shell-card a:hover,
-.seo-shell-footer a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.site-global-footer a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .seo-shell-security {
   margin-top: 24px;
-  padding: 0;
-  overflow: hidden;
+  padding: 20px;
   border: 1px solid #cfe2ff;
   border-radius: 14px;
   background: #f2f7ff;
-  scroll-margin-top: 92px;
 }
-.seo-shell-security-summary {
-  position: relative;
-  display: flex;
-  min-height: 64px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 18px 52px 18px 20px;
-  cursor: pointer;
-  list-style: none;
-  user-select: none;
-}
-.seo-shell-security-summary::-webkit-details-marker { display: none; }
-.seo-shell-security-summary::after {
-  position: absolute;
-  top: 50%;
-  right: 22px;
-  width: 9px;
-  height: 9px;
-  border-right: 2px solid #667085;
-  border-bottom: 2px solid #667085;
-  content: "";
-  transform: translateY(-65%) rotate(45deg);
-  transition: transform .2s ease;
-}
-.seo-shell-security[open] > .seo-shell-security-summary::after {
-  transform: translateY(-30%) rotate(225deg);
-}
-.seo-shell-security-summary:hover,
-.seo-shell-security-summary:focus-visible { background: rgba(255, 255, 255, .58); }
-.seo-shell-security-summary:focus-visible { outline: 3px solid rgba(22, 119, 255, .18); outline-offset: -3px; }
-.seo-shell-security-summary h2 { margin: 0; }
 .seo-shell-security-content {
-  padding: 20px;
-  border-top: 1px dashed #c8d9ef;
+  padding: 0;
   color: #42526b;
 }
 .seo-shell-security-content > p:first-child { margin-top: 0; }
@@ -2777,31 +2760,31 @@ button, input, textarea { font: inherit; }
   background: #fffbeb;
 }
 .seo-shell-security-note strong { color: #3d321a; }
-.seo-shell-faq { margin-top: 24px; padding-top: 22px; border-top: 1px dashed #d8e0eb; }
-.seo-shell-faq-list { display: grid; gap: 8px; margin-top: 12px; }
-.seo-shell-faq details { padding: 12px 14px; border-radius: 12px; background: #fff; }
-.seo-shell-faq summary { cursor: pointer; color: #27364f; font-size: 14px; font-weight: 700; }
-.seo-shell-faq details p { padding-right: 18px; }
-.seo-shell-footer {
+.site-global-footer {
+  width: min(var(--page-max), calc(100% - 48px));
+  margin: 0 auto 30px;
+  color: #667085;
+  font-size: 13px;
+}
+.site-global-footer-inner {
   display: flex;
   align-items: center;
   justify-content: flex-start;
   gap: 20px;
-  margin-top: 22px;
   padding-top: 18px;
   border-top: 1px dashed #d8e0eb;
-  color: #667085;
-  font-size: 13px;
 }
 @media (max-width: 760px) {
-  .seo-shell { width: calc(100% - 24px); margin-block: 18px 28px; padding: 20px; border-radius: 16px; }
+  .seo-shell { width: calc(100% - 24px); margin-block: 18px 24px; border-radius: 16px; }
+  .seo-shell-overview-summary { min-height: 88px; padding: 18px 52px 18px 18px; }
+  .seo-shell-overview-summary::after { right: 20px; }
+  .seo-shell-overview-content { padding: 20px 18px 22px; }
   .seo-shell-grid { grid-template-columns: 1fr; }
   .seo-shell-security-list { grid-template-columns: 1fr; }
   .seo-shell-security-grid { grid-template-columns: 1fr; }
-  .seo-shell-security-summary { min-height: 58px; padding: 15px 48px 15px 16px; }
-  .seo-shell-security-summary::after { right: 18px; }
-  .seo-shell-security-content { padding: 16px; }
-  .seo-shell-footer { align-items: flex-start; flex-direction: column; }
+  .seo-shell-security { padding: 16px; }
+  .site-global-footer { width: calc(100% - 24px); margin-bottom: 24px; }
+  .site-global-footer-inner { align-items: flex-start; flex-direction: column; gap: 8px; }
 }
 
 
@@ -2810,100 +2793,92 @@ button, input, textarea { font: inherit; }
 <body>
   <div id="root"></div>
   <main id="seo-content" class="seo-shell" aria-labelledby="seo-shell-title">
-    <header class="seo-shell-header">
-      <p class="seo-shell-eyebrow">本地安全工具 · Local Security Tool</p>
-      <h1 id="seo-shell-title">密码生成器 Password Generator</h1>
-      <p>免费、专业的浏览器本地密码生成器，支持随机密码、记忆短语（助记词式口令）、PIN 和动态密码强度分析。可根据每次实际生成结果分析字符多样性、理论熵、穷举次数与预计破解时间。</p>
-    </header>
-
-    <section class="seo-shell-features" aria-labelledby="seo-features-title">
-      <h2 id="seo-features-title">核心功能</h2>
-      <div class="seo-shell-grid">
-        <article class="seo-shell-card">
-          <h2>随机密码生成器</h2>
-          <p>自定义密码长度、字符类型、符号比例、开头与结尾规则，适合账号密码、主密码、API Token 和测试字符串。</p>
-          <a href="#password">生成随机密码</a>
-        </article>
-        <article class="seo-shell-card">
-          <h2>记忆短语生成器</h2>
-          <p>从安全随机词库生成便于记忆的 Passphrase，可选择词数、词库、大小写和分隔方式，并显示实际理论熵。</p>
-          <a href="#words">生成记忆短语</a>
-        </article>
-        <article class="seo-shell-card">
-          <h2>PIN 码生成器</h2>
-          <p>生成 4 位、6 位或自定义长度的纯数字 PIN，可过滤明显弱 PIN、重复数字和连续数字组合。</p>
-          <a href="#pin">生成 PIN 码</a>
-        </article>
-      </div>
-    </section>
-
-    <details id="security-verification" class="seo-shell-security">
-      <summary class="seo-shell-security-summary">
-        <h2 id="seo-security-title">安全与可验证性</h2>
+    <details id="security-verification" class="seo-shell-overview">
+      <summary class="seo-shell-overview-summary">
+        <h1 id="seo-shell-title">
+          <span class="seo-shell-eyebrow">本地安全工具 · Local Security Tool</span>
+          <span class="seo-shell-title">密码生成器 Password Generator</span>
+        </h1>
       </summary>
-      <div class="seo-shell-security-content" aria-labelledby="seo-security-title">
-        <p>随机密码、记忆短语、PIN 和输入内容均在当前设备中生成与分析，不会作为生成数据发送到服务器。</p>
-        <div class="seo-shell-security-flow" aria-label="密码安全生成流程">
-          <strong>Browser CSPRNG</strong><span aria-hidden="true">→</span>
-          <strong>Rejection Sampling</strong><span aria-hidden="true">→</span>
-          <strong>模式感知分析</strong><span aria-hidden="true">→</span>
-          <strong>本地结果</strong>
-        </div>
-        <div class="seo-shell-security-grid">
-          <section>
-            <h3>密码数据平面</h3>
-            <p>密码、PIN、记忆短语和用户输入不会进入网络请求或统计参数。历史记录不会跨浏览器会话持久保存；仅保存在当前标签页的 <code>sessionStorage</code>，刷新页面仍可恢复，关闭标签页后自动清除，也可随时手动清空。</p>
-          </section>
-          <section>
-            <h3>静态资源平面</h3>
-            <p>zxcvbn 模式分析器、PIN 风险库与 7,776 词词包只从本站同源静态文件加载；加载的是公开模型与词表，不包含生成结果。</p>
-          </section>
-          <section>
-            <h3>匿名统计平面</h3>
-            <p>站点只发送不含凭据内容的匿名访问统计；访问统计不包含密码、PIN、记忆短语或输入内容，也不会发送 <code>generated_value</code> 参数。</p>
-          </section>
-          <section>
-            <h3>如何自行验证</h3>
-            <p>打开浏览器 DevTools → Network，生成并复制密码，即可确认请求中不存在生成值；也可在 GitHub 仓库审计 Web Crypto、拒绝采样和分析实现。</p>
-          </section>
-        </div>
-        <ul class="seo-shell-security-list">
-          <li>Web Crypto API 提供密码学安全随机数</li>
-          <li>拒绝采样避免字符与词语索引的取模偏差</li>
-          <li>生成内容不会上传或进入匿名统计</li>
-          <li>Web Crypto 不可用时停止生成，不回退到 Math.random()</li>
-        </ul>
-        <p class="seo-shell-security-note"><strong>当前会话历史：</strong>不会跨浏览器会话持久保存；关闭当前标签页后自动清除，也可随时手动清空。</p>
+      <div class="seo-shell-overview-content">
+        <p class="seo-shell-overview-intro">免费、专业的浏览器本地密码生成器，支持随机密码、记忆短语（助记词式口令）、PIN 和动态密码强度分析。可根据每次实际生成结果分析字符多样性、理论熵、穷举次数与预计破解时间。</p>
+
+        <section class="seo-shell-features" aria-labelledby="seo-features-title">
+          <h2 id="seo-features-title">核心功能</h2>
+          <div class="seo-shell-grid">
+            <article class="seo-shell-card">
+              <h2>随机密码生成器</h2>
+              <p>自定义密码长度、字符类型、符号比例、开头与结尾规则，适合账号密码、主密码、API Token 和测试字符串。</p>
+              <a href="#password">生成随机密码</a>
+            </article>
+            <article class="seo-shell-card">
+              <h2>记忆短语生成器</h2>
+              <p>从安全随机词库生成便于记忆的 Passphrase，可选择词数、词库、大小写和分隔方式，并显示实际理论熵。</p>
+              <a href="#words">生成记忆短语</a>
+            </article>
+            <article class="seo-shell-card">
+              <h2>PIN 码生成器</h2>
+              <p>生成 4 位、6 位或自定义长度的纯数字 PIN，可过滤明显弱 PIN、重复数字和连续数字组合。</p>
+              <a href="#pin">生成 PIN 码</a>
+            </article>
+          </div>
+        </section>
+
+        <section class="seo-shell-security" aria-labelledby="seo-security-title">
+          <h2 id="seo-security-title">安全与可验证性</h2>
+          <div class="seo-shell-security-content">
+            <p>随机密码、记忆短语、PIN 和输入内容均在当前设备中生成与分析，不会作为生成数据发送到服务器。</p>
+            <div class="seo-shell-security-flow" aria-label="密码安全生成流程">
+              <strong>Browser CSPRNG</strong><span aria-hidden="true">→</span>
+              <strong>Rejection Sampling</strong><span aria-hidden="true">→</span>
+              <strong>模式感知分析</strong><span aria-hidden="true">→</span>
+              <strong>本地结果</strong>
+            </div>
+            <div class="seo-shell-security-grid">
+              <section>
+                <h3>密码数据平面</h3>
+                <p>密码、PIN、记忆短语和用户输入不会进入网络请求或统计参数。历史记录不会跨浏览器会话持久保存；仅保存在当前标签页的 <code>sessionStorage</code>，刷新页面仍可恢复，关闭标签页后自动清除，也可随时手动清空。</p>
+              </section>
+              <section>
+                <h3>静态资源平面</h3>
+                <p>zxcvbn 模式分析器、PIN 风险库与 7,776 词词包只从本站同源静态文件加载；加载的是公开模型与词表，不包含生成结果。</p>
+              </section>
+              <section>
+                <h3>匿名统计平面</h3>
+                <p>站点只发送不含凭据内容的匿名访问统计；访问统计不包含密码、PIN、记忆短语或输入内容，也不会发送 <code>generated_value</code> 参数。</p>
+              </section>
+              <section>
+                <h3>如何自行验证</h3>
+                <p>打开浏览器 DevTools → Network，生成并复制密码，即可确认请求中不存在生成值；也可在 GitHub 仓库审计 Web Crypto、拒绝采样和分析实现。</p>
+              </section>
+              <section>
+                <h3>记忆短语边界</h3>
+                <p>本工具生成的是普通可记忆口令，不等同于 BIP39 钱包恢复短语；用户描述不参与随机性或理论熵计算。</p>
+              </section>
+              <section>
+                <h3>测试方案边界</h3>
+                <p>银行卡、钱包地址和私钥方案仅生成符合外观规则的测试字符串，不校验卡号、地址校验和或链上有效性。</p>
+              </section>
+            </div>
+            <ul class="seo-shell-security-list">
+              <li>Web Crypto API 提供密码学安全随机数</li>
+              <li>拒绝采样避免字符与词语索引的取模偏差</li>
+              <li>生成内容不会上传或进入匿名统计</li>
+              <li>Web Crypto 不可用时停止生成，不回退到 Math.random()</li>
+            </ul>
+            <p class="seo-shell-security-note"><strong>当前会话历史：</strong>不会跨浏览器会话持久保存；关闭当前标签页后自动清除，也可随时手动清空。</p>
+          </div>
+        </section>
       </div>
     </details>
+  </main>
 
-    <section class="seo-shell-faq" aria-labelledby="seo-faq-title">
-      <h2 id="seo-faq-title">常见问题</h2>
-      <div class="seo-shell-faq-list">
-        <details>
-          <summary>密码和助记词会上传到服务器吗？</summary>
-          <p>不会。密码、助记词（记忆短语）和 PIN 码均在当前浏览器中处理，生成内容不会发送到服务器。</p>
-        </details>
-        <details>
-          <summary>历史记录会长期保存吗？</summary>
-          <p>不会。历史记录只保存在当前标签页会话的 sessionStorage 中，不会跨浏览器会话持久保存；关闭标签页后自动清除，也可随时手动清空。</p>
-        </details>
-        <details>
-          <summary>随机密码是否使用安全随机数？</summary>
-          <p>是。工具使用浏览器 Web Crypto API 生成密码学安全随机数，不使用 Math.random()。</p>
-        </details>
-        <details>
-          <summary>这里的助记词等同于钱包恢复短语吗？</summary>
-          <p>不等同。本工具用于生成便于记忆的随机口令；钱包地址、私钥和银行卡相关方案仅作格式测试演示，不应作为真实钱包恢复短语使用。</p>
-        </details>
-      </div>
-    </section>
-
-    <footer class="seo-shell-footer">
+  <footer class="site-global-footer">
+    <div class="site-global-footer-inner">
       <span>密码生成器 · Password Generator</span>
       <a href="https://betaer.github.io/AiSignalGuard/" title="AI Signal Guard" target="_blank" rel="noopener noreferrer">AI 网络与隐私检测</a>
-    </footer>
-  </main>
+    </div>
+  </footer>
   <script>
     if (window.location.protocol === 'file:') {
       document.write('<script src="./assets/js/embedded-word-packs.js"><\/script>');
@@ -5610,7 +5585,7 @@ function PasswordGenerator() {
                             { label: React.createElement("span", { className: "mode-option-label" }, React.createElement(DialPadOutlined, null), React.createElement("span", null, "PIN 码")), value: 'pin' },
                             { label: React.createElement("span", { className: "mode-option-label" }, React.createElement(BulbOutlined, null), React.createElement("span", null, "记忆短语")), value: 'memorable' },
                         ], onChange: switchMode })),
-                React.createElement("button", { type: "button", className: "privacy-pill", onClick: openSecurityDetails, "aria-label": "展开并查看网站底部安全与可验证性说明" },
+                React.createElement("button", { type: "button", className: "privacy-pill", onClick: openSecurityDetails, "aria-label": "展开并查看网站底部本地安全工具说明" },
                     React.createElement(SafetyCertificateFilled, { style: { color: '#1677ff', marginRight: 6 } }),
                     "\u672C\u5730\u751F\u6210\uFF0C\u4E0D\u4E0A\u4F20"))),
         React.createElement("div", { className: "page-main" },
