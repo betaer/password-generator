@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
 
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const memorableEngineSource = await readFile(new URL('../assets/js/memorable-engine.js', import.meta.url), 'utf8');
+const wordPackManagerSource = await readFile(new URL('../assets/js/word-pack-manager.js', import.meta.url), 'utf8');
 const appStart = html.indexOf('const React =');
 assert.ok(appStart > -1, '缺少 V1.7.5 应用脚本');
 const app = html.slice(appStart);
@@ -12,6 +15,30 @@ test('完整应用脚本可以被 JavaScript 引擎解析', () => {
   const scriptEnd = html.indexOf('</script>', appStart);
   const runtimeScript = html.slice(scriptStart + 1, scriptEnd);
   assert.doesNotThrow(() => new Function(runtimeScript));
+});
+
+test('首次冷启动所需的两个小型运行时已压缩内置且可以直接执行', () => {
+  assert.doesNotMatch(html, /<script src="\.\/assets\/js\/(?:memorable-engine|word-pack-manager)\.js"><\/script>/);
+
+  const embeddedMemorableEngine = html.match(/<script data-startup-runtime="memorable-engine">\n([\s\S]*?)\n  <\/script>/)?.[1];
+  const embeddedWordPackManager = html.match(/<script data-startup-runtime="word-pack-manager">\n([\s\S]*?)\n  <\/script>/)?.[1];
+
+  assert.ok(embeddedMemorableEngine, '缺少内置的记忆短语安全随机运行时');
+  assert.ok(embeddedWordPackManager, '缺少内置的异步词包管理运行时');
+  assert.ok(
+    embeddedMemorableEngine.length + embeddedWordPackManager.length
+      < memorableEngineSource.length + wordPackManagerSource.length,
+    '内置启动模块应使用压缩代码',
+  );
+
+  const sandbox = {};
+  assert.doesNotThrow(() => vm.runInNewContext(
+    `${embeddedMemorableEngine}\n${embeddedWordPackManager}`,
+    sandbox,
+  ));
+  assert.equal(typeof sandbox.MemorableEngine?.SecureWordGenerator, 'function');
+  assert.equal(typeof sandbox.MemorableEngine?.EntropyCalculator?.forWords, 'function');
+  assert.equal(typeof sandbox.WordPackRuntime?.WordPackManager, 'function');
 });
 
 test('V1.7.5 顶部导航使用四种批准图标', () => {
