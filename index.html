@@ -67,7 +67,7 @@
     "sameAs": "https://github.com/betaer/password-generator",
     "featureList": [
       "随机密码生成",
-      "记忆短语与记忆故事",
+      "安全随机记忆短语",
       "PIN 生成",
       "密码强度与预计破解时间分析",
       "浏览器本地生成，不上传服务器"
@@ -945,15 +945,6 @@ button, input, textarea { font: inherit; }
 .batch-meta { color: #98a2b3; font-size: 12px; margin-top: 3px; }
 .batch-buttons { display: flex; gap: 4px; }
 
-.story-hint {
-  margin-top: 14px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: #f0f5ff;
-  color: #344054;
-  line-height: 1.65;
-}
-
 .history-panel { margin-top: 22px; }
 .history-header { margin-bottom: 10px; }
 .history-list {
@@ -1300,14 +1291,6 @@ button, input, textarea { font: inherit; }
 }
 .strength-meter.readonly .strength-labels button {
   cursor: default;
-}
-
-.story-generator-box {
-  display: grid;
-  gap: 12px;
-}
-.story-generator-box .ant-btn {
-  justify-self: start;
 }
 
 .history-title-wrap {
@@ -1918,90 +1901,11 @@ button, input, textarea { font: inherit; }
 .wordpack-source,
 .wordpack-total-note { margin-top: 5px; color: var(--muted); font-size: 12px; line-height: 1.55; }
 .memorable-format-grid { margin-top: 12px; }
-.story-security-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 10px 12px;
-  color: #176b43;
-  background: #f2fbf6;
-  border: 1px solid #b7ebc9;
-  border-radius: var(--button-radius);
-  font-size: 13px;
-  line-height: 1.55;
-}
-.story-security-note .anticon { margin-top: 3px; flex: 0 0 auto; }
-.memory-story-card {
-  margin-top: 14px;
-  border: 1px solid #d8e7fb;
-  border-radius: var(--button-radius);
-  overflow: hidden;
-  background: #fbfdff;
-}
-.memory-story-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 13px 14px;
-  border-bottom: 1px solid #e4edf8;
-  background: linear-gradient(135deg, #eef6ff, #f8fbff);
-}
-.memory-story-header h3 { display: block; margin: 0; font-size: 15px; line-height: 1.35; }
-.memory-story-eyebrow { margin-bottom: 2px; color: #1677ff; font-size: 11px; font-weight: 650; }
-.memory-story-scenes { display: grid; }
-.memory-story-scene { padding: 13px 14px; }
-.memory-story-scene + .memory-story-scene { border-top: 1px solid #e8eef6; }
-.memory-story-scene-head {
-  display: grid;
-  grid-template-columns: 24px auto minmax(0, 1fr);
-  align-items: center;
-  gap: 7px;
-}
-.memory-story-scene-index {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  color: #fff;
-  background: #1677ff;
-  font-size: 12px;
-  font-weight: 700;
-}
-.memory-story-core-words { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 4px; min-width: 0; }
-.memory-story-core-words span {
-  max-width: 100%;
-  padding: 2px 6px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: #245a96;
-  background: #eaf3ff;
-  border-radius: 6px;
-  font: 600 11px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
-.memory-story-sentence { margin: 9px 0 0; color: #344054; line-height: 1.7; }
-.memory-story-sentence mark { padding: 1px 3px; color: #0757b7; background: #e3f0ff; border-radius: 4px; font-weight: 700; }
-.memory-story-footer {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  padding: 10px 14px;
-  color: #176b43;
-  background: #f2fbf6;
-  border-top: 1px solid #d3f0df;
-  font-size: 12px;
-  line-height: 1.55;
-}
-.memory-story-footer .anticon { margin-top: 3px; flex: 0 0 auto; }
 @media (max-width: 640px) {
   .boundary-segment-title { font-size: 12px; }
   .boundary-segment-sample { max-width: 42%; font-size: 9px; }
   .theme-pack-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .wordpack-metrics { grid-template-columns: 1fr; }
-  .memory-story-scene-head { grid-template-columns: 24px 1fr; }
-  .memory-story-core-words { grid-column: 1 / -1; justify-content: flex-start; }
 }
 
 /* ===== V1.7.0：1,344px 紧凑自适应布局 ===== */
@@ -2135,9 +2039,6 @@ button, input, textarea { font: inherit; }
   .wordpack-source,
   .wordpack-total-note { margin-top: 3px; font-size: 11px; }
   .memorable-format-grid { margin-top: 8px; }
-  .story-security-note { padding: 8px 10px; font-size: 12px; }
-  .story-generator-box { gap: 8px; }
-
   .generate-action { height: 36px !important; margin-top: 10px !important; }
 
   .result-pane { padding: 0 14px 18px; }
@@ -2249,14 +2150,11 @@ button, input, textarea { font: inherit; }
   background: none !important;
 }
 .batch-item,
-.memory-story-header,
 .result-sticky-summary {
   border-bottom-color: var(--structural-divider);
   border-bottom-style: dashed;
 }
 .history-item + .history-item,
-.memory-story-scene + .memory-story-scene,
-.memory-story-footer,
 .inline-symbol-picker {
   border-top-color: var(--structural-divider);
   border-top-style: dashed;
@@ -2407,26 +2305,6 @@ button, input, textarea { font: inherit; }
   text-overflow: clip;
   white-space: nowrap;
 }
-.story-context-field { position: relative; min-width: 0; }
-.story-context-field textarea.ant-input {
-  min-height: 84px;
-  padding: 10px 12px 28px;
-}
-.story-context-count {
-  position: absolute;
-  right: 30px;
-  bottom: 7px;
-  z-index: 2;
-  padding: 1px 4px;
-  border-radius: 5px;
-  color: #98a2b3;
-  background: rgba(255, 255, 255, .92);
-  font-size: 11px;
-  line-height: 18px;
-  pointer-events: none;
-}
-.story-context-field .ant-input-data-count { display: none !important; }
-
 .pin-rule-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2983,12 +2861,10 @@ const Tooltip = __component(457196);
 const Typography = __component(570800);
 const {
   SecureWordGenerator,
-  StoryIntentParser,
-  StoryRenderer,
   EntropyCalculator,
 } = globalThis.MemorableEngine || {};
 const { WordPackManager } = globalThis.WordPackRuntime || {};
-if (!SecureWordGenerator || !StoryRenderer || !WordPackManager) {
+if (!SecureWordGenerator || !EntropyCalculator || !WordPackManager) {
   throw new Error('记忆短语本地引擎加载失败。请确认 assets/js 目录与 HTML 位于同一项目中。');
 }
 
@@ -3105,9 +2981,6 @@ const OrderedListOutlined = createInlineIcon([
 const BookOpenOutlined = createInlineIcon([
   { d: 'M12 6.5C10.2 4.8 7.8 4 4.5 4v14c3.3 0 5.7.8 7.5 2.5M12 6.5C13.8 4.8 16.2 4 19.5 4v14c-3.3 0-5.7.8-7.5 2.5V6.5Z', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
 ]);
-const StoryOutlined = createInlineIcon([
-  { d: 'M5 4.5h10.5A2.5 2.5 0 0 1 18 7v12.5H7.5A2.5 2.5 0 0 1 5 17V4.5Zm0 12.5c.6-.7 1.4-1 2.5-1H18M15.5 3v4M13.5 5h4', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
-]);
 const ChartLineOutlined = createInlineIcon([
   { d: 'M4 19V5M4 19h16M7 15l3.2-4 3 2.3L18 7', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
 ]);
@@ -3123,7 +2996,6 @@ const SECTION_HEADING_ICONS = Object.freeze({
   '符号设置': BracketsOutlined,
   '单词数量': OrderedListOutlined,
   '词库与安全': BookOpenOutlined,
-  '记忆故事': StoryOutlined,
   'PIN 长度': DialPadOutlined,
   'PIN 规则': SafetyCertificateFilled,
 });
@@ -3201,7 +3073,6 @@ function getSharePromotionText(navigatorLike = navigator, intlLike = Intl) {
 }
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
-const { TextArea } = Input;
 const LOWER = 'abcdefghijklmnopqrstuvwxyz';
 const UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const DIGITS = '0123456789';
@@ -3329,8 +3200,6 @@ const DEFAULT_STATE = {
         themePack: 'technology',
         capitalization: 'lowercase',
         separator: 'hyphen',
-        storyContext: '',
-        showStory: false,
     },
     pin: {
         length: 6,
@@ -4203,10 +4072,6 @@ function formatCrackTime(entropy, guessesPerSecond = 10000) {
         return `${Math.round(10 ** yearsLog).toLocaleString('zh-CN')} 年`;
     return `约 10 的 ${yearsLog.toFixed(1)} 次方年`;
 }
-function buildStoryHint(words, context) {
-    if (!words?.length) return null;
-    return StoryRenderer.render(words, StoryIntentParser.parse(context));
-}
 const WORD_ENTROPY_TOOLTIP = tooltipCopy('每词理论熵',
     ['表示随机抽取 1 个词带来的理论安全强度。'],
     ['1,296 词 ≈ 10.34 bits', '7,776 词 ≈ 12.92 bits', '每增加 1 bit，候选数量约翻倍'],
@@ -4523,29 +4388,6 @@ function HighlightPassword({ value }) {
         return React.createElement("span", { key: `${index}-${char}`, className: className }, char === ' ' ? ' ' : char);
     })));
 }
-function StoryDisplay({ story }) {
-    if (!story?.scenes?.length) return null;
-    return (React.createElement("div", { className: "memory-story-card", "data-testid": "memory-story" },
-        React.createElement("div", { className: "memory-story-header" },
-            React.createElement("div", null,
-                React.createElement("div", { className: "memory-story-eyebrow" }, "\u672C\u5730\u7EC4\u5408\u5F0F\u6545\u4E8B"),
-                React.createElement("h3", null,
-                    React.createElement("span", { className: "heading-title-content" },
-                        React.createElement(HeadingIcon, { icon: StoryOutlined }),
-                        React.createElement("span", null, `记忆故事 · ${story.themeLabel || '冒险旅程'}`)))),
-            React.createElement(Tag, { color: "blue" }, `${story.scenes.length} 幕`)),
-        React.createElement("div", { className: "memory-story-scenes" }, story.scenes.map((scene) => (React.createElement("section", { className: "memory-story-scene", key: scene.index, "data-testid": "story-scene" },
-            React.createElement("div", { className: "memory-story-scene-head" },
-                React.createElement("span", { className: "memory-story-scene-index" }, scene.index),
-                React.createElement("strong", null, scene.title),
-                React.createElement("div", { className: "memory-story-core-words", "aria-label": `${scene.title}核心记忆词` }, scene.words.map((word, index) => (React.createElement("span", { key: `${scene.index}-${index}-${word}` }, word))))),
-            React.createElement("p", { className: "memory-story-sentence" }, scene.parts.map((part, index) => part.type === 'word'
-                ? React.createElement("mark", { key: index }, part.value)
-                : React.createElement(React.Fragment, { key: index }, part.value))))))),
-        React.createElement("div", { className: "memory-story-footer" },
-            React.createElement(SafetyCertificateFilled, null),
-            React.createElement("span", null, "\u6838\u5FC3\u8BCD\u4FDD\u6301\u539F\u987A\u5E8F\uFF0C\u6BCF\u8BCD\u5728\u6545\u4E8B\u4E2D\u53EA\u51FA\u73B0\u4E00\u6B21\uFF1B\u573A\u666F\u63CF\u8FF0\u4E0D\u8BA1\u5165\u71B5\u3002"))));
-}
 function InlineSymbolGrid({ value, onChange }) {
     const selected = sanitizeCustomSymbols(value);
     const toggle = (symbol) => onChange(selected.includes(symbol)
@@ -4809,7 +4651,7 @@ function PasswordGenerator() {
             return estimatePasswordSchemeEntropy(sourceState.random.schemeId);
         return estimateRandomEntropy(sourceState.random);
     };
-    const createOne = (sourceState, withStory = false) => {
+    const createOne = (sourceState) => {
         if (sourceState.mode === 'memorable') {
             const activePack = activeWordPackRef.current;
             if (!activePack?.entries?.length) throw new Error('当前词包尚未加载完成。');
@@ -4817,16 +4659,15 @@ function PasswordGenerator() {
             return {
                 value: generated.value,
                 words: generated.words,
-                story: withStory ? buildStoryHint(generated.words, sourceState.memorable.storyContext) : '',
                 wordPackId: activePack.id,
                 wordPackCount: activePack.entries.length,
             };
         }
         if (sourceState.mode === 'pin')
-            return { value: generatePin(sourceState.pin), words: null, story: '' };
+            return { value: generatePin(sourceState.pin), words: null };
         if (sourceState.random.schemeId && sourceState.random.schemeId !== 'custom')
-            return { value: generatePasswordSchemeValue(sourceState.random.schemeId), words: null, story: '' };
-        return { value: generateRandomPassword(sourceState.random), words: null, story: '' };
+            return { value: generatePasswordSchemeValue(sourceState.random.schemeId), words: null };
+        return { value: generateRandomPassword(sourceState.random), words: null };
     };
     const addHistory = (items, sourceState) => {
         const additions = items.map((item) => ({
@@ -4844,7 +4685,7 @@ function PasswordGenerator() {
         duration: 5,
         showProgress: true,
     });
-    const generateAll = (sourceState = stateRef.current, options = {}) => {
+    const generateAll = (sourceState = stateRef.current) => {
         try {
             if (sourceState.mode === 'memorable' && wordPackStateRef.current.status === 'loading')
                 throw new Error('词包仍在加载，请稍候。');
@@ -4869,7 +4710,7 @@ function PasswordGenerator() {
             let attempts = 0;
             while (nextResults.length < sourceState.quantity && attempts < maximumAttempts) {
                 attempts += 1;
-                const item = createOne(sourceState, Boolean(options.withStory));
+                const item = createOne(sourceState);
                 if (seen.has(item.value))
                     continue;
                 seen.add(item.value);
@@ -4894,7 +4735,7 @@ function PasswordGenerator() {
             const occupied = new Set(results.filter((_, position) => position !== index).map((item) => item.value));
             let replacement;
             for (let attempt = 0; attempt < 120; attempt += 1) {
-                const item = createOne(sourceState, Boolean(results[index]?.story));
+                const item = createOne(sourceState);
                 if (!occupied.has(item.value)) {
                     replacement = { id: createId(), mode: sourceState.mode, ...item };
                     break;
@@ -4911,22 +4752,6 @@ function PasswordGenerator() {
         catch (error) {
             showGenerationError(error.message || '未知错误。');
         }
-    };
-    const generateStories = () => {
-        const sourceState = stateRef.current;
-        if (sourceState.mode !== 'memorable')
-            return;
-        const hasWords = results.some((item) => Array.isArray(item.words) && item.words.length);
-        if (!hasWords) {
-            const generated = generateAll(sourceState, { withStory: true });
-            if (generated.length)
-                message.success('记忆短语和记忆故事已生成');
-            return;
-        }
-        setResults((current) => current.map((item) => item.words
-            ? { ...item, story: buildStoryHint(item.words, sourceState.memorable.storyContext) }
-            : item));
-        message.success('记忆故事已生成');
     };
     const selectWordPackCategory = (value) => {
         const next = structuredClone(stateRef.current);
@@ -5199,19 +5024,7 @@ function PasswordGenerator() {
                     React.createElement(Segmented, { value: state.memorable.capitalization, options: [{ label: '全部小写', value: 'lowercase' }, { label: '每词首字大写', value: 'every-word' }, { label: '首词大写', value: 'first-word' }, { label: '随机全大写', value: 'random-uppercase' }], onChange: (value) => updateMemorable('capitalization', value) })),
                 React.createElement("div", { className: "field-box segmented-full" },
                     React.createElement("div", { className: "field-label" }, "\u5206\u9694\u65B9\u5F0F"),
-                    React.createElement(Segmented, { value: state.memorable.separator, options: [{ label: '-', value: 'hyphen' }, { label: '_', value: 'underscore' }, { label: '.', value: 'period' }, { label: '空格Space', value: 'space' }, { label: '随机数字', value: 'random-digit' }, { label: '随机符号', value: 'random-symbol' }], onChange: (value) => updateMemorable('separator', value) })))),
-        React.createElement(Divider, { className: "compact-divider" }),
-        React.createElement("section", { className: "section-block" },
-            React.createElement(SectionHeading, { title: "\u8BB0\u5FC6\u6545\u4E8B", info: tooltipCopy('记忆故事', '系统先安全随机生成核心词，再用本地组合式语法编成故事。', ['场景描述只改变人物、背景和故事风格', '场景描述不会参与核心词抽取', '核心词的内容与顺序保持不变'], '场景描述不作为随机种子，也不增加密码熵。') }),
-            React.createElement("div", { className: "control-stack" },
-                React.createElement("div", { className: "story-context-field" },
-                    React.createElement(TextArea, { "data-testid": "story-context", rows: 2, maxLength: 200, showCount: false, value: state.memorable.storyContext, onChange: (event) => updateMemorable('storyContext', event.target.value), placeholder: "\u53EF\u9009\uFF1A\u4F8B\u5982\u201C\u4E00\u4E2A\u5B87\u822A\u5458\u5728\u706B\u661F\u4E0A\u4FEE\u7406\u670D\u52A1\u5668\u201D" }),
-                    React.createElement("span", { className: "story-context-count", "aria-live": "polite", "aria-label": `已输入 ${state.memorable.storyContext.length} 个字符，最多 200 个字符` }, `${state.memorable.storyContext.length}/200`)),
-                React.createElement("div", { className: "story-security-note" },
-                    React.createElement(SafetyCertificateFilled, null),
-                    React.createElement("span", null, "\u573A\u666F\u63CF\u8FF0\u4E0D\u4F5C\u4E3A\u968F\u673A\u79CD\u5B50\uFF0C\u4E0D\u6539\u53D8\u5DF2\u751F\u6210\u7684\u6838\u5FC3\u8BCD\uFF0C\u4E0D\u8BA1\u5165\u5BC6\u7801\u71B5\uFF080 bits\uFF09\u3002")),
-                React.createElement("div", { className: "story-action-row" },
-                    React.createElement(Button, { "data-testid": "generate-story", icon: React.createElement(ReloadOutlined, null), loading: wordPackState.status === 'loading', disabled: wordPackState.status === 'error', onClick: generateStories }, "\u751F\u6210\u4E09\u5E55\u8BB0\u5FC6\u6545\u4E8B"))))));
+                    React.createElement(Segmented, { value: state.memorable.separator, options: [{ label: '-', value: 'hyphen' }, { label: '_', value: 'underscore' }, { label: '.', value: 'period' }, { label: '空格Space', value: 'space' }, { label: '随机数字', value: 'random-digit' }, { label: '随机符号', value: 'random-symbol' }], onChange: (value) => updateMemorable('separator', value) }))))));
     };
     const renderPinSettings = () => (React.createElement(React.Fragment, null,
         React.createElement("section", { className: "section-block preset-slider-section" },
@@ -5246,13 +5059,12 @@ function PasswordGenerator() {
                     React.createElement(Button, { className: "result-regenerate-button", type: "primary", icon: React.createElement(ReloadOutlined, null), onClick: generateAndCopy }, "\u91CD\u65B0\u751F\u6210"),
                     results.length ? (React.createElement(Button, { className: "result-copy-button", icon: React.createElement(CopyOutlined, null), onClick: copyCurrentResults }, results.length > 1 ? "\u590D\u5236\u5168\u90E8" : "\u590D\u5236")) : null,
                     results.length > 1 ? React.createElement(Button, { danger: true, icon: React.createElement(DeleteOutlined, null), onClick: () => { setCopiedResultSignature(''); setResults([]); } }, "\u6E05\u7A7A") : null)),
-            !results.length ? React.createElement(Empty, { description: "\u5C1A\u672A\u751F\u6210\u7ED3\u679C" }) : results.length === 1 ? (React.createElement(React.Fragment, null,
+            !results.length ? React.createElement(Empty, { description: "\u5C1A\u672A\u751F\u6210\u7ED3\u679C" }) : results.length === 1 ? (
                 React.createElement("div", { className: `password-surface ${firstResult.value.length > 96 ? 'is-ultra-long' : firstResult.value.length > 48 ? 'is-long' : ''}` },
                     React.createElement(HighlightPassword, { value: firstResult.value }),
                     React.createElement("div", { className: "result-secure-status" },
                         React.createElement(SafetyCertificateFilled, null),
-                        React.createElement("span", null, resultWasCopied ? "已安全生成，已复制到剪贴板" : "已安全生成，点击复制可写入剪贴板"))),
-                firstResult.story ? React.createElement(StoryDisplay, { story: firstResult.story }) : null)) : (React.createElement("div", { className: "batch-list" }, results.map((item, index) => {
+                        React.createElement("span", null, resultWasCopied ? "已安全生成，已复制到剪贴板" : "已安全生成，点击复制可写入剪贴板")))) : (React.createElement("div", { className: "batch-list" }, results.map((item, index) => {
                 const stats = passwordStats(item.value);
                 return (React.createElement("div", { className: "batch-item", key: item.id },
                     React.createElement("div", { className: "batch-index" }, index + 1),

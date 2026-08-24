@@ -181,15 +181,17 @@ test('强度圆环按 L1-L4 警告、L5-L8 盾牌并继承等级颜色', () => {
   assert.match(app, /strokeColor: strength\.color/);
 });
 
-test('记忆故事计数器位于输入框内部且完整显示格式选项', () => {
-  assert.match(app, /showCount: false/);
-  assert.match(app, /story-context-count/);
-  assert.match(html, /\.story-context-field \{ position: relative/);
-  assert.match(html, /\.story-context-count \{[\s\S]*?position: absolute/);
+test('记忆短语保留完整格式选项并移除生硬的记忆故事模块', () => {
   for (const label of ['全部小写', '每词首字大写', '首词大写', '随机全大写', '空格Space', '随机数字', '随机符号']) {
     assert.match(app, new RegExp(label), `缺少完整选项：${label}`);
   }
   assert.match(html, /\.memorable-format-grid \.ant-segmented-item-label[\s\S]*?text-overflow: clip/);
+  for (const token of ['记忆故事', '生成三幕记忆故事', 'story-context', 'MemoryStoryCard', 'StoryDisplay', 'buildStoryHint', 'storyContext', 'showStory', 'StoryRenderer', 'StoryIntentParser']) {
+    assert.doesNotMatch(app, new RegExp(token), `仍残留记忆故事实现：${token}`);
+  }
+  for (const selector of ['memory-story-card', 'story-context-field', 'story-security-note', 'story-generator-box']) {
+    assert.doesNotMatch(html, new RegExp(`\\.${selector}`), `仍残留记忆故事样式：${selector}`);
+  }
 });
 
 test('结果结构分割线无阴影并统一弱虚线', () => {
@@ -303,10 +305,10 @@ test('除页面品牌外所有内容区块标题统一使用 H3', () => {
 });
 
 test('所有 H3 标题使用透明底简洁 SVG 图标', () => {
-  for (const title of ['密码强度', '生成数量', '密码长度', '字符类型', '开头与结尾', '高级设置', '符号占比', '符号设置', '单词数量', '词库与安全', '记忆故事', 'PIN 长度', 'PIN 规则']) {
+  for (const title of ['密码强度', '生成数量', '密码长度', '字符类型', '开头与结尾', '高级设置', '符号占比', '符号设置', '单词数量', '词库与安全', 'PIN 长度', 'PIN 规则']) {
     assert.match(app, new RegExp(`'${title}': [A-Za-z]+Outlined|'${title}': SafetyCertificateFilled`), `缺少标题图标映射：${title}`);
   }
-  for (const icon of ['ChartLineOutlined', 'StoryOutlined', 'KeyOutlined', 'ResultCubeOutlined', 'HistoryOutlined']) {
+  for (const icon of ['ChartLineOutlined', 'KeyOutlined', 'ResultCubeOutlined', 'HistoryOutlined']) {
     assert.match(app, new RegExp(`HeadingIcon, \\{ icon: ${icon}`), `缺少独立 H3 图标：${icon}`);
   }
   assert.match(html, /\.h3-heading-icon \{[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important/);
