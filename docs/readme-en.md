@@ -2,11 +2,9 @@
 
 [简体中文](../README.md) · [English](readme-en.md)
 
-[![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.password-generator)](https://github.com/betaer/password-generator)
-
 A browser-local password generator for **random passwords, passphrases, and PINs**, with fine-grained generation rules, format-oriented test schemes, and quantitative strength analysis based on each generated result.
 
-[Live app](https://betaer.github.io/password-generator/) · [Passwords](https://betaer.github.io/password-generator/#password) · [PINs](https://betaer.github.io/password-generator/#pin) · [Passphrases](https://betaer.github.io/password-generator/#words)
+[Live app](https://betaer.github.io/password-generator/) · [Passwords](https://betaer.github.io/password-generator/#password) · [PINs](https://betaer.github.io/password-generator/#pin) · [Passphrases](https://betaer.github.io/password-generator/#words) · [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.password-generator)](https://github.com/betaer/password-generator)
 
 ![Password Generator social preview](../assets/social-preview.png)
 
