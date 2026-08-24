@@ -437,18 +437,26 @@ test('完整 PIN 风险库异步加载、参与生成过滤并展示排名', () 
   assert.match(app, /68,202 个六位数字组合/);
 });
 
-test('本地生成入口可打开安全实现说明', () => {
-  assert.match(app, /const \[securityModalOpen, setSecurityModalOpen\] = useState\(false\)/);
-  assert.match(app, /CSPRNG/);
-  assert.match(app, /Rejection Sampling/);
-  assert.match(app, /密码数据平面/);
-  assert.match(app, /匿名统计平面/);
-  assert.match(app, /DevTools/);
-  assert.match(app, /React\.createElement\(Modal, \{[\s\S]*?open: securityModalOpen/);
+test('本地生成入口会展开并滚动到底部安全说明', () => {
+  assert.match(app, /function openSecurityDetails\(\)/);
+  assert.match(app, /document\.getElementById\('security-verification'\)/);
+  assert.match(app, /details\.open = true/);
+  assert.match(app, /scrollIntoView\(\{ behavior, block: 'start' \}\)/);
+  assert.match(html, /CSPRNG/);
+  assert.match(html, /Rejection Sampling/);
+  assert.match(html, /密码数据平面/);
+  assert.match(html, /匿名统计平面/);
+  assert.match(html, /DevTools/);
+  assert.doesNotMatch(app, /securityModalOpen|setSecurityModalOpen/);
+  assert.doesNotMatch(app, /React\.createElement\(Modal, \{/);
   assert.match(app, /本地安全运行时加载失败/);
 });
 
 test('网站底部公开展示安全边界、会话历史与自行验证方法', () => {
+  assert.match(html, /<details id="security-verification" class="seo-shell-security">/);
+  assert.doesNotMatch(html, /<details id="security-verification" class="seo-shell-security" open>/);
+  assert.match(html, /\.seo-shell-security-summary::after/);
+  assert.match(html, /\.seo-shell-security\[open\] > \.seo-shell-security-summary::after/);
   assert.match(html, /id="seo-security-title">安全与可验证性</);
   assert.match(html, /Web Crypto API/);
   assert.match(html, /拒绝采样/);

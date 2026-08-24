@@ -991,21 +991,6 @@ button, input, textarea { font: inherit; }
 }
 .attack-model-tip-row:last-of-type { border-bottom: 0; }
 .attack-model-tip-row small { display: block; margin-top: 3px; color: rgba(255, 255, 255, .82); }
-.security-modal-content { display: grid; gap: 14px; color: #344054; }
-.security-flow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid #d8e7ff;
-  border-radius: var(--card-radius);
-  background: #f5f9ff;
-  color: #174ea6;
-}
-.security-modal-content section { padding-top: 12px; border-top: 1px dashed #d9e0ea; }
-.security-modal-content h3 { margin: 0 0 5px; font-size: 15px; color: #172033; }
-.security-modal-content p { margin: 0; line-height: 1.7; }
 .strength-analysis-advice {
   width: 100%;
   display: grid;
@@ -2695,16 +2680,77 @@ button, input, textarea { font: inherit; }
 .seo-shell-footer a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .seo-shell-security {
   margin-top: 24px;
-  padding: 20px;
+  padding: 0;
+  overflow: hidden;
   border: 1px solid #cfe2ff;
   border-radius: 14px;
   background: #f2f7ff;
+  scroll-margin-top: 92px;
 }
+.seo-shell-security-summary {
+  position: relative;
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 52px 18px 20px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.seo-shell-security-summary::-webkit-details-marker { display: none; }
+.seo-shell-security-summary::after {
+  position: absolute;
+  top: 50%;
+  right: 22px;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid #667085;
+  border-bottom: 2px solid #667085;
+  content: "";
+  transform: translateY(-65%) rotate(45deg);
+  transition: transform .2s ease;
+}
+.seo-shell-security[open] > .seo-shell-security-summary::after {
+  transform: translateY(-30%) rotate(225deg);
+}
+.seo-shell-security-summary:hover,
+.seo-shell-security-summary:focus-visible { background: rgba(255, 255, 255, .58); }
+.seo-shell-security-summary:focus-visible { outline: 3px solid rgba(22, 119, 255, .18); outline-offset: -3px; }
+.seo-shell-security-summary h2 { margin: 0; }
+.seo-shell-security-content {
+  padding: 20px;
+  border-top: 1px dashed #c8d9ef;
+  color: #42526b;
+}
+.seo-shell-security-content > p:first-child { margin-top: 0; }
+.seo-shell-security-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  color: #174ea6;
+  font-size: 13px;
+}
+.seo-shell-security-flow strong { font-weight: 750; }
+.seo-shell-security-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 24px;
+  margin-top: 18px;
+  border-top: 1px dashed #c8d9ef;
+}
+.seo-shell-security-grid section { padding: 16px 0; border-bottom: 1px dashed #c8d9ef; }
+.seo-shell-security-grid h3 { margin: 0; color: #172033; font-size: 14px; line-height: 1.45; }
+.seo-shell-security-grid p { margin-top: 6px; }
+.seo-shell-security-grid code { color: #174ea6; }
 .seo-shell-security-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px 18px;
-  margin: 14px 0 0;
+  margin: 16px 0 0;
   padding: 0;
   color: #42526b;
   font-size: 13px;
@@ -2751,6 +2797,10 @@ button, input, textarea { font: inherit; }
   .seo-shell { width: calc(100% - 24px); margin-block: 18px 28px; padding: 20px; border-radius: 16px; }
   .seo-shell-grid { grid-template-columns: 1fr; }
   .seo-shell-security-list { grid-template-columns: 1fr; }
+  .seo-shell-security-grid { grid-template-columns: 1fr; }
+  .seo-shell-security-summary { min-height: 58px; padding: 15px 48px 15px 16px; }
+  .seo-shell-security-summary::after { right: 18px; }
+  .seo-shell-security-content { padding: 16px; }
   .seo-shell-footer { align-items: flex-start; flex-direction: column; }
 }
 
@@ -2787,17 +2837,45 @@ button, input, textarea { font: inherit; }
       </div>
     </section>
 
-    <section class="seo-shell-security" aria-labelledby="seo-security-title">
-      <h2 id="seo-security-title">安全与可验证性</h2>
-      <p>随机密码、记忆短语、PIN 和输入内容均在当前设备中生成与分析，不会作为生成数据发送到服务器。</p>
-      <ul class="seo-shell-security-list">
-        <li>使用 Web Crypto API 与拒绝采样，避免不安全随机数和取模偏差</li>
-        <li>zxcvbn、PIN 风险库和词包只从本站同源静态资源加载</li>
-        <li>匿名访问统计不包含密码、PIN、记忆短语或输入内容</li>
-        <li>可通过 DevTools → Network 验证网络请求中不存在生成内容</li>
-      </ul>
-      <p class="seo-shell-security-note"><strong>当前会话历史：</strong>历史记录不会跨浏览器会话持久保存；仅保存在当前标签页的 sessionStorage，刷新页面仍可恢复，关闭当前标签页后自动清除，也可随时手动清空。</p>
-    </section>
+    <details id="security-verification" class="seo-shell-security">
+      <summary class="seo-shell-security-summary">
+        <h2 id="seo-security-title">安全与可验证性</h2>
+      </summary>
+      <div class="seo-shell-security-content" aria-labelledby="seo-security-title">
+        <p>随机密码、记忆短语、PIN 和输入内容均在当前设备中生成与分析，不会作为生成数据发送到服务器。</p>
+        <div class="seo-shell-security-flow" aria-label="密码安全生成流程">
+          <strong>Browser CSPRNG</strong><span aria-hidden="true">→</span>
+          <strong>Rejection Sampling</strong><span aria-hidden="true">→</span>
+          <strong>模式感知分析</strong><span aria-hidden="true">→</span>
+          <strong>本地结果</strong>
+        </div>
+        <div class="seo-shell-security-grid">
+          <section>
+            <h3>密码数据平面</h3>
+            <p>密码、PIN、记忆短语和用户输入不会进入网络请求或统计参数。历史记录不会跨浏览器会话持久保存；仅保存在当前标签页的 <code>sessionStorage</code>，刷新页面仍可恢复，关闭标签页后自动清除，也可随时手动清空。</p>
+          </section>
+          <section>
+            <h3>静态资源平面</h3>
+            <p>zxcvbn 模式分析器、PIN 风险库与 7,776 词词包只从本站同源静态文件加载；加载的是公开模型与词表，不包含生成结果。</p>
+          </section>
+          <section>
+            <h3>匿名统计平面</h3>
+            <p>站点只发送不含凭据内容的匿名访问统计；访问统计不包含密码、PIN、记忆短语或输入内容，也不会发送 <code>generated_value</code> 参数。</p>
+          </section>
+          <section>
+            <h3>如何自行验证</h3>
+            <p>打开浏览器 DevTools → Network，生成并复制密码，即可确认请求中不存在生成值；也可在 GitHub 仓库审计 Web Crypto、拒绝采样和分析实现。</p>
+          </section>
+        </div>
+        <ul class="seo-shell-security-list">
+          <li>Web Crypto API 提供密码学安全随机数</li>
+          <li>拒绝采样避免字符与词语索引的取模偏差</li>
+          <li>生成内容不会上传或进入匿名统计</li>
+          <li>Web Crypto 不可用时停止生成，不回退到 Math.random()</li>
+        </ul>
+        <p class="seo-shell-security-note"><strong>当前会话历史：</strong>不会跨浏览器会话持久保存；关闭当前标签页后自动清除，也可随时手动清空。</p>
+      </div>
+    </details>
 
     <section class="seo-shell-faq" aria-labelledby="seo-faq-title">
       <h2 id="seo-faq-title">常见问题</h2>
@@ -3139,7 +3217,6 @@ const Empty = __component(776875);
 const Input = __component(897826);
 const InputNumber = __component(745999);
 const Layout = __component(149753);
-const Modal = __component(590297);
 const Progress = __component(54089);
 const Segmented = __component(107162);
 const Slider = __component(509753);
@@ -4791,7 +4868,6 @@ function PasswordGenerator() {
     const [history, setHistory] = useState([]);
     const [historyExpanded, setHistoryExpanded] = useState(false);
     const [showBackToTop, setShowBackToTop] = useState(false);
-    const [securityModalOpen, setSecurityModalOpen] = useState(false);
     const [analysisOverlay, setAnalysisOverlay] = useState({ resultId: null, patternGuesses: null, pinRisk: null });
     const historyRef = useRef([]);
     const historyStorage = getBrowserStorage('session');
@@ -5202,6 +5278,16 @@ function PasswordGenerator() {
         const behavior = reduceMotion ? 'auto' : 'smooth';
         window.scrollTo({ top: 0, left: 0, behavior });
     };
+    function openSecurityDetails() {
+        const details = document.getElementById('security-verification');
+        if (!(details instanceof HTMLDetailsElement))
+            return;
+        details.open = true;
+        const reduceMotion = typeof window.matchMedia === 'function'
+            && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const behavior = reduceMotion ? 'auto' : 'smooth';
+        requestAnimationFrame(() => details.scrollIntoView({ behavior, block: 'start' }));
+    }
     const switchMode = (mode, { syncHash = true } = {}) => {
         const next = structuredClone(stateRef.current);
         next.mode = mode;
@@ -5524,7 +5610,7 @@ function PasswordGenerator() {
                             { label: React.createElement("span", { className: "mode-option-label" }, React.createElement(DialPadOutlined, null), React.createElement("span", null, "PIN 码")), value: 'pin' },
                             { label: React.createElement("span", { className: "mode-option-label" }, React.createElement(BulbOutlined, null), React.createElement("span", null, "记忆短语")), value: 'memorable' },
                         ], onChange: switchMode })),
-                React.createElement("button", { type: "button", className: "privacy-pill", onClick: () => setSecurityModalOpen(true), "aria-label": "查看本地生成与安全实现说明" },
+                React.createElement("button", { type: "button", className: "privacy-pill", onClick: openSecurityDetails, "aria-label": "展开并查看网站底部安全与可验证性说明" },
                     React.createElement(SafetyCertificateFilled, { style: { color: '#1677ff', marginRight: 6 } }),
                     "\u672C\u5730\u751F\u6210\uFF0C\u4E0D\u4E0A\u4F20"))),
         React.createElement("div", { className: "page-main" },
@@ -5538,34 +5624,6 @@ function PasswordGenerator() {
                         "\u751F\u6210",
                         state.mode === 'pin' ? ' PIN' : state.mode === 'memorable' ? '记忆短语' : '密码')),
                 renderResultPane())),
-        React.createElement(Modal, {
-            title: "安全实现与数据边界",
-            open: securityModalOpen,
-            onCancel: () => setSecurityModalOpen(false),
-            width: 680,
-            footer: React.createElement(Button, { type: "primary", onClick: () => setSecurityModalOpen(false) }, "我知道了")
-        },
-            React.createElement("div", { className: "security-modal-content" },
-                React.createElement("div", { className: "security-flow", "aria-label": "密码安全生成流程" },
-                    React.createElement("strong", null, "Browser CSPRNG"),
-                    React.createElement("span", null, "→"),
-                    React.createElement("strong", null, "Rejection Sampling"),
-                    React.createElement("span", null, "→"),
-                    React.createElement("strong", null, "模式感知分析"),
-                    React.createElement("span", null, "→"),
-                    React.createElement("strong", null, "本地结果")),
-                React.createElement("section", null,
-                    React.createElement("h3", null, "密码数据平面"),
-                    React.createElement("p", null, "密码、PIN、记忆短语和用户输入只在当前浏览器中生成与分析，不会作为网络请求或统计参数发送。历史记录不会跨浏览器会话持久保存；仅保存在当前标签页会话的 sessionStorage 中，刷新页面仍可恢复，关闭标签页后自动清除，也可随时手动清空。")),
-                React.createElement("section", null,
-                    React.createElement("h3", null, "静态资源平面"),
-                    React.createElement("p", null, "zxcvbn 模式分析器、PIN 风险库与 7,776 词词包均从本站同源静态文件加载；加载的是公开模型与词表，不包含生成结果。")),
-                React.createElement("section", null,
-                    React.createElement("h3", null, "匿名统计平面"),
-                    React.createElement("p", null, "站点可发送不含凭据内容的匿名访问统计。代码禁止把 generated_value、密码、PIN、记忆短语或输入内容写入统计事件。")),
-                React.createElement("section", null,
-                    React.createElement("h3", null, "如何自行验证"),
-                    React.createElement("p", null, "打开浏览器 DevTools → Network，生成并复制密码；你可以确认请求中不存在生成值。也可在 GitHub 仓库审计 Web Crypto、拒绝采样与分析实现。")))),
         React.createElement("div", { className: "site-floating-actions", role: "group", "aria-label": "网站快捷操作" },
             showBackToTop ? React.createElement(Button, { className: "site-floating-button site-floating-backtop", icon: React.createElement(ArrowUpOutlined, null), onClick: scrollPageToTop, "aria-label": "回到顶部" },
                 React.createElement("span", { className: "site-floating-button-label" }, "回到顶部")) : null,
