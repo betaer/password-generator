@@ -6,6 +6,7 @@ import vm from 'node:vm';
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const memorableEngineSource = await readFile(new URL('../assets/js/memorable-engine.js', import.meta.url), 'utf8');
 const wordPackManagerSource = await readFile(new URL('../assets/js/word-pack-manager.js', import.meta.url), 'utf8');
+const securityAnalysisSource = await readFile(new URL('../assets/js/security-analysis.js', import.meta.url), 'utf8');
 const appStart = html.indexOf('const React =');
 assert.ok(appStart > -1, '缺少 V1.7.5 应用脚本');
 const app = html.slice(appStart);
@@ -17,28 +18,31 @@ test('完整应用脚本可以被 JavaScript 引擎解析', () => {
   assert.doesNotThrow(() => new Function(runtimeScript));
 });
 
-test('首次冷启动所需的两个小型运行时已压缩内置且可以直接执行', () => {
+test('首次冷启动所需的小型运行时已压缩内置且可以直接执行', () => {
   assert.doesNotMatch(html, /<script src="\.\/assets\/js\/(?:memorable-engine|word-pack-manager)\.js"><\/script>/);
 
   const embeddedMemorableEngine = html.match(/<script data-startup-runtime="memorable-engine">\n([\s\S]*?)\n  <\/script>/)?.[1];
   const embeddedWordPackManager = html.match(/<script data-startup-runtime="word-pack-manager">\n([\s\S]*?)\n  <\/script>/)?.[1];
+  const embeddedSecurityAnalysis = html.match(/<script data-startup-runtime="security-analysis">\n([\s\S]*?)\n  <\/script>/)?.[1];
 
   assert.ok(embeddedMemorableEngine, '缺少内置的记忆短语安全随机运行时');
   assert.ok(embeddedWordPackManager, '缺少内置的异步词包管理运行时');
+  assert.ok(embeddedSecurityAnalysis, '缺少内置的密码安全分析运行时');
   assert.ok(
-    embeddedMemorableEngine.length + embeddedWordPackManager.length
-      < memorableEngineSource.length + wordPackManagerSource.length,
+    embeddedMemorableEngine.length + embeddedWordPackManager.length + embeddedSecurityAnalysis.length
+      < memorableEngineSource.length + wordPackManagerSource.length + securityAnalysisSource.length,
     '内置启动模块应使用压缩代码',
   );
 
   const sandbox = {};
   assert.doesNotThrow(() => vm.runInNewContext(
-    `${embeddedMemorableEngine}\n${embeddedWordPackManager}`,
+    `${embeddedMemorableEngine}\n${embeddedWordPackManager}\n${embeddedSecurityAnalysis}`,
     sandbox,
   ));
   assert.equal(typeof sandbox.MemorableEngine?.SecureWordGenerator, 'function');
   assert.equal(typeof sandbox.MemorableEngine?.EntropyCalculator?.forWords, 'function');
   assert.equal(typeof sandbox.WordPackRuntime?.WordPackManager, 'function');
+  assert.equal(typeof sandbox.PasswordSecurityRuntime?.createAssessment, 'function');
 });
 
 test('说明气泡在触摸设备首次点击后保持展开并支持点击外部关闭', () => {
@@ -392,7 +396,7 @@ test('密码强度分析只根据当前生成结果实时计算，不复用生�
   const estimateSource = app.match(/function log2Factorial[\s\S]*?(?=\nfunction modeName)/)?.[0];
   assert.ok(statsSource && estimateSource, '缺少结果级强度计算函数');
   const estimateGeneratedResult = Function(
-    'LOWER', 'UPPER', 'DIGITS', 'ALL_SYMBOLS', 'isWeakPin', 'hasSequentialDigitRun',
+    'LOWER', 'UPPER', 'DIGITS', 'ALL_SYMBOLS', 'isWeakPin', 'hasSequentialDigitRun', 'pinRiskRuntime', 'pinRiskDatabase',
     `${statsSource}; ${estimateSource}; return estimateGeneratedResult;`,
   )(
     'abcdefghijklmnopqrstuvwxyz',
@@ -401,6 +405,8 @@ test('密码强度分析只根据当前生成结果实时计算，不复用生�
     `!\"#$%&'()*+,-./:;<=>?@[\\]^_\`{|}~`,
     (value) => ['0000', '1111', '1234', '4321'].includes(value),
     (value) => value === '1234' || value === '4321',
+    null,
+    null,
   );
 
   const simple = estimateGeneratedResult({ value: 'aaaaaaaa', mode: 'random' });
@@ -408,4 +414,36 @@ test('密码强度分析只根据当前生成结果实时计算，不复用生�
   assert.ok(diverse.entropy > simple.entropy, '相同长度但组成更丰富的实际结果应得到更高熵值');
   assert.notEqual(diverse.entropy, simple.entropy, '不同实际结果不应返回同一个静态规则估算');
   assert.ok(estimateGeneratedResult({ value: '5941', mode: 'pin' }).entropy > estimateGeneratedResult({ value: '1111', mode: 'pin' }).entropy, '明显弱 PIN 应按实际结果降级');
+});
+
+test('安全分析按理论空间、zxcvbn 模式与三种攻击模型实时合并', () => {
+  assert.match(app, /const \{[\s\S]*?createAssessment,[\s\S]*?formatGuessCount,[\s\S]*?\} = globalThis\.PasswordSecurityRuntime/);
+  assert.match(app, /import\('\.\/assets\/vendor\/zxcvbn-analyzer\.v2\.min\.js'\)/);
+  assert.match(app, /patternGuesses: pattern\.patternGuesses/);
+  assert.match(app, /createAssessment\(\{ theoreticalBits: currentEstimate\.entropy, patternGuesses \}\)/);
+  assert.match(app, /在线限速攻击/);
+  assert.match(app, /慢速密码哈希/);
+  assert.match(app, /快速离线哈希/);
+  assert.match(app, /这些结果是攻击模型估算，不是安全保证/);
+  assert.doesNotMatch(app, /const CRACK_GUESSES_PER_SECOND = 10000/);
+});
+
+test('完整 PIN 风险库异步加载、参与生成过滤并展示排名', () => {
+  assert.match(app, /import\('\.\/assets\/modules\/pin-risk-engine\.js'\)/);
+  assert.match(app, /loadPinRiskDatabase\('\.\/assets\/data\/pin-risk\.v1\.json'\)/);
+  assert.match(app, /pinRiskRuntime\.shouldBlockWeakPin\(pin, pinRiskDatabase\)/);
+  assert.match(app, /常见 PIN 排名/);
+  assert.match(app, /10,000 个四位排名/);
+  assert.match(app, /68,202 个六位数字组合/);
+});
+
+test('本地生成入口可打开安全实现说明', () => {
+  assert.match(app, /const \[securityModalOpen, setSecurityModalOpen\] = useState\(false\)/);
+  assert.match(app, /CSPRNG/);
+  assert.match(app, /Rejection Sampling/);
+  assert.match(app, /密码数据平面/);
+  assert.match(app, /匿名统计平面/);
+  assert.match(app, /DevTools/);
+  assert.match(app, /React\.createElement\(Modal, \{[\s\S]*?open: securityModalOpen/);
+  assert.match(app, /本地安全运行时加载失败/);
 });

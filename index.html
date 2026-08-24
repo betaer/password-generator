@@ -244,7 +244,19 @@ button, input, textarea { font: inherit; }
   font-weight: 650;
   white-space: nowrap;
 }
-.privacy-pill { justify-self: end; white-space: nowrap; color: #475467; }
+.privacy-pill {
+  justify-self: end;
+  white-space: nowrap;
+  color: #475467;
+  border: 0;
+  padding: 7px 9px;
+  border-radius: var(--button-radius);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.privacy-pill:hover,
+.privacy-pill:focus-visible { color: #0958d9; background: #f0f7ff; outline: none; }
 
 .page-main {
   width: min(100%, var(--page-max));
@@ -970,6 +982,30 @@ button, input, textarea { font: inherit; }
   padding-top: 8px;
   border-top: 1px solid rgba(255, 255, 255, .16);
 }
+.password-strength-tip-models,
+.attack-model-tip { display: grid; gap: 8px; }
+.password-strength-tip-models { padding-top: 9px; }
+.attack-model-tip-row {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, .14);
+}
+.attack-model-tip-row:last-of-type { border-bottom: 0; }
+.attack-model-tip-row small { display: block; margin-top: 3px; color: rgba(255, 255, 255, .82); }
+.security-modal-content { display: grid; gap: 14px; color: #344054; }
+.security-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #d8e7ff;
+  border-radius: var(--card-radius);
+  background: #f5f9ff;
+  color: #174ea6;
+}
+.security-modal-content section { padding-top: 12px; border-top: 1px dashed #d9e0ea; }
+.security-modal-content h3 { margin: 0 0 5px; font-size: 15px; color: #172033; }
+.security-modal-content p { margin: 0; line-height: 1.7; }
 .strength-analysis-advice {
   width: 100%;
   display: grid;
@@ -2786,6 +2822,9 @@ button, input, textarea { font: inherit; }
   <script data-startup-runtime="word-pack-manager">
 !function(t,e){const a=e();"undefined"!=typeof module&&module.exports&&(module.exports=a),t&&(t.WordPackRuntime=a)}("undefined"!=typeof globalThis?globalThis:this,function(){"use strict";class t extends Error{constructor(t,e,a){super(e,a?{cause:a}:void 0),this.name="WordPackError",this.code=t}}function e(t,e){return new URL(e,t).href}async function a(t,e){if(!e?.subtle?.digest)return null;const a=(new TextEncoder).encode(t),s=await e.subtle.digest("SHA-256",a);return[...new Uint8Array(s)].map(t=>t.toString(16).padStart(2,"0")).join("")}return{WordPackManager:class{constructor(t={}){this.baseURL=t.baseURL||"./assets/wordpacks/",this.manifestName=t.manifestName||"manifest.v1.json",this.fetchImpl=t.fetchImpl||globalThis.fetch?.bind(globalThis),this.cryptoImpl=t.cryptoImpl||globalThis.crypto,this.cacheStorage=void 0===t.cacheStorage?globalThis.caches:t.cacheStorage,this.cacheName=t.cacheName||"password-generator-wordpacks-v1",this.manifestPromise=null,this.inflight=new Map,this.memory=new Map}async getManifest(){return this.manifestPromise||(this.manifestPromise=this.fetchJsonText(e(this.baseURL,this.manifestName),!1).then(({text:e})=>{const a=JSON.parse(e);if(!Array.isArray(a.packs))throw new t("INVALID_MANIFEST","词包清单格式无效。");return a}).catch(e=>{if(this.manifestPromise=null,e instanceof t)throw e;throw new t("MANIFEST_LOAD_FAILED",`无法加载词包清单：${e.message}`,e)})),this.manifestPromise}async fetchJsonText(e,a=!0,s=!1){if("function"!=typeof this.fetchImpl)throw new t("FETCH_UNAVAILABLE","当前环境无法加载异步词包。");let i,r=null;if(a&&this.cacheStorage?.open)try{if(r=await this.cacheStorage.open(this.cacheName),!s){const t=await r.match(e);if(t)return{text:await t.text(),source:"cache"}}}catch{r=null}try{i=await this.fetchImpl(e,{credentials:"same-origin",cache:"no-cache"})}catch(a){throw new t("NETWORK_ERROR",`词包网络请求失败：${e}`,a)}if(!i?.ok)throw new t("HTTP_ERROR",`词包请求失败（HTTP ${i?.status||0}）：${e}`);const n=await i.text();if(r&&i.clone)try{await r.put(e,i.clone())}catch{}return{text:n,source:"network"}}async load(t){if(this.memory.has(t))return this.memory.get(t);if(this.inflight.has(t))return this.inflight.get(t);const e=this.loadUnchecked(t).finally(()=>this.inflight.delete(t));return this.inflight.set(t,e),e}async loadUnchecked(s){const i=(await this.getManifest()).packs.find(t=>t.id===s);if(!i)throw new t("PACK_NOT_FOUND",`词包不存在：${s}`);const r=e(this.baseURL,i.path);let n,c=await this.fetchJsonText(r,!0),o=await a(c.text,this.cryptoImpl);if(o&&o!==i.sha256&&"cache"===c.source){try{const t=await(this.cacheStorage?.open?.(this.cacheName));await(t?.delete?.(r))}catch{}c=await this.fetchJsonText(r,!0,!0),o=await a(c.text,this.cryptoImpl)}if(o&&o!==i.sha256)throw new t("HASH_MISMATCH",`词包 ${s} 完整性校验失败。`);try{n=JSON.parse(c.text)}catch(e){throw new t("INVALID_JSON",`词包 ${s} 不是有效 JSON。`,e)}if(n.id!==s||!Array.isArray(n.entries))throw new t("INVALID_PACK",`词包 ${s} 结构无效。`);if(n.entries.length!==i.count)throw new t("COUNT_MISMATCH",`词包 ${s} 应有 ${i.count} 词，实际为 ${n.entries.length} 词。`);if(new Set(n.entries.map(t=>t.word)).size!==i.count)throw new t("DUPLICATE_WORDS",`词包 ${s} 含有重复词条。`);const h={...n,descriptor:i,loadSource:c.source,integrityVerified:Boolean(o)};return this.memory.set(s,h),h}async loadWithFallback(t,e){try{return{pack:await this.load(t),fallbackFrom:null,reason:""}}catch(a){return{pack:await this.load(e),fallbackFrom:t,reason:`${t} 加载失败：${a.message}`,error:a}}}clearMemory(){this.memory.clear(),this.inflight.clear()}},WordPackError:t,sha256Hex:a}});
   </script>
+  <script data-startup-runtime="security-analysis">
+(function(h){"use strict";const c=Math.log10(31557600),o=Object.freeze({online:Object.freeze({id:"online",label:"\u5728\u7EBF\u9650\u901F\u653B\u51FB",guessesPerSecond:100/3600,speedLabel:"100 \u6B21/\u5C0F\u65F6",description:"\u7F51\u7AD9\u5B58\u5728\u767B\u5F55\u9650\u901F\u3001\u8D26\u53F7\u9501\u5B9A\u3001\u9A8C\u8BC1\u7801\u6216\u591A\u56E0\u7D20\u8BA4\u8BC1\u3002"}),slowHash:Object.freeze({id:"slowHash",label:"\u6162\u901F\u5BC6\u7801\u54C8\u5E0C",guessesPerSecond:1e4,speedLabel:"10\u2074 \u6B21/\u79D2",description:"\u7528\u4E8E Argon2id\u3001scrypt\u3001bcrypt\u3001PBKDF2 \u7B49\u6162\u901F\u79BB\u7EBF\u9A8C\u8BC1\u7684\u793A\u610F\u4F30\u7B97\u3002"}),fastOffline:Object.freeze({id:"fastOffline",label:"\u5FEB\u901F\u79BB\u7EBF\u54C8\u5E0C",guessesPerSecond:1e10,speedLabel:"10\xB9\u2070 \u6B21/\u79D2",description:"\u7528\u4E8E\u6570\u636E\u5E93\u6CC4\u9732\u4E14\u91C7\u7528\u5FEB\u901F\u54C8\u5E0C\u3001\u653B\u51FB\u786C\u4EF6\u9AD8\u5EA6\u5E76\u884C\u7684\u4E25\u82DB\u4F30\u7B97\u3002"})}),l=Object.freeze([Object.freeze({level:"L1",key:"instant",label:"\u77AC\u95F4\u7834\u89E3",minGuessBits:0}),Object.freeze({level:"L2",key:"extremely-easy",label:"\u6781\u6613\u7834\u89E3",minGuessBits:20}),Object.freeze({level:"L3",key:"easy",label:"\u5BB9\u6613\u7834\u89E3",minGuessBits:32}),Object.freeze({level:"L4",key:"risky",label:"\u6709\u4E00\u5B9A\u98CE\u9669",minGuessBits:40}),Object.freeze({level:"L5",key:"hard",label:"\u8F83\u96BE\u7834\u89E3",minGuessBits:52}),Object.freeze({level:"L6",key:"very-hard",label:"\u5F88\u96BE\u7834\u89E3",minGuessBits:64}),Object.freeze({level:"L7",key:"extremely-hard",label:"\u6781\u96BE\u7834\u89E3",minGuessBits:80}),Object.freeze({level:"L8",key:"practically-impossible",label:"\u51E0\u4E4E\u65E0\u6CD5\u7834\u89E3",minGuessBits:112})]);function u(e){const t=Number(e);return Number.isFinite(t)?Math.max(0,t):0}function f(e){const t=u(e);let r=0;for(let s=1;s<l.length&&!(t<l[s].minGuessBits);s+=1)r=s;return Object.freeze({...l[r],index:r,progress:(r+1)/l.length*100})}function b(e){if(!Number.isFinite(e))return"\u65E0\u6CD5\u4F30\u7B97";if(e<0)return"\u4E0D\u8DB3 1 \u79D2";if(e<Math.log10(60))return`\u7EA6 ${Math.max(1,Math.round(10**e))} \u79D2`;if(e<Math.log10(3600))return`\u7EA6 ${Math.max(1,Math.round(10**e/60))} \u5206\u949F`;if(e<Math.log10(86400))return`\u7EA6 ${Math.max(1,Math.round(10**e/3600))} \u5C0F\u65F6`;if(e<c)return`\u7EA6 ${Math.max(1,Math.round(10**e/86400))} \u5929`;const t=e-c;if(t<6){const r=10**t,s=r<10?1:0;return`\u7EA6 ${r.toLocaleString("zh-CN",{maximumFractionDigits:s})} \u5E74`}return`\u7EA6 10 \u7684 ${t.toFixed(1)} \u6B21\u65B9\u5E74`}function m(e){const r=u(e)*Math.LOG10E*Math.LN2;return Object.freeze(Object.fromEntries(Object.entries(o).map(([s,n])=>{const i=r-Math.log10(n.guessesPerSecond),a=i<308?10**i:null;return[s,Object.freeze({...n,seconds:a,log10Seconds:i,label:b(i)})]})))}function O(e){const t=u(e);return t<=49?Math.max(1,Math.round(2**t)).toLocaleString("zh-CN"):`\u7EA6 2 \u7684 ${t.toFixed(1)} \u6B21\u65B9`}function z({theoreticalBits:e,patternGuesses:t=null}={}){const r=u(e),s=Math.max(0,r-1),n=Number(t),i=Number.isFinite(n)&&n>0?Math.log2(Math.max(1,n)):null,a=i===null?s:Math.min(s,i),G=a<1024?2**a:null,M=s<1024?2**s:null;return Object.freeze({theoreticalBits:r,theoreticalAverageGuessBits:s,theoreticalAverageGuesses:M,patternGuesses:i===null?null:n,patternGuessBits:i,effectiveGuesses:G,effectiveGuessBits:a,attackTimes:m(a),strength:f(a)})}h.PasswordSecurityRuntime=Object.freeze({ATTACK_MODELS:o,STRENGTH_LEVELS:l,createAssessment:z,estimateAttackTimes:m,formatAttackTimeFromLog10:b,formatGuessCount:O,strengthFromGuessBits:f})})(globalThis);
+  </script>
   <script>
 (globalThis.utooChunk_antd||(globalThis.utooChunk_antd=[])).push(["password-generator-runtime.js",{otherChunks:[],runtimeModuleIds:[]}]),(()=>{let e,t;var r,n=globalThis.utooChunk_antd;if(void 0===n)n=[];else if(!Array.isArray(n))return;var o="__RUNTIME_PUBLIC_PATH__",s="anonymous",l=((r=l||{})[r.Runtime=0]="Runtime",r[r.Parent=1]="Parent",r[r.Update=2]="Update",r);let i=new WeakMap;function c(e,t){this.m=e,this.e=t}let a=c.prototype,u=Object.prototype.hasOwnProperty,f="u">typeof Symbol&&Symbol.toStringTag;function d(e,t,r){u.call(e,t)||Object.defineProperty(e,t,r)}function p(e,t){let r=e[t];return r||(r=h(t),e[t]=r),r}function h(e){return{exports:{},error:void 0,id:e,namespaceObject:void 0}}function m(e,t,r){d(e,"__esModule",{value:!0}),f&&d(e,f,{value:"Module"});let n=0;for(;n<t.length;){let r=t[n++],o=t[n++];if("number"==typeof o)if(0===o)d(e,r,{value:t[n++],enumerable:!0,writable:!1});else throw Error(`unexpected tag: ${o}`);else"function"==typeof t[n]?d(e,r,{get:o,set:t[n++],enumerable:!0}):d(e,r,{get:o,enumerable:!0})}r||Object.seal(e)}function _(e,t){(null!=t?p(this.c,t):this.m).exports=e}a.s=function(e,t,r){let n,o;null!=t?o=(n=p(this.c,t)).exports:(n=this.m,o=this.e),n.namespaceObject=o,m(o,e,r)},a.j=function(e,t){let r,n;null!=t?n=(r=p(this.c,t)).exports:(r=this.m,n=this.e);let o=function(e,t){let r=i.get(e);if(!r){i.set(e,r=[]);let n=e=>{if("default"!==e){for(let t of r)if(u.call(t,e))return t}};e.exports=e.namespaceObject=new Proxy(t,{get(e,t){if(u.call(e,t)||"default"===t||"__esModule"===t)return Reflect.get(e,t);let r=n(t);return r&&Reflect.get(r,t)},set:()=>!1,defineProperty:()=>!1,deleteProperty:()=>!1,has:(e,t)=>!!Reflect.has(e,t)||"default"!==t&&"__esModule"!==t&&void 0!==n(t),ownKeys(e){let t=Reflect.ownKeys(e);for(let e of r)for(let r of Reflect.ownKeys(e))"default"===r||t.includes(r)||t.push(r);return t},getOwnPropertyDescriptor(e,t){let r=Reflect.getOwnPropertyDescriptor(e,t);if(r||"default"===t||"__esModule"===t)return r;let o=n(t);if(o)return{enumerable:!0,configurable:!0,get:()=>Reflect.get(o,t)}}})}return r}(r,n);"object"==typeof e&&null!==e&&o.push(e)},a.v=_,a.n=function(e,t){let r;(r=null!=t?p(this.c,t):this.m).exports=r.namespaceObject=e};let y=Object.getPrototypeOf?e=>Object.getPrototypeOf(e):e=>e.__proto__,b=[null,y({}),y([]),y(y)];function g(e,t,r){let n=[],o=-1;for(let t=e;("object"==typeof t||"function"==typeof t)&&!b.includes(t);t=y(t))for(let r of Object.getOwnPropertyNames(t))n.push(r,function(e,t){return()=>e[t]}(e,r)),-1===o&&"default"===r&&(o=n.length-1);return r&&o>=0||(o>=0?n.splice(o,1,0,e):n.push("default",0,e)),m(t,n),t}function j(e){let t=H(e,this.m);if(t.namespaceObject)return t.namespaceObject;let r=t.exports;return t.namespaceObject=g(r,"function"==typeof r?function(...e){return r.apply(this,e)}:Object.create(null),r&&r.__esModule)}function O(e){let t=e.indexOf("#");-1!==t&&(e=e.substring(0,t));let r=e.indexOf("?");return -1!==r&&(e=e.substring(0,r)),e}a.i=j,a.A=function(e){return this.r(e)(j.bind(this))},a.t="function"==typeof require?require:function(){throw Error("Unexpected use of runtime require")},a.r=function(e){return H(e,this.m).exports},a.f=function(e){function t(t){if(t=O(t),u.call(e,t))return e[t].module();let r=Error(`Cannot find module '${t}'`);throw r.code="MODULE_NOT_FOUND",r}return t.keys=()=>Object.keys(e),t.resolve=t=>{if(t=O(t),u.call(e,t))return e[t].id();let r=Error(`Cannot find module '${t}'`);throw r.code="MODULE_NOT_FOUND",r},t.import=async e=>await t(e),t};let w=function(e){let t=new URL(e,"x:/"),r={};for(let e in t)r[e]=t[e];for(let t in r.href=e,r.pathname=e.replace(/[?#].*/,""),r.origin=r.protocol="",r.toString=r.toJSON=(...t)=>e,r)Object.defineProperty(this,t,{enumerable:!0,configurable:!0,value:r[t]})};function k(e,t){throw Error(`Invariant: ${t(e)}`)}function $(e=o){return"__RUNTIME_PUBLIC_PATH__"===e?a.p():"__AUTO_PUBLIC_PATH__"===e?a.p("auto"):e}w.prototype=URL.prototype,a.U=w,a.z=function(e){throw Error("dynamic usage of require is not supported")},a.g=globalThis,a.p=function(t){if("auto"===t){let t;if(void 0!==e)return e;if("object"==typeof document){let e=document.currentScript;if(!(t=e?.src)){let e=document.getElementsByTagName("script"),r=e[e.length-1];t=r?.src}}return!t&&"function"==typeof globalThis.importScripts&&globalThis.location&&(t=String(globalThis.location)),e=t?t.replace(/^blob:/,"").replace(/#.*$/,"").replace(/\?.*$/,"").replace(/\/[^/]*$/,"/"):""}if("u">typeof globalThis&&"string"==typeof globalThis.publicPath){let e=globalThis.publicPath;return e.endsWith("/")?e:`${e}/`}return"/"};let v=c.prototype,U="string"==typeof TURBOPACK_CHUNK_BASE_PATH?TURBOPACK_CHUNK_BASE_PATH:o,P=new Map;a.M=P;let R=new Map,C=new Map,T=new Map;async function E(e,t,r){let n;if("string"==typeof r)return function(e,t,r){return x(e,t,r)}(e,t,L(r));let o=r.included||[],s=o.map(e=>!!P.has(e)||R.get(e));if(s.length>0&&s.every(e=>e))return void await Promise.all(s);for(let s of(n=x(e,t,L(r.path)),o))R.has(s)||R.set(s,n);await n}v.l=function(e){return E(l.Parent,this.m.id,e)};let A=Promise.resolve(void 0),M=new WeakMap;v.L=function(e){return function(e,t,r){return x(e,t,r)}(l.Parent,this.m.id,e)};let S=new Map;function x(e,r,n){let o=t.loadChunkCached(e,n),s=M.get(o);if(void 0===s){let t=M.set.bind(M,o,A);s=o.then(t).catch(t=>{let o;switch(e){case l.Runtime:o=`as a runtime dependency of chunk ${r}`;break;case l.Parent:o=`from module ${r}`;break;case l.Update:o="from an HMR update";break;default:k(e,e=>`Unknown source type: ${e}`)}let s=Error(`Failed to load chunk ${n} ${o}${t?`: ${t}`:""}`,t?{cause:t}:void 0);throw s.name="ChunkLoadError",s}),M.set(o,s)}return s}v.S=function(e){let t=S.get(e);return t||(t=new Promise((t,r)=>{let n=document.createElement("script");n.crossOrigin=s,n.src=e,n.onload=()=>t(),n.onerror=()=>r(Error(`Failed to load script: ${e}`)),document.head.appendChild(n)}),S.set(e,t)),t};v.R=function(e){let t=this.r(e);return t?.default??t},v.P=function(e){return`/ROOT/${e??""}`},v.F=function(e){return e?`file:///ROOT/${e.split("/").map(encodeURIComponent).join("/")}`:"file:///ROOT/"},v.q=function(e,t){_.call(this,`${e}`,t)};let N=/[^A-Za-z0-9\-_.!~*'()/]/;function L(e,t=U){let r=N.test(e)?e.split("/").map(encodeURIComponent).join("/"):e;return`${$(t)}${r}`}function I(e,t){let r,n=e.indexOf("?");if(-1!==n)r=n;else{let t=e.indexOf("#");r=-1!==t?t:e.length}return r>=t.length&&e.startsWith(t,r-t.length)}v.b=U,v.X="",v.h=L;function K(e){return I(e,".css")}let B={};a.c=B;let H=(e,t)=>{let r=B[e];if(r){if(r.error)throw r.error;return r}return q(e,l.Parent,t.id)};function q(e,t,r){let n=P.get(e);if("function"!=typeof n)throw Error(function(e,t,r){let n;switch(t){case 0:n=`as a runtime entry of chunk ${r}`;break;case 1:n=`because it was required from module ${r}`;break;case 2:n="because of an HMR update";break;default:k(t,e=>`Unknown source type: ${e}`)}return`Module ${e} was instantiated ${n}, but the module factory is not available.`}(e,t,r));let o=h(e),s=o.exports;B[e]=o;let l=new c(o,s);try{n(l,o,s)}catch(e){throw o.error=e,e}return o.namespaceObject&&o.exports!==o.namespaceObject&&g(o.exports,o.namespaceObject),o}function W(e){let r;if(!Array.isArray(e))return t.registerChunk(void 0,e);let n=function(e){if("string"==typeof e)return e;if(e)return{src:e.getAttribute("src")};if("u">typeof TURBOPACK_NEXT_CHUNK_URLS)return{src:TURBOPACK_NEXT_CHUNK_URLS.pop()};throw Error("chunk path empty but not in a worker")}(e[0]);return 2===e.length?r=e[1]:(r=void 0,!function(e,t){let r=1;for(;r<e.length;){let n,o=r+1;for(;o<e.length&&"function"!=typeof e[o];)o++;if(o===e.length)throw Error("malformed chunk format, expected a factory function");let s=e[o];for(let s=r;s<o;s++){let r=e[s],o=t.get(r);if(o){n=o;break}}let l=n??s,i=!1;for(let n=r;n<o;n++){let r=e[n];t.has(r)||(i||(l===s&&Object.defineProperty(s,"name",{value:"module evaluation"}),i=!0),t.set(r,l))}r=o+1}}(e,P)),t.registerChunk(n,r)}let D=new Map;function F(e){let t=D.get(e);if(!t){let r,n;t={resolved:!1,loadingStarted:!1,retryAttempts:0,promise:new Promise((e,t)=>{r=e,n=t}),resolve:()=>{t.resolved=!0,r()},reject:n},D.set(e,t)}return t}function X(e,t,r,n,o){!(null==n||n instanceof DOMException&&"NetworkError"===n.name)||r.retryAttempts>=1||D.get(t)!==r?(D.get(t)===r&&D.delete(t),r.reject(n)):(r.retryAttempts++,setTimeout(()=>{r.resolved||D.get(t)!==r||(o?o():(r.loadingStarted=!1,z(e,t)))},200+Math.floor(401*Math.random())))}function z(e,t){let r=F(t);if(r.loadingStarted)return r.promise;if(e===l.Runtime){if(r.loadingStarted=!0,K(t)){if("function"!=typeof importScripts){let e=decodeURI(t);if(0===document.querySelectorAll(`link[rel=stylesheet][href="${t}"],link[rel=stylesheet][href^="${t}?"],link[rel=stylesheet][href="${e}"],link[rel=stylesheet][href^="${e}?"]`).length){let e=document.createElement("link");return e.rel="stylesheet",e.crossOrigin=s,e.href=t,e.onerror=()=>{r.reject()},e.onload=()=>{r.resolve()},document.head.appendChild(e),r.promise}}return r.resolve(),r.promise}if("function"!=typeof importScripts){let e=decodeURI(t),n=document.querySelectorAll(`script[src="${t}"],script[src^="${t}?"],script[src="${e}"],script[src^="${e}?"]`);if(n.length>0){for(let e of Array.from(n))e.addEventListener("error",()=>{r.reject()});return r.promise}}}if("function"==typeof importScripts)if(K(t));else if(I(t,".js")){self.TURBOPACK_NEXT_CHUNK_URLS.push(t);try{importScripts(t)}catch(n){X(e,t,r,n)}}else throw Error(`can't infer type of chunk from URL ${t} in worker`);else{let n=decodeURI(t);if(K(t))if(document.querySelectorAll(`link[rel=stylesheet][href="${t}"],link[rel=stylesheet][href^="${t}?"],link[rel=stylesheet][href="${n}"],link[rel=stylesheet][href^="${n}?"]`).length>0)r.resolve();else{let n=()=>{let o=document.createElement("link");return o.rel="stylesheet",o.crossOrigin=s,o.href=t,o.onerror=()=>{let s=document.createComment("");o.replaceWith(s),X(e,t,r,void 0,()=>s.replaceWith(n()))},o.onload=()=>{r.resolve()},o};document.head.appendChild(n())}else if(I(t,".js")){let o=document.querySelectorAll(`script[src="${t}"],script[src^="${t}?"],script[src="${n}"],script[src^="${n}?"]`);if(o.length>0)for(let n of Array.from(o))n.addEventListener("error",()=>{n.remove(),X(e,t,r)},{once:!0});else{let n=document.createElement("script");n.crossOrigin=s,n.src=t,n.onerror=()=>{n.remove(),X(e,t,r)},document.head.appendChild(n)}}else throw Error(`can't infer type of chunk from URL ${t}`)}return r.loadingStarted=!0,r.promise}globalThis.__PASSWORD_GENERATOR_IMPORT__=function(e){let t=q(e,l.Parent,0);return t.namespaceObject||t.exports};t={async registerChunk(e,t){var r;let n;if(null!=e&&F("string"==typeof(r=n=function(e){if("string"==typeof e)return e;let t=decodeURIComponent(e.src.replace(/[?#].*$/,"")),r=$(U),n=t.startsWith(r)?t.slice(r.length):t;return n.startsWith("/")&&(n=n.slice(1)),n}(e))?L(r):r.src).resolve(),null!=t){for(let e of t.otherChunks)F(L("string"==typeof e?e:e.path));if(await Promise.all(t.otherChunks.map(e=>{var t;return t=n,E(l.Runtime,t,e)})),t.runtimeModuleIds.length>0)for(let e of t.runtimeModuleIds)!function(e,t){let r=B[t];if(r){if(r.error)throw r.error;return}q(t,l.Runtime,e)}(n,e)}},loadChunkCached:(e,t)=>z(e,t)},globalThis.utooChunk_antd={push:W},n.forEach(W)})();
 ;(globalThis.utooChunk_antd||(globalThis.utooChunk_antd=[])).push(["_2245786e.390075fd.async.js",802839,e=>{"use strict";var t=e.i(33920);e.s(["default",0,(e,n={})=>!(0,t.isNonNullable)(e)&&n?.skipEmpty?[]:Array.isArray(e)?e:[e]])},971676,e=>{"use strict";var t=e.i(391398),n=e.i(191788),i=e.i(608427),r=e.i(56206),a=e.i(658109),l=e.i(942739),o=e.i(33920),s=e.i(401561),c=e.i(114112),d=e.i(798659),u=e.i(7986),p=e.i(19106),f=e.i(317133),m=e.i(844493),g=e.i(445317),h=e.i(151304),x=e.i(884011),b=e.i(286287),y=e.i(108314),$=e.i(400156),v=(0,b.genStyleHooks)(["Input","TextArea"],e=>(e=>{let{componentCls:t,paddingLG:n}=e,i=`${t}-textarea`;return{[`textarea${t}`]:{maxWidth:"100%",height:"auto",minHeight:e.controlHeight,lineHeight:e.lineHeight,verticalAlign:"bottom",transition:`all ${e.motionDurationSlow}`,resize:"vertical","@media (hover: none) and (pointer: coarse)":{resize:"none"},[`&${t}-mouse-active`]:{transition:`all ${e.motionDurationSlow}, height 0s, width 0s`}},[`${t}-textarea-affix-wrapper-resize-dirty`]:{width:"auto"},[i]:{position:"relative","&-show-count":{[`${t}-data-count`]:{position:"absolute",bottom:e.calc(e.fontSize).mul(e.lineHeight).mul(-1).equal(),insetInlineEnd:0,color:e.colorTextDescription,whiteSpace:"nowrap",pointerEvents:"none"}},[`
@@ -3099,8 +3138,39 @@ const {
   EntropyCalculator,
 } = globalThis.MemorableEngine || {};
 const { WordPackManager } = globalThis.WordPackRuntime || {};
-if (!SecureWordGenerator || !EntropyCalculator || !WordPackManager) {
-  throw new Error('记忆短语本地引擎加载失败。请确认 assets/js 目录与 HTML 位于同一项目中。');
+const {
+  ATTACK_MODELS,
+  createAssessment,
+  formatGuessCount,
+  strengthFromGuessBits,
+} = globalThis.PasswordSecurityRuntime || {};
+if (!SecureWordGenerator || !EntropyCalculator || !WordPackManager || !createAssessment || !formatGuessCount || !strengthFromGuessBits) {
+  throw new Error('本地安全运行时加载失败。请确认完整部署 index.html 与 assets 目录。');
+}
+
+let zxcvbnAnalyzerPromise = null;
+let pinRiskLoaderPromise = null;
+let pinRiskRuntime = null;
+let pinRiskDatabase = null;
+function loadZxcvbnAnalyzer() {
+  if (!zxcvbnAnalyzerPromise) {
+    zxcvbnAnalyzerPromise = import('./assets/vendor/zxcvbn-analyzer.v2.min.js')
+      .catch((error) => { zxcvbnAnalyzerPromise = null; throw error; });
+  }
+  return zxcvbnAnalyzerPromise;
+}
+function loadPinRiskResources() {
+  if (!pinRiskLoaderPromise) {
+    pinRiskLoaderPromise = import('./assets/modules/pin-risk-engine.js')
+      .then(async (runtime) => {
+        const database = await runtime.loadPinRiskDatabase('./assets/data/pin-risk.v1.json');
+        pinRiskRuntime = runtime;
+        pinRiskDatabase = database;
+        return { runtime, database };
+      })
+      .catch((error) => { pinRiskLoaderPromise = null; throw error; });
+  }
+  return pinRiskLoaderPromise;
 }
 
 function createInlineIcon(paths, viewBox = '0 0 24 24') {
@@ -3323,56 +3393,51 @@ const MAX_LENGTH = 4096;
 const MAX_QUANTITY = 1000;
 const MAX_WORD_COUNT = 100;
 const MAX_TOTAL_OUTPUT_CHARS = 1000000;
-const CRACK_GUESSES_PER_SECOND = 10000;
-const SECONDS_PER_YEAR = 31557600;
-function entropyForAverageCrackSeconds(seconds) {
-    return Math.log2(seconds * 2 * CRACK_GUESSES_PER_SECOND);
-}
 const STRENGTH_LEVELS = Object.freeze([
     Object.freeze({
-        level: 'L1', key: 'instant', label: '瞬间破解', color: '#c62828', minEntropy: 0,
+        level: 'L1', key: 'instant', label: '瞬间破解', color: '#c62828', minGuessBits: 0,
         timeRange: '不到 1 分钟', summary: '几乎立刻就能被尝试出来。',
         advice: '风险极高，只适合演示，不要用于任何账号。',
         recipe: Object.freeze({ length: 4, lowercase: false, uppercase: false, digits: true, symbols: false, fixedSymbolCount: 0 }),
     }),
     Object.freeze({
-        level: 'L2', key: 'extremely-easy', label: '极易破解', color: '#c2410c', minEntropy: entropyForAverageCrackSeconds(60),
+        level: 'L2', key: 'extremely-easy', label: '极易破解', color: '#c2410c', minGuessBits: 20,
         timeRange: '1 分钟～1 天', summary: '很容易被撞出。',
         advice: '短时间内就可能被撞库或暴力尝试破解，请立即增强。',
         recipe: Object.freeze({ length: 6, lowercase: true, uppercase: false, digits: false, symbols: false, fixedSymbolCount: 0 }),
     }),
     Object.freeze({
-        level: 'L3', key: 'easy', label: '容易破解', color: '#b35c00', minEntropy: entropyForAverageCrackSeconds(86400),
+        level: 'L3', key: 'easy', label: '容易破解', color: '#b35c00', minGuessBits: 32,
         timeRange: '1 天～1 年', summary: '风险很高，不建议使用。',
         advice: '不建议用于邮箱、支付或后台账号，请增加长度和字符类型。',
         recipe: Object.freeze({ length: 8, lowercase: true, uppercase: false, digits: false, symbols: false, fixedSymbolCount: 0 }),
     }),
     Object.freeze({
-        level: 'L4', key: 'risky', label: '有一定风险', color: '#876400', minEntropy: entropyForAverageCrackSeconds(SECONDS_PER_YEAR),
+        level: 'L4', key: 'risky', label: '有一定风险', color: '#876400', minGuessBits: 40,
         timeRange: '1 年～1 万年', summary: '不够稳妥，建议加固。',
         advice: '安全性有所提升，但重要账号仍建议继续增加长度。',
         recipe: Object.freeze({ length: 8, lowercase: true, uppercase: true, digits: true, symbols: false, fixedSymbolCount: 0 }),
     }),
     Object.freeze({
-        level: 'L5', key: 'hard', label: '较难破解', color: '#4d7c0f', minEntropy: entropyForAverageCrackSeconds(10000 * SECONDS_PER_YEAR),
+        level: 'L5', key: 'hard', label: '较难破解', color: '#4d7c0f', minGuessBits: 52,
         timeRange: '1 万年～1 亿年', summary: '对普通攻击已经比较安全。',
         advice: '对普通攻击场景已有较强防护；重要账号仍应使用唯一密码。',
         recipe: Object.freeze({ length: 10, lowercase: true, uppercase: true, digits: true, symbols: false, fixedSymbolCount: 0 }),
     }),
     Object.freeze({
-        level: 'L6', key: 'very-hard', label: '很难破解', color: '#15803d', minEntropy: entropyForAverageCrackSeconds(100000000 * SECONDS_PER_YEAR),
+        level: 'L6', key: 'very-hard', label: '很难破解', color: '#15803d', minGuessBits: 64,
         timeRange: '1 亿年～138 亿年', summary: '已经达到非常高的强度。',
         advice: '已经达到非常高的密码强度，请妥善保存并避免重复使用。',
         recipe: Object.freeze({ length: 11, lowercase: true, uppercase: true, digits: true, symbols: true, fixedSymbolCount: 2 }),
     }),
     Object.freeze({
-        level: 'L7', key: 'extremely-hard', label: '极难破解', color: '#0f766e', minEntropy: entropyForAverageCrackSeconds(13800000000 * SECONDS_PER_YEAR),
+        level: 'L7', key: 'extremely-hard', label: '极难破解', color: '#0f766e', minGuessBits: 80,
         timeRange: '138 亿年～10²⁰ 年', summary: '破解时间已超过宇宙年龄。',
         advice: '破解时间已明显超过宇宙存在的时间尺度，实际使用时请优先保证可安全保存。',
         recipe: Object.freeze({ length: 12, lowercase: true, uppercase: true, digits: true, symbols: true, fixedSymbolCount: 2 }),
     }),
     Object.freeze({
-        level: 'L8', key: 'practically-impossible', label: '几乎无法破解', color: '#1d4ed8', minEntropy: entropyForAverageCrackSeconds(1e20 * SECONDS_PER_YEAR),
+        level: 'L8', key: 'practically-impossible', label: '几乎无法破解', color: '#1d4ed8', minGuessBits: 112,
         timeRange: '≥ 10²⁰ 年', summary: '现实中基本不可破解。',
         advice: '已达到天文数字级别；默认 20 位方案约需 10²⁵ 年，请重点防止密码泄露或遗失。',
         recipe: Object.freeze({ length: 20, lowercase: true, uppercase: true, digits: true, symbols: true, fixedSymbolCount: 2 }),
@@ -3919,6 +3984,8 @@ function generateMemorablePassword(config, randomConfig, entries) {
     return { value, words };
 }
 function isWeakPin(pin) {
+    if (pinRiskRuntime && pinRiskDatabase)
+        return pinRiskRuntime.shouldBlockWeakPin(pin, pinRiskDatabase);
     if (/^(\d)\1+$/.test(pin))
         return true;
     if (/^(\d{1,3})\1+$/.test(pin))
@@ -4107,15 +4174,10 @@ function estimatePinEntropy(config) {
     return { entropy, error: '', approximate: true, poolSize: 10 };
 }
 function strengthFromEntropy(entropy) {
-    const normalizedEntropy = Math.max(0, Number(entropy) || 0);
-    let index = 0;
-    for (let cursor = 1; cursor < STRENGTH_LEVELS.length; cursor += 1) {
-        if (normalizedEntropy < STRENGTH_LEVELS[cursor].minEntropy)
-            break;
-        index = cursor;
-    }
+    const runtimeStrength = strengthFromGuessBits(Math.max(0, (Number(entropy) || 0) - 1));
+    const index = runtimeStrength.index;
     const level = STRENGTH_LEVELS[index];
-    const progress = (index + 1) / STRENGTH_LEVELS.length * 100;
+    const progress = runtimeStrength.progress;
     return { ...level, index, progress, percent: progress };
 }
 function strengthTargetFromIndex(index) {
@@ -4148,7 +4210,7 @@ function randomConfigForStrengthTarget(currentConfig, target) {
         nextConfig.excludeAmbiguous = false;
         estimate = estimateRandomEntropy(nextConfig);
     }
-    while (!estimate.error && estimate.entropy < target.minEntropy && nextConfig.length < MAX_LENGTH) {
+    while (!estimate.error && Math.max(0, estimate.entropy - 1) < target.minGuessBits && nextConfig.length < MAX_LENGTH) {
         nextConfig.length += 1;
         estimate = estimateRandomEntropy(nextConfig);
     }
@@ -4255,12 +4317,15 @@ function estimateGeneratedResult(result) {
     const estimate = estimateObservedCharacterEntropy(value);
     if (mode !== 'pin')
         return estimate;
+    const pinRisk = pinRiskRuntime && pinRiskDatabase
+        ? pinRiskRuntime.inspectPin(value, pinRiskDatabase)
+        : null;
     let entropy = estimate.entropy;
     if (isWeakPin(value))
-        entropy = Math.min(entropy, new Set(value).size === 1 ? Math.log2(10) : Math.log2(1000));
+        entropy = Math.min(entropy, pinRisk?.rank ? Math.log2(Math.max(2, pinRisk.rank * 2)) : new Set(value).size === 1 ? Math.log2(10) : Math.log2(1000));
     else if (hasSequentialDigitRun(value, 2))
         entropy = Math.max(0, entropy - 8);
-    return { ...estimate, entropy, poolSize: 10, basis: 'actual-pin-pattern' };
+    return { ...estimate, entropy, poolSize: 10, basis: 'actual-pin-pattern', pinRisk };
 }
 function modeName(mode) {
     return mode === 'memorable' ? '记忆短语' : mode === 'pin' ? 'PIN' : '随机密码';
@@ -4280,32 +4345,6 @@ function formatGeneratedClipboardText(items) {
         .map((item) => typeof item?.value === 'string' ? item.value : '')
         .filter(Boolean)
         .join('\n');
-}
-function formatLargeNumberFromEntropy(entropy) {
-    if (!Number.isFinite(entropy))
-        return '—';
-    if (entropy < 50)
-        return Math.round(2 ** entropy).toLocaleString('zh-CN');
-    return `约 2 的 ${entropy.toFixed(1)} 次方`;
-}
-function formatCrackTime(entropy, guessesPerSecond = 10000) {
-    if (entropy <= 0)
-        return '不足 1 秒';
-    const log10Seconds = entropy * Math.LOG10E * Math.LN2 - Math.log10(2) - Math.log10(guessesPerSecond);
-    if (log10Seconds < 0)
-        return '不足 1 秒';
-    if (log10Seconds < Math.log10(60))
-        return `${Math.max(1, Math.round(10 ** log10Seconds))} 秒`;
-    if (log10Seconds < Math.log10(3600))
-        return `${Math.round(10 ** log10Seconds / 60)} 分钟`;
-    if (log10Seconds < Math.log10(86400))
-        return `${Math.round(10 ** log10Seconds / 3600)} 小时`;
-    if (log10Seconds < Math.log10(31557600))
-        return `${Math.round(10 ** log10Seconds / 86400)} 天`;
-    const yearsLog = log10Seconds - Math.log10(31557600);
-    if (yearsLog < 6)
-        return `${Math.round(10 ** yearsLog).toLocaleString('zh-CN')} 年`;
-    return `约 10 的 ${yearsLog.toFixed(1)} 次方年`;
 }
 const WORD_ENTROPY_TOOLTIP = tooltipCopy('每词理论熵',
     ['表示随机抽取 1 个词带来的理论安全强度。'],
@@ -4536,12 +4575,27 @@ function CompactBoundarySelect({ value, onChange, label, availableTypes = {} }) 
 }
 function PasswordStrengthTooltip() {
     return (React.createElement("div", { className: "password-strength-tip" },
-        React.createElement("div", { className: "password-strength-tip-intro" }, "按每秒尝试 1 万次、平均检查一半候选组合估算。"),
+        React.createElement("div", { className: "password-strength-tip-intro" }, "等级按有效猜测次数划分：取理论平均搜索次数与模式分析猜测次数中的较小值。"),
+        React.createElement("div", { className: "password-strength-tip-models" },
+            React.createElement("div", null, React.createElement("strong", null, "在线限速攻击"), "：100 次/小时，适用于有限速、锁定或验证码的登录页面。"),
+            React.createElement("div", null, React.createElement("strong", null, "慢速密码哈希"), "：10⁴ 次/秒，模拟 Argon2id、scrypt、bcrypt、PBKDF2。"),
+            React.createElement("div", null, React.createElement("strong", null, "快速离线哈希"), "：10¹⁰ 次/秒，模拟数据库泄露与并行硬件攻击。")),
         React.createElement("div", { className: "password-strength-tip-list" }, STRENGTH_LEVELS.map((level) => (React.createElement("div", { className: "password-strength-tip-row", key: level.level },
             React.createElement("span", { className: "password-strength-tip-level" }, level.level),
             React.createElement("span", { className: "password-strength-tip-name" }, level.label),
-            React.createElement("span", { className: "password-strength-tip-time" }, level.timeRange))))),
-        React.createElement("div", { className: "password-strength-tip-note" }, "实际时间还会受到网站限速、哈希算法和攻击设备影响。")));
+            React.createElement("span", { className: "password-strength-tip-time" }, `≥ 2^${level.minGuessBits} 次`))))),
+        React.createElement("div", { className: "password-strength-tip-note" }, "这些结果是攻击模型估算，不是安全保证；密码泄露、重复使用或钓鱼会绕过穷举强度。")));
+}
+
+function AttackModelTooltip({ assessment }) {
+    return React.createElement("div", { className: "password-strength-tip attack-model-tip" },
+        React.createElement("div", { className: "password-strength-tip-intro" }, "同一密码在不同攻击条件下，时间差异可能非常大："),
+        Object.values(ATTACK_MODELS).map((model) => React.createElement("div", { className: "attack-model-tip-row", key: model.id },
+            React.createElement("strong", null, model.label),
+            React.createElement("span", null, `（${model.speedLabel}）`),
+            React.createElement("div", null, assessment.attackTimes[model.id].label),
+            React.createElement("small", null, model.description))),
+        React.createElement("div", { className: "password-strength-tip-note" }, "这些结果是攻击模型估算，不是安全保证。"));
 }
 function StrengthTargetControl({ entropy, onTargetChange }) {
     const strength = strengthFromEntropy(entropy);
@@ -4570,15 +4624,19 @@ function StrengthTargetControl({ entropy, onTargetChange }) {
                         onClick: () => finishChange(index),
                     }, target.label)))))))));
 }
-function StrengthMeter({ entropy, stats }) {
-    const strength = strengthFromEntropy(entropy);
+function StrengthMeter({ assessment, stats, pinRisk = null }) {
+    const strength = { ...STRENGTH_LEVELS[assessment.strength.index], ...assessment.strength };
     const StrengthIcon = strength.index < 4 ? WarningTriangleFilled : SafetyCertificateFilled;
     const diversityCount = [stats.lower, stats.upper, stats.digits, stats.symbols].filter((count) => count > 0).length;
     const diversityPercent = Math.round(diversityCount / 4 * 100);
-    const entropyPercent = clamp(entropy / 128 * 100, 0, 100);
-    const crackTime = formatCrackTime(entropy);
-    const attempts = formatLargeNumberFromEntropy(entropy);
-    const strengthAdvice = `按每秒尝试 1 万次估算，破解此密码约需 ${crackTime}。${strength.advice}`;
+    const entropyPercent = clamp(assessment.theoreticalBits / 128 * 100, 0, 100);
+    const crackTime = assessment.attackTimes.fastOffline.label;
+    const attempts = formatGuessCount(assessment.effectiveGuessBits);
+    const patternNote = assessment.patternGuesses
+        ? '模式分析发现了字典词、键盘路径、日期、重复或替换写法，已采用更保守的有效猜测次数。'
+        : '未发现需要进一步压低的常见模式，当前采用理论平均搜索次数。';
+    const pinRankNote = pinRisk?.rank ? ` 常见 PIN 排名：第 ${pinRisk.rank.toLocaleString('zh-CN')} 位。` : '';
+    const strengthAdvice = `快速离线哈希模型（10¹⁰ 次/秒）：${crackTime}。${strength.advice}${pinRankNote} 这些结果是攻击模型估算，不是安全保证。`;
     const metrics = [
         {
             key: 'diversity',
@@ -4589,24 +4647,24 @@ function StrengthMeter({ entropy, stats }) {
         },
         {
             key: 'entropy',
-            label: '熵值',
-            value: `${entropy.toFixed(1)} bits`,
+            label: '理论熵',
+            value: `${assessment.theoreticalBits.toFixed(1)} bits`,
             percent: entropyPercent,
-            tip: tooltipCopy('熵值', '根据当前生成结果的实际长度、字符组成和明显模式估算。', ['每次生成新结果后都会重新计算', '每增加 1 bit，候选组合约翻一倍', '数值越高，暴力破解通常越困难'], '记忆短语按实际词数和词包规模计算；熵值不代表密码不会因泄露而失效。'),
+            tip: tooltipCopy('理论熵', '表示当前生成策略提供的理论搜索空间。', ['每次生成新结果后都会重新计算', '每增加 1 bit，候选数量约翻一倍', '记忆短语按实际词数和当前词包规模计算'], '理论熵不等于实际攻击复杂度；常见模式会在有效猜测次数中单独扣减。'),
         },
         {
             key: 'attempts',
-            label: '穷举次数',
+            label: '有效猜测次数',
             value: attempts,
             percent: strength.progress,
-            tip: tooltipCopy('穷举次数', '攻击者逐个排查所有候选密码时，最多需要尝试的总次数。', ['100 万次：平均约 50 秒', '1 亿次：平均约 1 小时 23 分', '1 万亿次：平均约 1.6 年'], '以上均按每秒尝试 1 万次、平均检查一半组合估算。'),
+            tip: tooltipCopy('有效猜测次数', '取理论平均搜索次数与模式分析结果中的较小值。', [patternNote, pinRankNote.trim()].filter(Boolean), '它比只看字符集和长度更保守，但仍然不是安全保证。'),
         },
         {
             key: 'time',
-            label: '预计破解时间',
+            label: '快速离线估计',
             value: crackTime,
             percent: strength.progress,
-            tip: tooltipCopy('预计破解时间', '把理论候选组合换算成普通人更容易理解的时间。', ['每秒尝试 1 万次', '平均检查一半组合后命中'], '实际时间还会受到网站限速、加密方式和攻击设备性能影响。'),
+            tip: React.createElement(AttackModelTooltip, { assessment }),
         },
     ];
     return (React.createElement("section", { className: "strength-analysis", style: { '--strength-color': strength.color }, "aria-label": "密码强度分析", "aria-live": "polite" },
@@ -4718,6 +4776,8 @@ function PasswordGenerator() {
     const [history, setHistory] = useState([]);
     const [historyExpanded, setHistoryExpanded] = useState(false);
     const [showBackToTop, setShowBackToTop] = useState(false);
+    const [securityModalOpen, setSecurityModalOpen] = useState(false);
+    const [analysisOverlay, setAnalysisOverlay] = useState({ resultId: null, patternGuesses: null, pinRisk: null });
     const historyRef = useRef([]);
     const historyStorage = getBrowserStorage('session');
     const embeddedCommonPack = useMemo(() => ({
@@ -4902,6 +4962,19 @@ function PasswordGenerator() {
     }, []);
     useEffect(() => {
         loadSelectedWordPack(stateRef.current.memorable, stateRef.current.mode === 'memorable');
+    }, []);
+    useEffect(() => {
+        const warmSecurityAssets = () => Promise.allSettled([
+            loadZxcvbnAnalyzer(),
+            loadPinRiskResources(),
+        ]);
+        const idleId = typeof window.requestIdleCallback === 'function'
+            ? window.requestIdleCallback(warmSecurityAssets, { timeout: 1800 })
+            : window.setTimeout(warmSecurityAssets, 800);
+        return () => {
+            if (typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(idleId);
+            else window.clearTimeout(idleId);
+        };
     }, []);
     const estimateForState = (sourceState) => {
         if (sourceState.mode === 'memorable')
@@ -5300,7 +5373,7 @@ function PasswordGenerator() {
             React.createElement(SectionHeading, { title: "PIN \u89C4\u5219", info: tooltipCopy('PIN 安全性', 'PIN 本身只使用数字，实际安全性还依赖验证系统。', ['连续输错后的尝试次数限制', '账号或设备锁定策略', '设备绑定与二次验证']) }),
             React.createElement("div", { className: "pin-rule-grid" },
                 React.createElement(PinRuleCard, { icon: React.createElement(ZeroCircleOutlined, null), title: "允许以 0 开头", description: "关闭后，首位只使用数字 1-9", checked: state.pin.allowLeadingZero, onChange: (checked) => updatePin('allowLeadingZero', checked) }),
-                React.createElement(PinRuleCard, { icon: React.createElement(SafetyCertificateFilled, null), title: "排除明显弱 PIN", description: "过滤 0000、1111、1234 等组合", checked: state.pin.blockWeak, onChange: (checked) => updatePin('blockWeak', checked) }),
+                React.createElement(PinRuleCard, { icon: React.createElement(SafetyCertificateFilled, null), title: "排除明显弱 PIN", description: "本地语料含 10,000 个四位排名与 68,202 个六位数字组合", checked: state.pin.blockWeak, onChange: (checked) => updatePin('blockWeak', checked) }),
                 React.createElement(PinRuleCard, { icon: React.createElement(RepeatOutlined, null), title: "允许重复数字", description: "关闭后，同一数字不会重复出现", checked: state.pin.allowRepeated, onChange: (checked) => updatePin('allowRepeated', checked) }),
                 React.createElement(PinRuleCard, { icon: React.createElement(SequenceOutlined, null), title: "连续数字限制", description: "开启后，最多允许连续 2 位升序或降序数字", checked: state.pin.limitSequential, onChange: (checked) => updatePin('limitSequential', checked) })))));
     const firstResult = results[0];
@@ -5309,6 +5382,40 @@ function PasswordGenerator() {
     const currentEstimate = useMemo(() => firstResult
         ? estimateGeneratedResult(firstResult)
         : configuredEstimate, [firstResult, configuredEstimate]);
+    const patternGuesses = analysisOverlay.resultId === firstResult?.id
+        ? analysisOverlay.patternGuesses
+        : null;
+    const currentPinRisk = analysisOverlay.resultId === firstResult?.id
+        ? analysisOverlay.pinRisk
+        : currentEstimate.pinRisk || null;
+    const currentAssessment = useMemo(
+        () => createAssessment({ theoreticalBits: currentEstimate.entropy, patternGuesses }),
+        [currentEstimate.entropy, patternGuesses],
+    );
+    useEffect(() => {
+        let cancelled = false;
+        const resultId = firstResult?.id || null;
+        const value = String(firstResult?.value || '');
+        const mode = firstResult?.mode || stateRef.current.mode;
+        setAnalysisOverlay({ resultId, patternGuesses: null, pinRisk: currentEstimate.pinRisk || null });
+        if (!resultId || !value || mode === 'memorable') return () => { cancelled = true; };
+        if (mode === 'pin') {
+            loadPinRiskResources().then(({ runtime, database }) => {
+                if (cancelled) return;
+                const pinRisk = runtime.inspectPin(value, database);
+                const pinPatternGuesses = pinRisk.rank || (pinRisk.blocked ? 100 : null);
+                setAnalysisOverlay({ resultId, patternGuesses: pinPatternGuesses, pinRisk });
+            }).catch(() => { /* 完整库不可用时沿用内置规则。 */ });
+        }
+        else {
+            loadZxcvbnAnalyzer().then(({ analyzePassword }) => {
+                if (cancelled) return;
+                const pattern = analyzePassword(value);
+                setAnalysisOverlay({ resultId, patternGuesses: pattern.patternGuesses, pinRisk: null });
+            }).catch(() => { /* 模式分析不可用时仍显示理论空间。 */ });
+        }
+        return () => { cancelled = true; };
+    }, [firstResult?.id, firstResult?.value, currentEstimate.entropy]);
     const currentResultSignature = useMemo(() => formatGeneratedClipboardText(results), [results]);
     const resultWasCopied = Boolean(currentResultSignature && copiedResultSignature === currentResultSignature);
     const visibleHistory = history.slice(0, historyExpanded ? history.length : 10);
@@ -5345,8 +5452,9 @@ function PasswordGenerator() {
                             React.createElement(Button, { className: "result-regenerate-button", type: "primary", size: "small", icon: React.createElement(ReloadOutlined, null), onClick: () => regenerateOne(index) })))));
             })))),
         React.createElement(StrengthMeter, {
-            entropy: currentEstimate.entropy,
-            stats: currentStats
+            assessment: currentAssessment,
+            stats: currentStats,
+            pinRisk: currentPinRisk
         }),
         React.createElement("div", { className: "history-panel" },
             React.createElement(Divider, { className: "compact-divider" }),
@@ -5401,7 +5509,7 @@ function PasswordGenerator() {
                             { label: React.createElement("span", { className: "mode-option-label" }, React.createElement(DialPadOutlined, null), React.createElement("span", null, "PIN 码")), value: 'pin' },
                             { label: React.createElement("span", { className: "mode-option-label" }, React.createElement(BulbOutlined, null), React.createElement("span", null, "记忆短语")), value: 'memorable' },
                         ], onChange: switchMode })),
-                React.createElement("div", { className: "privacy-pill" },
+                React.createElement("button", { type: "button", className: "privacy-pill", onClick: () => setSecurityModalOpen(true), "aria-label": "查看本地生成与安全实现说明" },
                     React.createElement(SafetyCertificateFilled, { style: { color: '#1677ff', marginRight: 6 } }),
                     "\u672C\u5730\u751F\u6210\uFF0C\u4E0D\u4E0A\u4F20"))),
         React.createElement("div", { className: "page-main" },
@@ -5415,6 +5523,34 @@ function PasswordGenerator() {
                         "\u751F\u6210",
                         state.mode === 'pin' ? ' PIN' : state.mode === 'memorable' ? '记忆短语' : '密码')),
                 renderResultPane())),
+        React.createElement(Modal, {
+            title: "安全实现与数据边界",
+            open: securityModalOpen,
+            onCancel: () => setSecurityModalOpen(false),
+            width: 680,
+            footer: React.createElement(Button, { type: "primary", onClick: () => setSecurityModalOpen(false) }, "我知道了")
+        },
+            React.createElement("div", { className: "security-modal-content" },
+                React.createElement("div", { className: "security-flow", "aria-label": "密码安全生成流程" },
+                    React.createElement("strong", null, "Browser CSPRNG"),
+                    React.createElement("span", null, "→"),
+                    React.createElement("strong", null, "Rejection Sampling"),
+                    React.createElement("span", null, "→"),
+                    React.createElement("strong", null, "模式感知分析"),
+                    React.createElement("span", null, "→"),
+                    React.createElement("strong", null, "本地结果")),
+                React.createElement("section", null,
+                    React.createElement("h3", null, "密码数据平面"),
+                    React.createElement("p", null, "密码、PIN、记忆短语和用户输入只在当前浏览器中生成与分析，不会作为网络请求或统计参数发送。历史记录仅保存在当前标签页会话的 sessionStorage 中，关闭会话后清除。")),
+                React.createElement("section", null,
+                    React.createElement("h3", null, "静态资源平面"),
+                    React.createElement("p", null, "zxcvbn 模式分析器、PIN 风险库与 7,776 词词包均从本站同源静态文件加载；加载的是公开模型与词表，不包含生成结果。")),
+                React.createElement("section", null,
+                    React.createElement("h3", null, "匿名统计平面"),
+                    React.createElement("p", null, "站点可发送不含凭据内容的匿名访问统计。代码禁止把 generated_value、密码、PIN、记忆短语或输入内容写入统计事件。")),
+                React.createElement("section", null,
+                    React.createElement("h3", null, "如何自行验证"),
+                    React.createElement("p", null, "打开浏览器 DevTools → Network，生成并复制密码；你可以确认请求中不存在生成值。也可在 GitHub 仓库审计 Web Crypto、拒绝采样与分析实现。")))),
         React.createElement("div", { className: "site-floating-actions", role: "group", "aria-label": "网站快捷操作" },
             showBackToTop ? React.createElement(Button, { className: "site-floating-button site-floating-backtop", icon: React.createElement(ArrowUpOutlined, null), onClick: scrollPageToTop, "aria-label": "回到顶部" },
                 React.createElement("span", { className: "site-floating-button-label" }, "回到顶部")) : null,

@@ -4,6 +4,8 @@
 
 A browser-local password generator for **random passwords, passphrases, and PINs**, with fine-grained generation rules, format-oriented test schemes, and quantitative strength analysis based on each generated result.
 
+> **Password Policy Compiler / Credential Policy Generation and Validation Tool**
+
 [Live app](https://betaer.github.io/password-generator/) · [Passwords](https://betaer.github.io/password-generator/#password) · [PINs](https://betaer.github.io/password-generator/#pin) · [Passphrases](https://betaer.github.io/password-generator/#words) · [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.password-generator)](https://github.com/betaer/password-generator)
 
 ![Password Generator social preview](../assets/social-preview.png)
@@ -13,17 +15,17 @@ A browser-local password generator for **random passwords, passphrases, and PINs
 - **Cryptographic randomness:** core random choices use the browser's Web Crypto API, not `Math.random()`.
 - **Browser-local generation:** passwords, PINs, passphrases, and user input are not sent to a project server.
 - **Precise rules:** control length, character classes, symbol ratios, boundary types, repetition, and excluded characters.
-- **Quantitative analysis:** inspect composition, estimated entropy, exhaustive-search space, and estimated cracking time with explicit assumptions.
+- **Pattern-aware analysis:** compare theoretical search space, zxcvbn predictability, and three explicit attack models.
 
 ## Core capabilities
 
 | Mode | Capabilities | Typical uses |
 |---|---|---|
 | Random passwords | 4–512 characters, batches, four character classes, symbol ratios, start/end rules, ambiguous-character exclusion | Website passwords, master passwords, API tokens, machine credentials, test strings |
-| PINs | Length, leading zero, weak-pattern filtering, repeated digits, sequential-digit limits | Device codes, access codes, numeric test data |
+| PINs | Length, leading zero, corpus-backed common-PIN filtering, repeated digits, sequential-digit limits | Device codes, access codes, numeric test data |
 | Passphrases | 1,296- and 7,776-word core packs, six 1,024-word theme packs, casing and separators | Long passphrases designed to be easier to type and segment |
 | Format schemes | Numeric formats, ETH/TRON/BTC address-shaped strings, 64-hex private-key-shaped strings | UI, form, database, and demo-data testing |
-| Strength analysis | Character diversity, entropy, search space, estimated cracking time, eight levels | Comparing the effects of length, composition, and predictable patterns |
+| Strength analysis | Theoretical space, zxcvbn patterns, effective guesses, three attack models, eight levels | Separating raw combinations from practical predictability |
 
 Generating or regenerating automatically copies the result to the clipboard. History is stored in the current browser session by default.
 
@@ -61,6 +63,16 @@ Random indices are not produced with a direct `randomUint32 % size`. The impleme
 | Science and space | 1,024 | 10 bits | Theme pack loaded on demand |
 | Business and office | 1,024 | 10 bits | Theme pack loaded on demand |
 
+Equal word counts do not provide equal entropy across packs:
+
+| Pack | Entropy per word | 4 words | 6 words |
+|---|---:|---:|---:|
+| 1,024-word theme pack | 10 bits | 40 bits | 60 bits |
+| 1,296-word common pack | about 10.34 bits | about 41.36 bits | about 62.04 bits |
+| 7,776-word standard pack | about 12.92 bits | about 51.70 bits | about 77.55 bits |
+
+Theme packs are focused and easier to turn into a mental theme, but their smaller pool makes them weaker than the standard pack at the same word count. **Use at least 6 words with a theme pack**; choose the 7,776-word pack or add more words when a larger random space is required.
+
 The passphrase model is:
 
 ```text
@@ -81,7 +93,7 @@ PIN generation can combine:
 - repeated-digit permission;
 - ascending or descending runs limited to at most two digits.
 
-Weak-pattern filtering covers identical digits, short repeated units, sequential strings, and common values such as `0000`, `1111`, `1212`, `1234`, `4321`, and `123456`. When the sequential limit is enabled, a state-counting algorithm calculates the number of valid combinations under the active rules instead of applying a simple `10ⁿ` formula.
+Weak-PIN filtering is not a short hard-coded sample. A local risk index is built from a pinned SecLists revision and covers the complete **10,000-entry four-digit PIN ranking** plus **68,202 unique six-digit numeric PINs**. Runtime rules also detect identical digits, short cycles, ascending or descending sequences, date-shaped values, and keypad paths. High-frequency ranks and obvious patterns are blocked by default. When the sequential limit is enabled, a state-counting algorithm calculates the number of valid combinations under the active rules instead of applying a simple `10ⁿ` formula.
 
 These filters remove some predictable choices; they do not give a short PIN the security of a long random password.
 
@@ -89,13 +101,33 @@ These filters remove some predictable choices; they do not give a short PIN the 
 
 The result panel recalculates strength from the **actual generated value** instead of reusing the target level from the settings panel.
 
-- Random passwords: uses observed length, character-class counts, class placement, candidate pools, repeated units, and simple sequences.
+- Random passwords: calculates a theoretical space from observed length, classes, class placement, and pools, then uses `zxcvbn-ts` to detect dictionary words, repetitions, sequences, and keyboard paths.
 - Passphrases: uses the actual word-pack size and actual word count.
-- PINs: applies additional reductions for weak values and sequential patterns.
-- Exhaustive-search count: derived from estimated entropy.
-- Estimated cracking time: assumes 10,000 guesses per second and, on average, half of the search space.
+- PINs: combines the valid combination space with common-PIN ranks and rule-based pattern analysis.
+- Effective guesses: uses the more conservative of the theoretical average guess count and the pattern-model guess count.
 
-Cracking time is a comparative theoretical model, not a security guarantee. Real attacks depend on rate limiting, password hashing, hardware, attack strategy, and whether the secret has already leaked.
+The UI compares three models instead of presenting one speed as a fact:
+
+| Attack model | Default rate | Meaning |
+|---|---:|---|
+| Online rate-limited attack | 100 guesses/hour | Illustrative login scenario with throttling, lockout, CAPTCHA, or MFA |
+| Slow password hash | 10⁴ guesses/second | Illustrative offline verification using Argon2id, scrypt, bcrypt, or PBKDF2 |
+| Fast offline hash | 10¹⁰ guesses/second | Severe database-leak scenario with a fast hash and highly parallel hardware |
+
+`zxcvbn` is a **pattern estimator**, not an entropy source. Passphrases continue to use the actual word-pool size and independent draw count. Time estimates assume half the candidate space on average. **These results are attack-model estimates, not a security guarantee.** Rate limits, hash parameters, hardware, leaks, reuse, phishing, and compromised endpoints can change the real risk.
+
+## Security implementation and verification
+
+```text
+Browser CSPRNG → Rejection Sampling → Pattern-aware analysis → Local result
+```
+
+- Passwords, PINs, passphrases, user input, and generated history form the **password data plane** and stay in the current browser.
+- `zxcvbn`, the PIN corpus, and word packs form a **static resource plane** loaded from same-origin paths; requests contain no generated values.
+- Google Analytics is used only for anonymous visit measurement. There is no `generated_value` event parameter, and credentials or user input are never sent.
+- Open browser **DevTools → Network**, generate and copy results, and verify that no request contains a generated value.
+
+If Web Crypto is unavailable, generation stops instead of falling back to `Math.random()`. Component versions, corpora, and licenses are listed in [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md).
 
 ## Format-oriented test schemes
 
@@ -111,11 +143,11 @@ Cracking time is a comparative theoretical model, not a security guarantee. Real
 
 | Data | Handling |
 |---|---|
-| Passwords, PINs, passphrases | Generated in the current browser; not uploaded to a project server |
+| Passwords, PINs, passphrases, and input | Generated and analyzed locally; never included in network requests or analytics parameters |
 | Settings | Stored in browser-local storage for restoration |
 | History | Session-only by default and can be cleared by the user |
 | Word packs | Loaded from this site's static assets; no third-party random-word API is called at generation time |
-| Google Analytics | Basic visit measurement; passwords, PINs, passphrases, and user input are not sent as analytics events |
+| Google Analytics | Anonymous visit measurement only; no `generated_value`, credential, or input parameters |
 
 Clipboard writes remain subject to browser permission and secure-context policies. If access is denied, the generated value stays visible for manual copying.
 
@@ -139,18 +171,23 @@ http://127.0.0.1:8765/
 npm test
 ```
 
-The deterministic suite covers Web Crypto entry points, rejection sampling, password and PIN rules, actual-result strength analysis, word-pack loading and integrity, format schemes, URL anchors, SEO metadata, and integrated page behavior.
+The deterministic suite covers Web Crypto entry points, rejection sampling, sanitized zxcvbn output, three attack models, the full PIN corpus, actual-result analysis, word-pack integrity, format schemes, URL anchors, SEO metadata, and integrated page behavior.
 
 ## Project layout
 
 ```text
 .
 ├── index.html                    # Deployable application entry
-├── assets/                       # Social assets, engines, and versioned word packs
+├── assets/                       # Social assets, security-analysis resources, and word packs
+│   ├── data/                     # Versioned PIN risk index and source integrity metadata
+│   ├── js/                       # Embedded analysis and passphrase runtimes
+│   ├── modules/                  # On-demand PIN-risk analysis module
+│   ├── vendor/                   # Browser zxcvbn analyzer and license
 │   └── wordpacks/                # Manifest, JSON packs, and compressed resources
 ├── scripts/                      # Word-pack and embedded-module build scripts
 ├── tests/                        # Deterministic Node.js tests
 ├── docs/readme-en.md             # English README
+├── THIRD_PARTY_NOTICES.md        # Third-party components, corpora, and licenses
 ├── llms.txt                      # Compact project facts for generative retrieval
 ├── robots.txt / sitemap.xml      # Subproject discovery hints
 └── password-generator-icon.*     # Logo and favicon

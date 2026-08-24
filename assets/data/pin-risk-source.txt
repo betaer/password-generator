@@ -1,0 +1,10 @@
+PIN risk corpus
+SecLists commit: 0e0329aa77f0f3d2ff5035e989ad320a2ac4a35d
+4-digit source: https://raw.githubusercontent.com/danielmiessler/SecLists/0e0329aa77f0f3d2ff5035e989ad320a2ac4a35d/Passwords/Common-Credentials/four-digit-pin-codes-sorted-by-frequency-withcount.csv
+4-digit sha256: 18e0ebf05f5a9ab24dfd1d59cff979e931bc0dee8d0663008d6bd3e4b0fc320b
+4-digit records: 10000
+6-digit source: https://raw.githubusercontent.com/danielmiessler/SecLists/0e0329aa77f0f3d2ff5035e989ad320a2ac4a35d/Passwords/Common-Credentials/xato-net-10-million-passwords-1000000.txt
+6-digit sha256: 424a3e03a17df0a2bc2b3ca749d81b04e79d59cb7aeec8876a5a3f308d0caf51
+6-digit numeric unique records: 68202
+
+This derived index stores PIN values/ranks only. It is used locally for defensive weak-PIN detection.
