@@ -46,6 +46,24 @@ test('右下角提供 GitHub 与按语言选择文案的分享本站按钮', () 
   assert.doesNotMatch(floatingActions, /React\.createElement\(Tooltip/, '右下角两个按钮不应显示黑色气泡提示');
 });
 
+test('页面超过一屏且已向下滚动时在快捷按钮上方显示回到顶部', () => {
+  const helperSource = app.match(/function shouldShowBackToTop[\s\S]*?(?=\nfunction isChineseLocale)/)?.[0];
+  assert.ok(helperSource, '缺少回到顶部可见性判断函数');
+  const shouldShowBackToTop = Function(`${helperSource}; return shouldShowBackToTop;`)();
+  assert.equal(shouldShowBackToTop(1200, 800, 0), false, '页面顶部不应显示');
+  assert.equal(shouldShowBackToTop(800, 800, 200), false, '页面不超过一屏时不应显示');
+  assert.equal(shouldShowBackToTop(1200, 800, 80), false, '轻微滚动不应显示');
+  assert.equal(shouldShowBackToTop(1200, 800, 81), true, '长页面向下滚动后应显示');
+  assert.match(app, /const \[showBackToTop, setShowBackToTop\] = useState\(false\)/);
+  assert.match(app, /new ResizeObserver\(updateBackToTopVisibility\)/);
+  assert.match(app, /window\.addEventListener\('scroll', updateBackToTopVisibility, \{ passive: true \}\)/);
+  assert.match(app, /window\.scrollTo\(\{ top: 0, left: 0, behavior \}\)/);
+  const floatingActions = app.slice(app.indexOf('className: "site-floating-actions"'), app.indexOf('function RootApp'));
+  assert.ok(floatingActions.indexOf('site-floating-backtop') < floatingActions.indexOf('site-floating-github'), '回到顶部应位于 GitHub 按钮上方');
+  assert.match(floatingActions, /showBackToTop \? React\.createElement\(Button/);
+  assert.match(app, /"回到顶部"/);
+});
+
 test('分享文案在浏览器或系统语言命中中文时使用中文，否则使用英文', () => {
   const sourceStart = app.indexOf("const GITHUB_PAGES_URL =");
   const sourceEnd = app.indexOf('const { Header', sourceStart);

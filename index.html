@@ -3016,6 +3016,9 @@ const InfoCircleFilled = createInlineIcon([
 const ReloadOutlined = createInlineIcon([
   { d: 'M20 6v5h-5M4 18v-5h5M18.5 9A7.5 7.5 0 0 0 6 6.5L4 9M5.5 15A7.5 7.5 0 0 0 18 17.5l2-2.5', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
 ]);
+const ArrowUpOutlined = createInlineIcon([
+  { d: 'M12 20V4M5.5 10.5 12 4l6.5 6.5', stroke: 'currentColor', strokeWidth: 1.9, strokeLinecap: 'round', strokeLinejoin: 'round' }
+]);
 const SafetyCertificateFilled = createInlineIcon([
   { d: 'M12 2.8 4.5 5.7v5c0 4.7 2.9 8.8 7.5 10.5 4.6-1.7 7.5-5.8 7.5-10.5v-5L12 2.8Z', stroke: 'currentColor', strokeWidth: 1.8, strokeLinejoin: 'round' },
   { d: 'm8.6 12.1 2.1 2.1 4.8-4.8', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
@@ -3120,6 +3123,9 @@ Try it now:
 ${GITHUB_PAGES_URL}`,
 });
 const CHINESE_LOCALE_PATTERN = /^(?:zh|cmn|yue|wuu|hak|nan)(?:[-_]|$)/i;
+function shouldShowBackToTop(pageHeight, viewportHeight, scrollTop) {
+    return Number(pageHeight) > Number(viewportHeight) + 1 && Number(scrollTop) > 80;
+}
 function isChineseLocale(locale) {
     return CHINESE_LOCALE_PATTERN.test(String(locale || '').trim());
 }
@@ -4557,6 +4563,7 @@ function PasswordGenerator() {
     const [copiedResultSignature, setCopiedResultSignature] = useState('');
     const [history, setHistory] = useState([]);
     const [historyExpanded, setHistoryExpanded] = useState(false);
+    const [showBackToTop, setShowBackToTop] = useState(false);
     const historyRef = useRef([]);
     const historyStorage = getBrowserStorage('session');
     const embeddedCommonPack = useMemo(() => ({
@@ -4707,6 +4714,37 @@ function PasswordGenerator() {
             historyRef.current = [];
             setHistory([]);
         }
+    }, []);
+    useEffect(() => {
+        let animationFrame = 0;
+        const updateBackToTopVisibility = () => {
+            if (animationFrame)
+                window.cancelAnimationFrame(animationFrame);
+            animationFrame = window.requestAnimationFrame(() => {
+                const scrollRoot = document.scrollingElement || document.documentElement;
+                const pageHeight = Math.max(scrollRoot?.scrollHeight || 0, document.body?.scrollHeight || 0);
+                const scrollTop = window.scrollY || scrollRoot?.scrollTop || 0;
+                setShowBackToTop(shouldShowBackToTop(pageHeight, window.innerHeight, scrollTop));
+            });
+        };
+        updateBackToTopVisibility();
+        window.addEventListener('scroll', updateBackToTopVisibility, { passive: true });
+        window.addEventListener('resize', updateBackToTopVisibility);
+        const resizeObserver = typeof ResizeObserver === 'function'
+            ? new ResizeObserver(updateBackToTopVisibility)
+            : null;
+        if (resizeObserver) {
+            resizeObserver.observe(document.documentElement);
+            if (document.body)
+                resizeObserver.observe(document.body);
+        }
+        return () => {
+            window.removeEventListener('scroll', updateBackToTopVisibility);
+            window.removeEventListener('resize', updateBackToTopVisibility);
+            resizeObserver?.disconnect();
+            if (animationFrame)
+                window.cancelAnimationFrame(animationFrame);
+        };
     }, []);
     useEffect(() => {
         loadSelectedWordPack(stateRef.current.memorable, false);
@@ -4929,6 +4967,12 @@ function PasswordGenerator() {
     };
     const copySharePromotion = async () => {
         await copyText(getSharePromotionText(), '本站分享文案已复制');
+    };
+    const scrollPageToTop = () => {
+        const reduceMotion = typeof window.matchMedia === 'function'
+            && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const behavior = reduceMotion ? 'auto' : 'smooth';
+        window.scrollTo({ top: 0, left: 0, behavior });
     };
     const switchMode = (mode) => {
         const next = structuredClone(stateRef.current);
@@ -5227,6 +5271,8 @@ function PasswordGenerator() {
                             state.mode === 'pin' ? ' PIN' : state.mode === 'memorable' ? '记忆短语' : '密码')),
                     renderResultPane()))),
         React.createElement("div", { className: "site-floating-actions", role: "group", "aria-label": "网站快捷操作" },
+            showBackToTop ? React.createElement(Button, { className: "site-floating-button site-floating-backtop", icon: React.createElement(ArrowUpOutlined, null), onClick: scrollPageToTop, "aria-label": "回到顶部" },
+                React.createElement("span", { className: "site-floating-button-label" }, "回到顶部")) : null,
             React.createElement(Button, { className: "site-floating-button site-floating-github", href: GITHUB_REPOSITORY_URL, target: "_blank", rel: "noreferrer", icon: React.createElement(GitHubOutlined, null), "aria-label": `在 GitHub 查看源代码，${GITHUB_STAR_DISPLAY} Stars` },
                 React.createElement("span", { className: "site-floating-button-label" }, "GitHub"),
                 React.createElement("span", { className: "site-floating-star-badge", "aria-hidden": "true" }, GITHUB_STAR_DISPLAY)),
