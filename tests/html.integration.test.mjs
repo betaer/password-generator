@@ -40,6 +40,8 @@ test('右下角提供 GitHub 与按语言选择文案的分享本站按钮', () 
   assert.match(app, /copyText\(getSharePromotionText\(\), '本站分享文案已复制'\)/);
   assert.match(app, /"分享本站"/);
   assert.match(html, /\.site-floating-actions \{[\s\S]*?position: fixed/);
+  assert.match(html, /\.site-floating-button\.ant-btn \{[\s\S]*?width: 120px;[\s\S]*?min-width: 120px;/);
+  assert.match(html, /@media \(max-width: 640px\)[\s\S]*?\.site-floating-button\.ant-btn \{[\s\S]*?min-width: 44px;[\s\S]*?width: 44px;/);
   assert.match(html, /\.site-floating-github\.ant-btn,[\s\S]*?\.site-floating-copy\.ant-btn \{[\s\S]*?color: #172033/);
   assert.match(html, /\.site-floating-star-badge \{[\s\S]*?background: #172033/);
   const floatingActions = app.slice(app.indexOf('className: "site-floating-actions"'), app.indexOf('function RootApp'));
