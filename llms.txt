@@ -1,4 +1,4 @@
-# 密码生成器_助记词、PIN码 | Password Generator_Passphrase_PIN
+# 密码生成器 Password Generator｜随机密码、记忆短语与 PIN
 
 > 免费、专业、完全在浏览器本地运行的密码与记忆短语生成工具。
 

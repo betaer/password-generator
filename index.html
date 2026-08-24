@@ -6,10 +6,10 @@
   <meta name="color-scheme" content="light" />
   <meta name="referrer" content="no-referrer" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'unsafe-inline'; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://stats.g.doubleclick.net; img-src 'self' data: blob: https://www.google-analytics.com https://www.googletagmanager.com; font-src data:; object-src 'none'; base-uri 'none'; form-action 'none'" />
-  <title>密码生成器_助记词、PIN码 | Password Generator_Passphrase_PIN</title>
-  <meta name="title" content="密码生成器_助记词、PIN码 | Password Generator_Passphrase_PIN" />
-  <meta name="application-name" content="密码生成器_助记词、PIN码 | Password Generator_Passphrase_PIN" />
-  <meta name="description" content="免费在线密码生成器、助记词（记忆短语）与 PIN 码生成工具，支持密码长度、字符类型、符号比例、密码强度和预计破解时间分析。使用浏览器 Web Crypto API 在本地安全生成，密码与输入内容不会上传。" />
+  <title>密码生成器 Password Generator｜随机密码、记忆短语与 PIN</title>
+  <meta name="title" content="密码生成器 Password Generator｜随机密码、记忆短语与 PIN" />
+  <meta name="application-name" content="密码生成器 | Password Generator" />
+  <meta name="description" content="免费、专业的浏览器本地密码生成器，支持随机密码、记忆短语（助记词式口令）、PIN 和动态密码强度分析。使用 Web Crypto API 安全生成，密码与输入内容不会上传。" />
   <meta name="keywords" content="密码生成器,随机密码生成器,强密码,助记词,助记词生成器,记忆短语,口令,Passphrase,PIN码,PIN生成器,密码强度,Password Generator,Passphrase Generator,PIN Generator" />
   <meta name="subject" content="浏览器本地密码、助记词（记忆短语）与 PIN 码生成工具" />
   <meta name="abstract" content="A privacy-first Password Generator, Passphrase Generator and PIN Generator powered by the browser Web Crypto API." />
@@ -30,7 +30,7 @@
   <meta property="og:site_name" content="密码生成器 · Password Generator" />
   <meta property="og:locale" content="zh_CN" />
   <meta property="og:locale:alternate" content="en_US" />
-  <meta property="og:title" content="密码生成器_助记词、PIN码 | Password Generator_Passphrase_PIN" />
+  <meta property="og:title" content="密码生成器 Password Generator｜随机密码、记忆短语与 PIN" />
   <meta property="og:description" content="浏览器本地生成随机密码、助记词（记忆短语）和 PIN 码，实时分析密码强度与预计破解时间；密码和输入内容不上传。" />
   <meta property="og:url" content="https://betaer.github.io/password-generator/" />
   <meta property="og:image" content="https://betaer.github.io/password-generator/assets/social-preview.png" />
@@ -41,7 +41,7 @@
   <meta property="og:image:alt" content="密码生成器 Password Generator：本地生成、不上传" />
 
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="密码生成器_助记词、PIN码 | Password Generator_Passphrase_PIN" />
+  <meta name="twitter:title" content="密码生成器 Password Generator｜随机密码、记忆短语与 PIN" />
   <meta name="twitter:description" content="浏览器本地生成随机密码、助记词（记忆短语）和 PIN 码，实时分析密码强度；密码和输入内容不上传。" />
   <meta name="twitter:image" content="https://betaer.github.io/password-generator/assets/social-preview.png" />
   <meta name="twitter:image:alt" content="密码生成器 Password Generator：本地生成、不上传" />
@@ -52,7 +52,10 @@
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'G-DWZ72TFWQF');
+    gtag('config', 'G-DWZ72TFWQF', {
+      allow_google_signals: false,
+      allow_ad_personalization_signals: false
+    });
   </script>
 
   <script type="application/ld+json">
@@ -63,9 +66,9 @@
         "@type": "WebSite",
         "@id": "https://betaer.github.io/password-generator/#website",
         "url": "https://betaer.github.io/password-generator/",
-        "name": "密码生成器_助记词、PIN码",
-        "alternateName": "Password Generator_Passphrase_PIN",
-        "description": "浏览器本地运行的密码生成器、助记词（记忆短语）生成器与 PIN 码生成器。",
+        "name": "密码生成器 Password Generator",
+        "alternateName": "随机密码、记忆短语与 PIN 生成器",
+        "description": "浏览器本地运行的随机密码、记忆短语（助记词式口令）与 PIN 生成器。",
         "inLanguage": ["zh-CN", "en"],
         "publisher": { "@id": "https://betaer.github.io/password-generator/#author" }
       },
@@ -78,8 +81,8 @@
       {
         "@type": "WebApplication",
         "@id": "https://betaer.github.io/password-generator/#application",
-        "name": "密码生成器",
-        "alternateName": ["Password Generator", "Passphrase Generator", "PIN Generator"],
+        "name": "密码生成器 Password Generator",
+        "alternateName": ["Password Generator", "随机密码生成器", "Passphrase Generator", "PIN Generator"],
         "url": "https://betaer.github.io/password-generator/",
         "description": "免费在线生成随机密码、助记词（记忆短语）和 PIN 码，并根据实际结果分析字符多样性、理论熵、穷举次数和预计破解时间。所有敏感内容在浏览器本地生成，不上传服务器。",
         "keywords": ["密码生成器", "助记词", "记忆短语", "PIN码", "Password Generator", "Passphrase Generator", "PIN Generator"],
@@ -2618,11 +2621,12 @@ button, input, textarea { font: inherit; }
 .seo-shell h1 { font-size: clamp(24px, 3vw, 34px); line-height: 1.25; }
 .seo-shell h2 { font-size: 17px; line-height: 1.4; }
 .seo-shell p { margin: 8px 0 0; color: #526079; font-size: 14px; line-height: 1.75; }
+.seo-shell-features { margin-top: 24px; }
 .seo-shell-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  margin-top: 22px;
+  margin-top: 12px;
 }
 .seo-shell-card {
   padding: 18px;
@@ -2635,6 +2639,35 @@ button, input, textarea { font: inherit; }
 .seo-shell-card a { display: inline-block; margin-top: 12px; font-size: 13px; }
 .seo-shell-card a:hover,
 .seo-shell-footer a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.seo-shell-security {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid #cfe2ff;
+  border-radius: 14px;
+  background: #f2f7ff;
+}
+.seo-shell-security-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 18px;
+  margin: 14px 0 0;
+  padding: 0;
+  color: #42526b;
+  font-size: 13px;
+  line-height: 1.65;
+  list-style: none;
+}
+.seo-shell-security-list li { position: relative; padding-left: 16px; }
+.seo-shell-security-list li::before {
+  position: absolute;
+  top: .7em;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blue);
+  content: "";
+}
 .seo-shell-faq { margin-top: 24px; padding-top: 22px; border-top: 1px dashed #d8e0eb; }
 .seo-shell-faq-list { display: grid; gap: 8px; margin-top: 12px; }
 .seo-shell-faq details { padding: 12px 14px; border-radius: 12px; background: #fff; }
@@ -2654,6 +2687,7 @@ button, input, textarea { font: inherit; }
 @media (max-width: 760px) {
   .seo-shell { width: calc(100% - 24px); margin-block: 18px 28px; padding: 20px; border-radius: 16px; }
   .seo-shell-grid { grid-template-columns: 1fr; }
+  .seo-shell-security-list { grid-template-columns: 1fr; }
   .seo-shell-footer { align-items: flex-start; flex-direction: column; }
 }
 
@@ -2662,30 +2696,43 @@ button, input, textarea { font: inherit; }
 </head>
 <body>
   <div id="root"></div>
-  <section class="seo-shell" aria-labelledby="seo-shell-title">
+  <main id="seo-content" class="seo-shell" aria-labelledby="seo-shell-title">
     <header class="seo-shell-header">
       <p class="seo-shell-eyebrow">本地安全工具 · Local Security Tool</p>
-      <h1 id="seo-shell-title">密码生成器、助记词与 PIN 码工具</h1>
-      <p>免费生成高强度随机密码、助记词（记忆短语）和 PIN 码，并根据每次实际生成结果分析字符多样性、理论熵、穷举次数与预计破解时间。生成过程使用浏览器 Web Crypto API，密码和输入内容不会上传服务器。</p>
+      <h1 id="seo-shell-title">密码生成器 Password Generator</h1>
+      <p>免费、专业的浏览器本地密码生成器，支持随机密码、记忆短语（助记词式口令）、PIN 和动态密码强度分析。可根据每次实际生成结果分析字符多样性、理论熵、穷举次数与预计破解时间。</p>
     </header>
 
-    <div class="seo-shell-grid" aria-label="密码生成器核心功能">
-      <article class="seo-shell-card">
-        <h2>随机密码生成器</h2>
-        <p>自定义密码长度、字符类型、符号比例、开头与结尾规则，适合账号密码、主密码、API Token 和测试字符串。</p>
-        <a href="#password">生成随机密码</a>
-      </article>
-      <article class="seo-shell-card">
-        <h2>助记词与记忆短语</h2>
-        <p>从安全随机词库生成便于记忆的 Passphrase，可选择词数、词库、大小写和分隔方式，并显示实际理论熵。</p>
-        <a href="#words">生成记忆短语</a>
-      </article>
-      <article class="seo-shell-card">
-        <h2>PIN 码生成器</h2>
-        <p>生成 4 位、6 位或自定义长度的纯数字 PIN，可过滤明显弱 PIN、重复数字和连续数字组合。</p>
-        <a href="#pin">生成 PIN 码</a>
-      </article>
-    </div>
+    <section class="seo-shell-features" aria-labelledby="seo-features-title">
+      <h2 id="seo-features-title">核心功能</h2>
+      <div class="seo-shell-grid">
+        <article class="seo-shell-card">
+          <h2>随机密码生成器</h2>
+          <p>自定义密码长度、字符类型、符号比例、开头与结尾规则，适合账号密码、主密码、API Token 和测试字符串。</p>
+          <a href="#password">生成随机密码</a>
+        </article>
+        <article class="seo-shell-card">
+          <h2>记忆短语生成器</h2>
+          <p>从安全随机词库生成便于记忆的 Passphrase，可选择词数、词库、大小写和分隔方式，并显示实际理论熵。</p>
+          <a href="#words">生成记忆短语</a>
+        </article>
+        <article class="seo-shell-card">
+          <h2>PIN 码生成器</h2>
+          <p>生成 4 位、6 位或自定义长度的纯数字 PIN，可过滤明显弱 PIN、重复数字和连续数字组合。</p>
+          <a href="#pin">生成 PIN 码</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="seo-shell-security" aria-labelledby="seo-security-title">
+      <h2 id="seo-security-title">所有密码均在浏览器本地生成</h2>
+      <p>随机密码、记忆短语、PIN 和输入内容均在当前设备中处理，不会作为生成数据发送到服务器。</p>
+      <ul class="seo-shell-security-list">
+        <li>使用 Web Crypto API 提供的密码学安全随机数</li>
+        <li>生成结果与历史记录只在当前浏览器中处理</li>
+        <li>访问统计不包含密码、PIN、记忆短语或输入内容</li>
+      </ul>
+    </section>
 
     <section class="seo-shell-faq" aria-labelledby="seo-faq-title">
       <h2 id="seo-faq-title">常见问题</h2>
@@ -2709,7 +2756,7 @@ button, input, textarea { font: inherit; }
       <span>密码生成器 · Password Generator</span>
       <a href="https://betaer.github.io/AiSignalGuard/" title="AI Signal Guard" target="_blank" rel="noopener noreferrer">AI 网络与隐私检测</a>
     </footer>
-  </section>
+  </main>
   <script>
     if (window.location.protocol === 'file:') {
       document.write('<script src="./assets/js/embedded-word-packs.js"><\/script>');
