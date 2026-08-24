@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="light" />
   <meta name="referrer" content="no-referrer" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data: blob:; font-src data:; object-src 'none'; base-uri 'none'; form-action 'none'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'unsafe-inline'; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://www.googletagmanager.com; img-src 'self' data: blob: https://www.google-analytics.com https://www.googletagmanager.com; font-src data:; object-src 'none'; base-uri 'none'; form-action 'none'" />
   <title>密码生成器 | Password Generator</title>
   <meta name="application-name" content="密码生成器 | Password Generator" />
   <meta name="description" content="免费、专业的本地密码生成器，支持随机密码、记忆短语和 PIN，可调长度、字符类型与符号比例，并实时分析密码强度。所有生成内容只在浏览器中处理，不上传服务器。" />
@@ -36,6 +36,15 @@
   <meta name="twitter:description" content="浏览器本地生成随机密码、记忆短语和 PIN，实时分析密码强度；所有生成内容不上传服务器。" />
   <meta name="twitter:image" content="https://betaer.github.io/password-generator/assets/social-preview.png" />
   <meta name="twitter:image:alt" content="密码生成器 Password Generator：本地生成、不上传" />
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-DWZ72TFWQF"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-DWZ72TFWQF');
+  </script>
 
   <script type="application/ld+json">
   {
@@ -74,7 +83,7 @@
     ]
   }
   </script>
-  <!-- 内置 React、Ant Design 及其必要依赖；运行时不加载任何外部资源。相关开源组件遵循各自的 MIT 许可证。 -->
+  <!-- 内置 React、Ant Design 及其必要依赖；应用功能不依赖外部资源。Google Analytics 仅用于基础访问统计。相关开源组件遵循各自的 MIT 许可证。 -->
   <style>
 :root {
   color-scheme: light;
