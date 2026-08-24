@@ -4105,9 +4105,35 @@ function TooltipContent({ title, paragraphs = [], items = [], note = '' }) {
 function tooltipCopy(title, paragraphs, items = [], note = '') {
     return React.createElement(TooltipContent, { title, paragraphs: Array.isArray(paragraphs) ? paragraphs : [paragraphs], items, note });
 }
+function isTouchTooltipEnvironment() {
+    if (typeof window === 'undefined')
+        return false;
+    const coarsePointer = typeof window.matchMedia === 'function'
+        && window.matchMedia('(hover: none), (pointer: coarse)').matches;
+    const hasTouchPoints = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
+    return coarsePointer || hasTouchPoints;
+}
+function useTouchTooltip() {
+    const [touchTooltip, setTouchTooltip] = useState(isTouchTooltipEnvironment);
+    useEffect(() => {
+        if (typeof window.matchMedia !== 'function')
+            return undefined;
+        const pointerMedia = window.matchMedia('(hover: none), (pointer: coarse)');
+        const update = () => setTouchTooltip(isTouchTooltipEnvironment());
+        pointerMedia.addEventListener?.('change', update);
+        return () => pointerMedia.removeEventListener?.('change', update);
+    }, []);
+    return touchTooltip;
+}
 function InfoTip({ title, ariaLabel = '查看说明' }) {
     const content = typeof title === 'string' ? React.createElement(TooltipContent, { paragraphs: [title] }) : title;
-    return React.createElement(Tooltip, { title: content, placement: "top", mouseEnterDelay: 0, mouseLeaveDelay: 0, overlayClassName: "readable-tooltip" },
+    const touchTooltip = useTouchTooltip();
+    const [touchOpen, setTouchOpen] = useState(false);
+    useEffect(() => {
+        if (!touchTooltip)
+            setTouchOpen(false);
+    }, [touchTooltip]);
+    return React.createElement(Tooltip, { title: content, placement: "top", mouseEnterDelay: 0, mouseLeaveDelay: 0, overlayClassName: "readable-tooltip", trigger: touchTooltip ? ["click"] : ["hover", "focus"], open: touchTooltip ? touchOpen : undefined, onOpenChange: touchTooltip ? setTouchOpen : undefined },
         React.createElement(InfoCircleFilled, { className: "info-tip", "aria-label": ariaLabel, tabIndex: 0 }));
 }
 function MetricLabel({ label, info }) {

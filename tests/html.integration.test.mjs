@@ -41,6 +41,16 @@ test('首次冷启动所需的两个小型运行时已压缩内置且可以直�
   assert.equal(typeof sandbox.WordPackRuntime?.WordPackManager, 'function');
 });
 
+test('说明气泡在触摸设备首次点击后保持展开并支持点击外部关闭', () => {
+  const infoTipSource = app.match(/function isTouchTooltipEnvironment[\s\S]*?(?=\nfunction MetricLabel)/)?.[0];
+  assert.ok(infoTipSource, '缺少触摸设备气泡交互逻辑');
+  assert.match(infoTipSource, /matchMedia\('\(hover: none\), \(pointer: coarse\)'\)/);
+  assert.match(infoTipSource, /navigator\.maxTouchPoints > 0/);
+  assert.match(infoTipSource, /trigger: touchTooltip \? \["click"\] : \["hover", "focus"\]/);
+  assert.match(infoTipSource, /open: touchTooltip \? touchOpen : undefined/);
+  assert.match(infoTipSource, /onOpenChange: touchTooltip \? setTouchOpen : undefined/);
+});
+
 test('V1.7.5 顶部导航使用四种批准图标', () => {
   for (const token of ['SparklesOutlined', 'BulbOutlined', 'DialPadOutlined', 'SafetyCertificateFilled']) {
     assert.match(app, new RegExp(token), `缺少 ${token}`);
