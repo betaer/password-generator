@@ -133,7 +133,7 @@
           {
             "@type": "Question",
             "name": "密码和助记词会上传到服务器吗？",
-            "acceptedAnswer": { "@type": "Answer", "text": "不会。密码、助记词（记忆短语）、PIN 码和历史记录都在当前浏览器中处理，生成内容不会发送到服务器。" }
+            "acceptedAnswer": { "@type": "Answer", "text": "不会。密码、助记词（记忆短语）和 PIN 码都在当前浏览器中处理，生成内容不会发送到服务器。历史记录只保存在当前标签页会话，不会跨浏览器会话持久保存，可随时清空。" }
           },
           {
             "@type": "Question",
@@ -2702,7 +2702,7 @@ button, input, textarea { font: inherit; }
 }
 .seo-shell-security-list {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px 18px;
   margin: 14px 0 0;
   padding: 0;
@@ -2722,6 +2722,15 @@ button, input, textarea { font: inherit; }
   background: var(--blue);
   content: "";
 }
+.seo-shell-security-note {
+  margin-top: 16px !important;
+  padding: 13px 15px;
+  border: 1px solid #f2dda7;
+  border-radius: 12px;
+  color: #5d4a20 !important;
+  background: #fffbeb;
+}
+.seo-shell-security-note strong { color: #3d321a; }
 .seo-shell-faq { margin-top: 24px; padding-top: 22px; border-top: 1px dashed #d8e0eb; }
 .seo-shell-faq-list { display: grid; gap: 8px; margin-top: 12px; }
 .seo-shell-faq details { padding: 12px 14px; border-radius: 12px; background: #fff; }
@@ -2779,13 +2788,15 @@ button, input, textarea { font: inherit; }
     </section>
 
     <section class="seo-shell-security" aria-labelledby="seo-security-title">
-      <h2 id="seo-security-title">所有密码均在浏览器本地生成</h2>
-      <p>随机密码、记忆短语、PIN 和输入内容均在当前设备中处理，不会作为生成数据发送到服务器。</p>
+      <h2 id="seo-security-title">安全与可验证性</h2>
+      <p>随机密码、记忆短语、PIN 和输入内容均在当前设备中生成与分析，不会作为生成数据发送到服务器。</p>
       <ul class="seo-shell-security-list">
-        <li>使用 Web Crypto API 提供的密码学安全随机数</li>
-        <li>生成结果与历史记录只在当前浏览器中处理</li>
-        <li>访问统计不包含密码、PIN、记忆短语或输入内容</li>
+        <li>使用 Web Crypto API 与拒绝采样，避免不安全随机数和取模偏差</li>
+        <li>zxcvbn、PIN 风险库和词包只从本站同源静态资源加载</li>
+        <li>匿名访问统计不包含密码、PIN、记忆短语或输入内容</li>
+        <li>可通过 DevTools → Network 验证网络请求中不存在生成内容</li>
       </ul>
+      <p class="seo-shell-security-note"><strong>当前会话历史：</strong>历史记录不会跨浏览器会话持久保存；仅保存在当前标签页的 sessionStorage，刷新页面仍可恢复，关闭当前标签页后自动清除，也可随时手动清空。</p>
     </section>
 
     <section class="seo-shell-faq" aria-labelledby="seo-faq-title">
@@ -2793,7 +2804,11 @@ button, input, textarea { font: inherit; }
       <div class="seo-shell-faq-list">
         <details>
           <summary>密码和助记词会上传到服务器吗？</summary>
-          <p>不会。密码、助记词（记忆短语）、PIN 码和历史记录均在当前浏览器中处理，生成内容不会发送到服务器。</p>
+          <p>不会。密码、助记词（记忆短语）和 PIN 码均在当前浏览器中处理，生成内容不会发送到服务器。</p>
+        </details>
+        <details>
+          <summary>历史记录会长期保存吗？</summary>
+          <p>不会。历史记录只保存在当前标签页会话的 sessionStorage 中，不会跨浏览器会话持久保存；关闭标签页后自动清除，也可随时手动清空。</p>
         </details>
         <details>
           <summary>随机密码是否使用安全随机数？</summary>
@@ -5464,7 +5479,7 @@ function PasswordGenerator() {
                         React.createElement("span", { className: "heading-title-content" },
                             React.createElement(HeadingIcon, { icon: HistoryOutlined }),
                             React.createElement("span", null, "\u5386\u53F2\u8BB0\u5F55"))),
-                    React.createElement(InfoTip, { title: tooltipCopy('历史记录', '默认只保存本次浏览器会话内生成的密码。', ['关闭页面后自动清除', '记录中包含明文密码', '可逐条删除或一键清空'], '请勿在公共设备上长时间保留本页面。') }),
+                    React.createElement(InfoTip, { title: tooltipCopy('历史记录', '不会跨浏览器会话持久保存，仅保存在当前标签页会话。', ['刷新页面仍可恢复', '关闭标签页后自动清除', '可逐条删除或随时一键清空'], '记录中包含明文密码，请勿在公共设备上长时间保留本页面。') }),
                     history.length > 10 ? React.createElement(Text, { type: "secondary" },
                         "\u5171 ",
                         history.length,
@@ -5541,7 +5556,7 @@ function PasswordGenerator() {
                     React.createElement("strong", null, "本地结果")),
                 React.createElement("section", null,
                     React.createElement("h3", null, "密码数据平面"),
-                    React.createElement("p", null, "密码、PIN、记忆短语和用户输入只在当前浏览器中生成与分析，不会作为网络请求或统计参数发送。历史记录仅保存在当前标签页会话的 sessionStorage 中，关闭会话后清除。")),
+                    React.createElement("p", null, "密码、PIN、记忆短语和用户输入只在当前浏览器中生成与分析，不会作为网络请求或统计参数发送。历史记录不会跨浏览器会话持久保存；仅保存在当前标签页会话的 sessionStorage 中，刷新页面仍可恢复，关闭标签页后自动清除，也可随时手动清空。")),
                 React.createElement("section", null,
                     React.createElement("h3", null, "静态资源平面"),
                     React.createElement("p", null, "zxcvbn 模式分析器、PIN 风险库与 7,776 词词包均从本站同源静态文件加载；加载的是公开模型与词表，不包含生成结果。")),

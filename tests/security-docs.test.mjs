@@ -28,6 +28,8 @@ test('中英文 README 说明完整安全分析链路', () => {
     assert.match(content, /安全保证|security guarantee/i);
     assert.match(content, /DevTools/i);
     assert.match(content, /generated_value/);
+    assert.match(content, /不会跨浏览器会话持久保存|not persisted across browser sessions/i);
+    assert.match(content, /随时清空|cleared at any time/i);
   }
 });
 

@@ -447,3 +447,14 @@ test('本地生成入口可打开安全实现说明', () => {
   assert.match(app, /React\.createElement\(Modal, \{[\s\S]*?open: securityModalOpen/);
   assert.match(app, /本地安全运行时加载失败/);
 });
+
+test('网站底部公开展示安全边界、会话历史与自行验证方法', () => {
+  assert.match(html, /id="seo-security-title">安全与可验证性</);
+  assert.match(html, /Web Crypto API/);
+  assert.match(html, /拒绝采样/);
+  assert.match(html, /历史记录不会跨浏览器会话持久保存/);
+  assert.match(html, /关闭当前标签页后自动清除，也可随时手动清空/);
+  assert.match(html, /DevTools → Network/);
+  assert.match(app, /sessionStorage/);
+  assert.doesNotMatch(app, /localStorage\.setItem\(HISTORY_SESSION_KEY/);
+});

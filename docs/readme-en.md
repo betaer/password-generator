@@ -122,7 +122,7 @@ The UI compares three models instead of presenting one speed as a fact:
 Browser CSPRNG → Rejection Sampling → Pattern-aware analysis → Local result
 ```
 
-- Passwords, PINs, passphrases, user input, and generated history form the **password data plane** and stay in the current browser.
+- Passwords, PINs, passphrases, user input, and generated history form the **password data plane** and stay in the current browser. History uses only `sessionStorage`; it is not persisted across browser sessions, disappears when the tab is closed, and can be cleared at any time.
 - `zxcvbn`, the PIN corpus, and word packs form a **static resource plane** loaded from same-origin paths; requests contain no generated values.
 - Google Analytics is used only for anonymous visit measurement. There is no `generated_value` event parameter, and credentials or user input are never sent.
 - Open browser **DevTools → Network**, generate and copy results, and verify that no request contains a generated value.
@@ -145,7 +145,7 @@ If Web Crypto is unavailable, generation stops instead of falling back to `Math.
 |---|---|
 | Passwords, PINs, passphrases, and input | Generated and analyzed locally; never included in network requests or analytics parameters |
 | Settings | Stored in browser-local storage for restoration |
-| History | Session-only by default and can be cleared by the user |
+| History | Stored only in the current tab's `sessionStorage`; not persisted across browser sessions, removed when the tab closes, and can be cleared at any time |
 | Word packs | Loaded from this site's static assets; no third-party random-word API is called at generation time |
 | Google Analytics | Anonymous visit measurement only; no `generated_value`, credential, or input parameters |
 

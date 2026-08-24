@@ -57,7 +57,7 @@ test('静态 SEO Shell 在应用根节点之外提供功能说明、FAQ 与相�
   assert.ok(rootEnd > -1 && shellStart > rootEnd, 'SEO Shell 应位于应用根节点之外');
   assert.match(html, /<h1 id="seo-shell-title">密码生成器 Password Generator<\/h1>/);
   assert.match(html, /<h2 id="seo-features-title">核心功能<\/h2>/);
-  assert.match(html, /<h2 id="seo-security-title">所有密码均在浏览器本地生成<\/h2>/);
+  assert.match(html, /<h2 id="seo-security-title">安全与可验证性<\/h2>/);
   assert.match(html, /访问统计不包含密码、PIN、记忆短语或输入内容/);
   assert.match(html, /Web Crypto API/);
   assert.match(html, /href="https:\/\/betaer\.github\.io\/AiSignalGuard\/" title="AI Signal Guard"/);
