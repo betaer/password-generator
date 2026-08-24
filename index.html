@@ -4640,7 +4640,7 @@ function PasswordGenerator() {
         };
     }, []);
     useEffect(() => {
-        loadSelectedWordPack(stateRef.current.memorable, false);
+        loadSelectedWordPack(stateRef.current.memorable, stateRef.current.mode === 'memorable');
     }, []);
     const estimateForState = (sourceState) => {
         if (sourceState.mode === 'memorable')
@@ -4728,7 +4728,10 @@ function PasswordGenerator() {
             return [];
         }
     };
-    useEffect(() => { generateAll(stateRef.current); }, []);
+    useEffect(() => {
+        if (stateRef.current.mode !== 'memorable')
+            generateAll(stateRef.current);
+    }, []);
     const regenerateOne = (index) => {
         const sourceState = stateRef.current;
         try {

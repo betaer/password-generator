@@ -52,6 +52,11 @@ test('顶部 Tab 与 URL 锚点双向同步且内容垂直居中', () => {
   assert.match(html, /\.mode-option-label \{[\s\S]*?height: 100%;[\s\S]*?align-items: center;[\s\S]*?line-height: 1\.2;/);
 });
 
+test('直接打开记忆短语锚点时等待词库就绪后自动生成', () => {
+  assert.match(app, /loadSelectedWordPack\(stateRef\.current\.memorable, stateRef\.current\.mode === 'memorable'\)/);
+  assert.match(app, /useEffect\(\(\) => \{[\s\S]*?if \(stateRef\.current\.mode !== 'memorable'\)[\s\S]*?generateAll\(stateRef\.current\);[\s\S]*?\}, \[\]\);/);
+});
+
 test('右下角提供 GitHub 与按语言选择文案的分享本站按钮', () => {
   assert.match(app, /const GitHubOutlined = createInlineIcon/);
   assert.match(app, /const GITHUB_REPOSITORY_URL = 'https:\/\/github\.com\/betaer\/password-generator'/);
