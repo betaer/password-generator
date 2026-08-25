@@ -78,13 +78,13 @@ try {
   const modeLabels = new Map([
     ['password', ['密码', 'Password', '密码策略配置', '密码生成结果']],
     ['passphrase', ['口令', 'Passphrase', '口令策略配置', '口令生成结果']],
-    ['pin', ['PIN', 'PIN', 'PIN 策略配置', 'PIN 生成结果']],
+    ['pin', ['PIN 码', 'PIN', 'PIN 码策略配置', 'PIN 码生成结果']],
     ['mnemonic', ['助记词', 'Mnemonic', '助记词策略配置', '助记词生成结果']],
-    ['token', ['Token', 'Token', 'Token 策略配置', 'Token 生成结果']],
+    ['token', ['令牌', 'Token', '令牌策略配置', '令牌生成结果']],
     ['apiSecret', ['API 密钥', 'API Secret', 'API 密钥策略配置', 'API 密钥生成结果']],
-    ['hex', ['Hex', 'Hex', 'Hex 策略配置', 'Hex 生成结果']],
+    ['hex', ['十六进制', 'Hex', '十六进制策略配置', '十六进制生成结果']],
     ['randomBytes', ['随机字节', 'Random Bytes', '随机字节策略配置', '随机字节生成结果']],
-    ['uuid', ['UUID', 'UUID', 'UUID 策略配置', 'UUID 生成结果']],
+    ['uuid', ['UUID 标识符', 'UUID', 'UUID 标识符策略配置', 'UUID 标识符生成结果']],
   ]);
   assert.equal(await page.locator('#mode-panel-title').textContent(), '1、选择生成类型');
   for (const [mode, [zh, en, configTitle, resultTitle]] of modeLabels) {
@@ -108,17 +108,23 @@ try {
   await clickGenerate(page);
   const resultCard = page.locator('#result-container .result-card').first();
   const toggleButton = resultCard.locator('[data-secret-toggle]');
+  await toggleButton.evaluate((node) => node.scrollIntoView({ block: 'center', inline: 'nearest' }));
   const beforeToggle = await resultCard.boundingBox();
+  const beforePageScroll = await page.evaluate(() => scrollY);
   const beforeScrollTop = await page.locator('#result-container').evaluate((node) => node.scrollTop);
   await toggleButton.click();
   const afterHide = await resultCard.boundingBox();
   assert.deepEqual(afterHide, beforeToggle, '隐藏内容不得改变结果卡几何位置');
+  assert.equal(await page.evaluate(() => scrollY), beforePageScroll, '隐藏内容不得晃动页面滚动位置');
   assert.equal(await page.locator('#result-container').evaluate((node) => node.scrollTop), beforeScrollTop);
-  assert.match(await resultCard.locator('.secret-value').textContent(), /^•+$/u);
+  assert.equal(await resultCard.locator('.secret-value').getAttribute('data-secret-state'), 'masked');
+  assert.match(await resultCard.locator('.secret-value').evaluate((node) => getComputedStyle(node, '::before').content), /•+/u);
   assert.equal(await toggleButton.evaluate((node) => document.activeElement === node), true, '切换后保持键盘焦点');
   assert.equal(await resultCard.evaluate((node) => getComputedStyle(node).animationName), 'none');
   await toggleButton.click();
   assert.deepEqual(await resultCard.boundingBox(), beforeToggle, '显示内容不得改变结果卡几何位置');
+  assert.equal(await page.evaluate(() => scrollY), beforePageScroll, '显示内容不得晃动页面滚动位置');
+  assert.equal(await resultCard.locator('.secret-value').getAttribute('data-secret-state'), 'revealed');
 
   await page.locator('.mode-link[data-mode="uuid"]').click();
   await clickGenerate(page);
@@ -130,7 +136,7 @@ try {
   await page.locator('input[name="mnemonicAck"]').check();
   await page.locator('select[name="language"]').selectOption('japanese');
   await page.locator('select[name="language"]').selectOption('english');
-  await page.waitForFunction(() => document.querySelector('.resource-item')?.ownerDocument.body.textContent.includes('BIP39 English · ready'));
+  await page.waitForFunction(() => document.querySelector('.resource-item')?.ownerDocument.body.textContent.includes('BIP39 英语 · 已就绪'));
   await clickGenerate(page);
   assert.match(await page.locator('#result-container').textContent(), /校验和有效/u);
   assert.doesNotMatch(await page.locator('#result-container').textContent(), /攻击场景估算|快速离线/u);
@@ -150,7 +156,7 @@ try {
   await page.locator('input[name="quantity"]').fill('100');
   await page.getByRole('button', { name: '生成', exact: true }).click();
   await page.locator('.mode-link[data-mode="uuid"]').click();
-  await page.waitForFunction(() => document.getElementById('config-title').textContent === 'UUID 策略配置');
+  await page.waitForFunction(() => document.getElementById('config-title').textContent === 'UUID 标识符策略配置');
   assert.equal(await page.locator('#result-container article').count(), 0, 'stale Password batch must not commit');
   await waitReady(page);
   await clickGenerate(page);
@@ -201,8 +207,11 @@ try {
   await page.locator('input[name="quantity"]').fill('1');
   await clickGenerate(page);
   assert.match(await page.locator('#result-container').textContent(), /2\^8,388,608/u);
-  await page.getByRole('button', { name: '隐藏内容' }).click();
-  await page.getByRole('button', { name: '显示内容' }).click();
+  const randomBytesToggle = page.locator('#result-container [data-secret-toggle]');
+  await randomBytesToggle.click();
+  assert.equal(await randomBytesToggle.textContent(), '显示内容');
+  await randomBytesToggle.click();
+  assert.equal(await randomBytesToggle.textContent(), '隐藏内容');
   assert.ok((await page.locator('#result-container .secret-value').textContent()).length < 200);
   assert.ok((await page.locator('#result-container').textContent()).length < 20_000);
 

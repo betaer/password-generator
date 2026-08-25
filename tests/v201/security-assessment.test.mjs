@@ -36,7 +36,7 @@ test('UUID 是 identifier，不渲染密码等级、模式分析或破解时间'
   const assessment = createSecurityAssessment({ generationModel: model('uuid', 122) });
 
   assert.equal(assessment.profile, ASSESSMENT_PROFILES.uuid);
-  assert.equal(assessment.identifierNotice, 'Identifier, not a secret');
+  assert.equal(assessment.identifierNotice, '这是标识符，不是秘密');
   assert.equal(assessment.observedPattern, null);
   assert.deepEqual(assessment.attackScenarios, []);
   assert.equal('strength' in assessment, false);
@@ -60,4 +60,3 @@ test('Token/API Secret/Hex 只展示名义随机位数与碰撞语义', () => {
     assert.deepEqual(assessment.attackScenarios, []);
   }
 });
-

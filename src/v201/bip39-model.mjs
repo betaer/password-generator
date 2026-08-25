@@ -121,8 +121,7 @@ export function bip39CompatibilityNotice(language) {
   return Object.freeze({
     compatibilityWarning: normalized === 'english'
       ? null
-      : '兼容性警告：多数钱包只保证 English BIP39 词表兼容。请先验证目标钱包的导入和恢复能力。',
+      : '兼容性警告：多数钱包只保证 BIP39 英语词表兼容。请先验证目标钱包的导入和恢复能力。',
     assetSafetyWarning: '高价值真实资产优先使用硬件钱包或经过验证的离线构建；浏览器扩展、系统恶意软件、屏幕与剪贴板监听不在本页保护边界内。',
   });
 }
-

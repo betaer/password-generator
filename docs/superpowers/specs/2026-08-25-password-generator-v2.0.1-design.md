@@ -57,7 +57,7 @@ zxcvbn 放入单并发 Worker，输入上限 512 字符；结果使用 generatio
 | PIN | 合法空间、期望次序、批内唯一、锁定场景 | Common-first 启发式策略 | 通用快速哈希结论 |
 | Token / API Secret / Hex | 名义随机位数、编码、碰撞估算 | 固定前缀不增加随机性、用途警告 | zxcvbn 与密码等级 |
 | Random Bytes | 字节数、名义位数、编码、SHA-256 | 下载/复制状态、资源预算 | 破解时间与密码等级 |
-| UUID | 版本、Variant、随机位、v7 时间、碰撞估算 | “Identifier, not a secret” | 密码等级与破解时间 |
+| UUID | 版本、Variant、随机位、v7 时间、碰撞估算 | “这是标识符，不是秘密” | 密码等级与破解时间 |
 | BIP39 | ENT、CS、词数、语言、校验和、词表哈希 | English 兼容性与真实资产威胁边界 | 密码哈希破解场景 |
 
 ## 5. 不可变生成任务与批处理
@@ -121,7 +121,7 @@ Playwright 必须拦截 `www.google-analytics.com/g/collect` 与 `region1.google
 
 ## 9. DOM、剪贴板与状态 UI
 
-秘密默认用固定 24 个圆点遮蔽，避免泄露长度；History 每次页面会话默认关闭且不持久化。复制 fallback 使用 CSS class、`data-v201-clipboard-fallback` 与 `aria-hidden="true"`，无论成功或抛错都清空 value 并删除节点。
+> 交互更新（2026-08-26）：默认遮蔽要求已被后续批准的中文界面规格替代。当前结果默认显示明文；隐藏按钮只在原位置切换固定 24 个圆点，不重建结果卡、不改变滚动位置或键盘焦点。History 每次页面会话默认关闭且不持久化。复制 fallback 使用 CSS class、`data-v201-clipboard-fallback` 与 `aria-hidden="true"`，无论成功或抛错都清空 value 并删除节点。
 
 顶部 Web Crypto chip 绑定真实资源状态。切换模式立即清空当前结果并取消旧任务。每个结果提供折叠的 Generation Model Details，展示实际池、范围、资产哈希、策略版本、攻击假设、UUID 时间和 schema 版本。
 
@@ -152,4 +152,3 @@ GitHub Actions 发布流程必须先通过：
 ## 12. 回归验收清单
 
 必须覆盖审计列出的全部关键测试：模式切换/取消/部分失败清理、模型单次编译、PIN 批内唯一、`N=2` 的期望次序为 1.5、Random Bytes 符号空间与预算、History 字节预算、zxcvbn late-ready/stale/sequence、API 模板、BIP39 语言竞态与词表 SHA、Reset 刷新、clipboard fallback DOM 清理、全 DOM sentinel 扫描、GA 请求 sentinel 扫描、UUID 无密码破解时间、320/360/390/430 像素响应式与真实 Web Crypto fail-closed。
-

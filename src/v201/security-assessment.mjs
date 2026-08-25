@@ -109,8 +109,7 @@ export function createSecurityAssessment({ generationModel, patternAnalysis = nu
       ),
     });
   }
-  if (profile === 'uuid') assessment.identifierNotice = 'Identifier, not a secret';
+  if (profile === 'uuid') assessment.identifierNotice = '这是标识符，不是秘密';
   if (profile === 'bip39') assessment.bip39Notice = '真实资产优先使用硬件钱包或经过验证的离线构建。';
   return freeze(assessment);
 }
-
