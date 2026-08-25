@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 
 const html = await readFile(new URL('../../index-2.0.html', import.meta.url), 'utf8');
 const app = await readFile(new URL('../../assets/v2/app.v2.js', import.meta.url), 'utf8');
+const pinModel = await readFile(new URL('../../src/v2/pin-model.mjs', import.meta.url), 'utf8');
 const source = `${html}\n${app}`;
 
 test('Generate and Copy are separate actions', () => {
@@ -23,6 +24,15 @@ test('V2 has no persistent secret history storage', () => {
   assert.doesNotMatch(source, /localStorage\.setItem\([^\n]*(?:result|history|secret|password|mnemonic)/i);
   assert.match(source, /historyEnabled:\s*false/);
   assert.match(source, /slice\(0,\s*100\)/);
+});
+
+test('module-lifetime PIN caches never retain generated prefixes or full PIN values', () => {
+  const blockedCounter = pinModel.match(
+    /function createBlockedCompletionCounter[\s\S]*?function countBlockedIntersection/,
+  )?.[0] ?? '';
+  assert.match(blockedCounter, /countPeriodicBlocked\(normalized, value\) \+ explicitCount\(value\)/);
+  assert.doesNotMatch(blockedCounter, /memo/);
+  assert.doesNotMatch(blockedCounter, /\.set\(\s*(?:value|prefix)\b/);
 });
 
 test('clipboard fallback always clears and removes its temporary textarea', () => {

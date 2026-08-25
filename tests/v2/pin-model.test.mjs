@@ -373,6 +373,23 @@ test('生成器直接按允许 completion count 加权并保持最终输出均�
   }
 });
 
+test('32 位 blockWeak 批量生成保持有界性能且不缓存秘密前缀', () => {
+  const config = {
+    length: 32,
+    allowLeadingZero: true,
+    allowRepeated: true,
+    limitSequential: true,
+    blockWeak: true,
+  };
+  const startedAt = performance.now();
+  for (let index = 0; index < 100; index += 1) {
+    const result = generatePin(config, riskIndex, cyclingCrypto());
+    assert.equal(result.value.length, 32);
+    assert.equal(detectWeakPinPatterns(result.value).length, 0);
+  }
+  assert.ok(performance.now() - startedAt < 5_000);
+});
+
 test('非法长度、布尔设置和无可行空间会给出明确错误', () => {
   assert.throws(() => createPinModel({ length: 3 }), /4.*32/);
   assert.throws(() => createPinModel({ length: 33 }), /4.*32/);

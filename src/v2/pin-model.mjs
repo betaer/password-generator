@@ -17,6 +17,7 @@ const explicitBlockedIndexCaches = new WeakMap();
 const datePatternCache = new Map();
 const keypadPatternCache = new Map();
 const sequencePatternCache = new Map();
+const sequentialPeriodTableCache = new Map();
 
 function requireBoolean(config, name, fallback) {
   const value = config[name] === undefined ? fallback : config[name];
@@ -369,6 +370,52 @@ function choicesAtPosition(fixedDigits, position, allowLeadingZero) {
     : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 }
 
+function periodStateIndex(first, second, beforeLast, last) {
+  return ((first * 10 + second) * 10 + beforeLast) * 10 + last;
+}
+
+function sequentialPeriodTables(period) {
+  if (sequentialPeriodTableCache.has(period)) return sequentialPeriodTableCache.get(period);
+  if (period < 3 || period > Math.floor(MAX_PIN_LENGTH / 2)) {
+    throw new RangeError('周期 DP 长度超出安全表范围。');
+  }
+  const tables = Array(period + 1);
+  const terminal = new BigUint64Array(10_000);
+  for (let first = 0; first <= 9; first += 1) {
+    for (let second = 0; second <= 9; second += 1) {
+      for (let beforeLast = 0; beforeLast <= 9; beforeLast += 1) {
+        for (let last = 0; last <= 9; last += 1) {
+          if (hasForbiddenTriple(beforeLast, last, first)) continue;
+          if (hasForbiddenTriple(last, first, second)) continue;
+          terminal[periodStateIndex(first, second, beforeLast, last)] = 1n;
+        }
+      }
+    }
+  }
+  tables[period] = terminal;
+  for (let position = period - 1; position >= 2; position -= 1) {
+    const current = new BigUint64Array(10_000);
+    const next = tables[position + 1];
+    for (let first = 0; first <= 9; first += 1) {
+      for (let second = 0; second <= 9; second += 1) {
+        for (let beforeLast = 0; beforeLast <= 9; beforeLast += 1) {
+          for (let last = 0; last <= 9; last += 1) {
+            let total = 0n;
+            for (let digit = 0; digit <= 9; digit += 1) {
+              if (hasForbiddenTriple(beforeLast, last, digit)) continue;
+              total += next[periodStateIndex(first, second, last, digit)];
+            }
+            current[periodStateIndex(first, second, beforeLast, last)] = total;
+          }
+        }
+      }
+    }
+    tables[position] = current;
+  }
+  sequentialPeriodTableCache.set(period, tables);
+  return tables;
+}
+
 function countPeriodDividing(normalized, period, prefix = '') {
   if (!normalized.allowRepeated) return 0n;
   const fixedDigits = fixedDigitsForPeriod(prefix, period);
@@ -396,31 +443,22 @@ function countPeriodDividing(normalized, period, prefix = '') {
     }
     return total;
   }
+  const tables = sequentialPeriodTables(period);
+  const constrainedLength = Math.min(prefix.length, period);
   let total = 0n;
-  for (const first of choicesAtPosition(fixedDigits, 0, normalized.allowLeadingZero)) {
-    for (const second of choicesAtPosition(fixedDigits, 1, true)) {
-      let states = new Map([[`${first}|${second}`, 1n]]);
-      for (let position = 2; position < period; position += 1) {
-        const nextStates = new Map();
-        for (const [key, count] of states) {
-          const [beforeLast, last] = key.split('|').map(Number);
-          for (const digit of choicesAtPosition(fixedDigits, position, true)) {
-            if (hasForbiddenTriple(beforeLast, last, digit)) continue;
-            const nextKey = `${last}|${digit}`;
-            nextStates.set(nextKey, (nextStates.get(nextKey) ?? 0n) + count);
-          }
-        }
-        states = nextStates;
-      }
-      for (const [key, count] of states) {
-        const [beforeLast, last] = key.split('|').map(Number);
-        if (hasForbiddenTriple(beforeLast, last, first)) continue;
-        if (hasForbiddenTriple(last, first, second)) continue;
-        total += count;
+  if (constrainedLength <= 1) {
+    for (const first of choicesAtPosition(fixedDigits, 0, normalized.allowLeadingZero)) {
+      for (const second of choicesAtPosition(fixedDigits, 1, true)) {
+        total += tables[2][periodStateIndex(first, second, first, second)];
       }
     }
+    return total;
   }
-  return total;
+  const first = fixedDigits[0];
+  const second = fixedDigits[1];
+  const beforeLast = fixedDigits[constrainedLength - 2];
+  const last = fixedDigits[constrainedLength - 1];
+  return tables[constrainedLength][periodStateIndex(first, second, beforeLast, last)];
 }
 
 function countPeriodicBlocked(normalized, prefix = '') {
@@ -511,15 +549,12 @@ function createBlockedCompletionCounter(normalized, riskIndex) {
   if (cache.has(cacheKey)) return cache.get(cacheKey);
 
   const explicitCount = explicitBlockedPrefixCounter(normalized, riskIndex);
-  const memo = new Map();
+  const rootCount = countPeriodicBlocked(normalized) + explicitCount('');
   const count = (prefix = '') => {
     const value = String(prefix ?? '');
     if (!stateForPrefix(value, normalized)) return 0n;
-    const cached = memo.get(value);
-    if (cached !== undefined) return cached;
-    const total = countPeriodicBlocked(normalized, value) + explicitCount(value);
-    memo.set(value, total);
-    return total;
+    if (value.length === 0) return rootCount;
+    return countPeriodicBlocked(normalized, value) + explicitCount(value);
   };
   cache.set(cacheKey, count);
   return count;
