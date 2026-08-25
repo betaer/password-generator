@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN" data-runtime-version="2.0.1" data-product-version="2.1.0">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light" />
+  <meta name="referrer" content="no-referrer" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; frame-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'" />
+  <title>安全随机数据生成器 V2.1｜密码、令牌、UUID 与 BIP39</title>
+  <meta name="description" content="浏览器本地安全随机数据生成器 V2.1：九类生成器、复杂度快捷方案、统一概率契约、精确生成空间与明确攻击假设。" />
+  <meta name="application-name" content="安全随机数据生成器 V2.1" />
+  <meta name="theme-color" content="#0b5cff" />
+  <link rel="canonical" href="https://betaer.github.io/password-generator/index-2.1.html" />
+  <link rel="icon" type="image/png" sizes="512x512" href="./password-generator-icon.png" />
+  <link rel="stylesheet" href="./assets/v2.1/__V21_CSS__" />
+  <link rel="preload" href="./assets/v2.1/__V21_PASSPHRASE__" as="script" />
+  <link rel="preload" href="./assets/v2.1/__V21_PIN_RISK__" as="script" />
+  <link rel="preload" href="./assets/v2.1/__V21_BIP39_ENGLISH__" as="script" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <img src="./password-generator-icon.png" alt="" width="38" height="38" />
+        <div><span class="brand-kicker">浏览器本地安全工具</span><p class="brand-name">安全随机数据生成器</p></div>
+      </div>
+      <div class="topbar-meta">
+        <span class="status-chip" id="crypto-status-chip" data-state="loading">Web Crypto / 检测中</span>
+        <span class="version-chip">V2.1</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">一套概率契约 · 九类安全生成器</p>
+        <h1 id="page-title">不只生成密码。<span>生成可解释的安全随机数据。</span></h1>
+        <p class="intro-copy">精确计算生成空间；基于明确假设估算攻击成本。精确生成器指标、观察模式估算与攻击场景估算分层展示，不再混成一个“精确破解结论”。</p>
+      </div>
+      <div class="intro-proof" aria-label="核心安全保证"><div><strong>9</strong><span>专用生成模型</span></div><div><strong>L1–L8</strong><span>复杂度快捷方案</span></div></div>
+    </section>
+
+    <div class="workspace">
+      <nav class="panel mode-panel" aria-labelledby="mode-panel-title">
+        <h2 class="mode-panel-title" id="mode-panel-title"><span>1、</span>选择生成类型</h2>
+        <div class="mode-groups">
+          <div class="mode-group"><p>人类凭据</p><button class="mode-link" type="button" data-mode="password"><span class="mode-label-zh">密码</span><span class="mode-label-en">Password</span></button><button class="mode-link" type="button" data-mode="passphrase"><span class="mode-label-zh">口令</span><span class="mode-label-en">Passphrase</span></button><button class="mode-link" type="button" data-mode="pin"><span class="mode-label-zh">PIN 码</span><span class="mode-label-en">PIN</span></button><button class="mode-link" type="button" data-mode="mnemonic"><span class="mode-label-zh">助记词</span><span class="mode-label-en">Mnemonic</span></button></div>
+          <div class="mode-group"><p>机器密钥</p><button class="mode-link" type="button" data-mode="token"><span class="mode-label-zh">令牌</span><span class="mode-label-en">Token</span></button><button class="mode-link" type="button" data-mode="apiSecret"><span class="mode-label-zh">API 密钥</span><span class="mode-label-en">API Secret</span></button><button class="mode-link" type="button" data-mode="hex"><span class="mode-label-zh">十六进制</span><span class="mode-label-en">Hex</span></button><button class="mode-link" type="button" data-mode="randomBytes"><span class="mode-label-zh">随机字节</span><span class="mode-label-en">Random Bytes</span></button></div>
+          <div class="mode-group"><p>标准标识符</p><button class="mode-link" type="button" data-mode="uuid"><span class="mode-label-zh">UUID 标识符</span><span class="mode-label-en">UUID</span></button></div>
+        </div>
+      </nav>
+
+      <section class="panel config-panel" aria-labelledby="config-title">
+        <div class="panel-heading"><div><span class="panel-index">2、策略配置</span><h2 id="config-title">密码策略配置</h2><p id="config-description">约束感知的精确均匀模型。</p></div><span class="model-badge" id="model-badge">均匀约束模型</span></div>
+        <form id="generator-form" novalidate><div class="config-body" id="config-body"></div><div class="action-bar"><button class="button" type="reset">恢复默认</button><button class="button button-primary" id="generate-button" type="submit">生成</button></div></form>
+      </section>
+
+      <section class="panel result-panel" aria-labelledby="result-title">
+        <div class="panel-heading"><div><span class="panel-index">3、生成结果</span><h2 id="result-title">密码生成结果</h2><p>当前结果默认显示明文；生成不会自动复制，隐藏与显示只在原位置切换。</p></div></div>
+        <div class="result-toolbar" id="result-toolbar" hidden><button class="button button-small" id="copy-current" type="button">复制当前结果</button><button class="button button-small" id="copy-all" type="button">复制全部</button><button class="button button-small button-danger" id="clear-results" type="button">删除结果</button></div>
+        <div class="result-scroll">
+          <div id="result-container"></div>
+          <details class="history-panel" id="history-panel">
+            <summary class="history-summary"><span><strong id="history-title">生成记录 History</strong><small>默认折叠 · 当前页面内存</small></span><span class="history-summary-count" id="history-summary-count">未启用</span></summary>
+            <div class="history-body">
+              <div class="history-head"><div><p>每次会话默认关闭；不持久化开关或秘密。最多保留 100 条，并受 8 MiB 总预算限制。<span id="history-budget-status">0 / 8,388,608 字节</span></p></div><label class="switch"><input id="history-toggle" type="checkbox" />启用生成记录</label></div>
+              <div class="history-results" id="history-container" hidden></div>
+            </div>
+          </details>
+        </div>
+      </section>
+    </div>
+
+    <div class="resource-strip" id="resource-strip" aria-label="本地安全资源状态"></div>
+
+    <section class="security-note" aria-label="安全与隐私边界">
+      <div><h3>浏览器与秘密边界</h3><p>当前生成结果默认以明文进入可见 DOM；隐藏按钮只改变视觉呈现。JavaScript String 不可变，浏览器不提供可靠内存清零，因此本页不承诺“彻底擦除”。高价值 BIP39 应优先使用硬件钱包或经验证的离线构建。</p></div>
+      <div><h3>剪贴板与隔离页面访问统计</h3><p>只有显式复制才写入系统剪贴板。Google Analytics 只在无 <code>allow-same-origin</code> 的 sandbox iframe 中运行；父页面不加载 Google JS，也不向 iframe 发送类型、配置、输入或结果。无 Cookie page-view ping 仍可能包含浏览器与标准网络层元数据。</p></div>
+    </section>
+
+    <footer class="footer"><span>安全随机数据生成器 V2.1 · Web Crypto · 统一概率契约</span><span><a href="./index.html">V1.7.5</a> · <a href="./index-2.0.html">V2.0</a> · <a href="./v2.01.html">V2.0.1</a> · <a href="https://github.com/betaer/password-generator" rel="noopener noreferrer" target="_blank">GitHub</a></span></footer>
+  </main>
+
+  <div class="site-floating-actions" role="group" aria-label="网站快捷操作">
+    <button class="site-floating-button site-floating-backtop" id="back-to-top" type="button" hidden aria-label="回到顶部"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6" /></svg><span class="site-floating-button-label">回到顶部</span></button>
+    <a class="site-floating-button site-floating-github" href="https://github.com/betaer/password-generator" target="_blank" rel="noopener noreferrer" aria-label="在 GitHub 查看源代码，999+ Stars"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8a9.2 9.2 0 0 0-2.9 17.9c.5.1.6-.2.6-.5v-1.8c-2.7.6-3.3-1.2-3.3-1.2-.4-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 0 1.6 1 1.6 1 .9 1.6 2.4 1.1 3 .8.1-.7.4-1.1.6-1.3-2.2-.2-4.5-1.1-4.5-4.6 0-1 .4-1.9 1-2.5-.1-.2-.4-1.2.1-2.5 0 0 .8-.3 2.6 1a9 9 0 0 1 4.7 0c1.8-1.2 2.6-1 2.6-1 .5 1.3.2 2.3.1 2.5.6.7 1 1.5 1 2.5 0 3.5-2.3 4.3-4.5 4.6.4.3.7.9.7 1.7v2.6c0 .4.2.6.7.5A9.2 9.2 0 0 0 12 2.8Z" /></svg><span class="site-floating-button-label">GitHub</span><span class="site-floating-star-badge" aria-hidden="true">999+</span></a>
+    <button class="site-floating-button site-floating-copy" id="copy-share" type="button" aria-label="复制网站分享文案"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h11v11H8zM5 16H4V5h11v1" /></svg><span class="site-floating-button-label">复制分享</span></button>
+  </div>
+
+  <iframe src="./assets/v2.1/__V21_ANALYTICS_FRAME__" title="隔离页面访问统计" aria-hidden="true" tabindex="-1" sandbox="allow-scripts" referrerpolicy="no-referrer" hidden></iframe>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <script src="./assets/v2.1/__V21_RUNTIME__"></script>
+  <script src="./assets/v2.1/__V21_APP__"></script>
+  <noscript><div class="noscript">需要启用 JavaScript 与 Web Crypto 才能安全生成随机数据。</div></noscript>
+</body>
+</html>

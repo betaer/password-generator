@@ -4,17 +4,20 @@ import { readFile } from 'node:fs/promises';
 
 const root = new URL('../../', import.meta.url);
 
-test('V2.0.1 Pages 发布必须经过完整安全门禁与可复现制品比对', async () => {
+test('V2.1 Pages 发布必须经过完整安全门禁与 V2.0.1/V2.1 可复现制品比对', async () => {
   const workflow = await readFile(new URL('.github/workflows/v201-pages.yml', root), 'utf8');
   for (const required of [
     'npm ci',
-    'npm run verify:v201',
+    'npm run verify:v21',
     'playwright install --with-deps chromium',
     'git diff --exit-code',
     'actions/upload-pages-artifact',
     'actions/deploy-pages',
     'actions/attest-build-provenance',
   ]) assert.match(workflow, new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.match(workflow, /name:\s*V2\.1 security gate/u);
+  assert.match(workflow, /index-2\.1\.html/u);
+  assert.match(workflow, /assets\/v2\.1/u);
   assert.match(workflow, /pull_request:[\s\S]*branches:\s*\[main\]/u);
   assert.match(workflow, /package:[\s\S]*needs:\s*verify/u);
   assert.match(workflow, /deploy:[\s\S]*needs:\s*package/u);
