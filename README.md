@@ -4,7 +4,7 @@
 
 浏览器本地运行的安全随机数据工作台。V2.0 将 Password、Passphrase、PIN、Token、API Secret、UUID、Hex、Random Bytes 与 BIP39 Mnemonic 统一到可审计的生成模型中。
 
-[在线使用 V2.0](https://betaer.github.io/password-generator/index-2.0.html) · [稳定版 V1.7.5](https://betaer.github.io/password-generator/) · [源代码](https://github.com/betaer/password-generator)
+[在线使用 V2.0](https://betaer.github.io/password-generator/index-2.0.html) · [稳定版 V1.7.5](https://betaer.github.io/password-generator/) · [源代码](https://github.com/betaer/password-generator) · [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.password-generator)](https://github.com/betaer/password-generator)
 
 > V1.7.5 的 `index.html` 保持不变；V2.0 使用独立入口 `index-2.0.html`。
 
@@ -39,6 +39,18 @@ Password 的 estimator 与 sampler 共用同一个约束模型。符号比例范
 
 Passphrase 会把实际词数、随机一个全大写词的位置，以及每个随机数字或符号分隔符都计入模型。PIN 不使用固定的 `-0.03 bit` 修正：弱 PIN 排名和规则集合与合法状态空间求精确交集，生成时再按 completion count 均匀抽样。
 
+Passphrase 继续提供实际唯一词数不同的本地词包，因此相同词数不等于相同强度：
+
+| 词包规模 | 每词熵 | 4 个词 | 6 个词 |
+|---:|---:|---:|---:|
+| 1,024 | 10 bits | 40 bits | 60 bits |
+| 1,296 | 约 10.34 bits | 约 41.36 bits | 约 62.04 bits |
+| 7,776 | 约 12.92 bits | 约 51.70 bits | 约 77.55 bits |
+
+主题词包候选更聚焦但空间更小，主题词包建议至少 6 个词；需要更高强度时应增加词数或使用 7,776 词包。
+
+PIN 风险索引来自固定版本的 SecLists，覆盖完整的 10,000 个四位排名和 68,202 个唯一六位数字组合；生成与估算使用同一份本地风险模型。
+
 `zxcvbn-ts` 只做本地常见模式分析，而且只能降低 Effective Guess Count，不能给生成器增加熵。攻击时间是模型估算，不是安全承诺：
 
 | 攻击模型 | 速度 |
@@ -46,6 +58,8 @@ Passphrase 会把实际词数、随机一个全大写词的位置，以及每个
 | 在线限速攻击 | 100 次/小时 |
 | 慢速密码哈希 | 10⁴ 次/秒 |
 | 快速离线哈希 | 10¹⁰ 次/秒 |
+
+这些破解时间是公开假设下的估算，不是安全保证。服务限速、哈希参数、硬件、凭据复用、钓鱼和终端入侵都会改变真实风险。
 
 ## BIP39 与标准格式
 
@@ -70,6 +84,8 @@ UUID v4 的随机强度为 122 bits；UUID v7 的时间戳、version 和 variant
 | Google Analytics | 保留在只有 `allow-scripts`、没有 `allow-same-origin` 的 sandbox iframe；只接收固定 V2 页面访问，不存在父子消息桥 |
 
 Google Analytics 的 JavaScript 在隔离 iframe 内仍可向 Google 发起统计请求，但不能读取父页面 DOM、JavaScript 状态、URL 查询、hash、referrer 或生成内容。父页面 CSP 不信任 Google 域，也不执行 Google 远程脚本。
+
+V2.0 不发送 `generated_value`，History 不会跨浏览器会话持久保存，并可随时清空。可以打开浏览器 DevTools → Network，生成、显示和复制若干结果，核对请求中只有固定页面统计与同源静态资源，没有生成值。
 
 浏览器 JavaScript String 不可变，平台不提供可靠的内存清零能力。因此项目只承诺主动清除可控的字节缓冲区和释放引用，不宣传“删除后立即从内存彻底擦除”。剪贴板管理器、跨设备同步、浏览器扩展、输入法、辅助软件和受感染终端仍属于外部攻击面。
 
