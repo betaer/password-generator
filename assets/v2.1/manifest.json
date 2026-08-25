@@ -1,0 +1,26 @@
+{
+  "version": "2.1.0",
+  "assets": {
+    "version": "2.1.0",
+    "runtime": "runtime.38793d36e4a8.js",
+    "passwordWorker": "password-worker.864bb1633c19.js",
+    "zxcvbnWorker": "zxcvbn-worker.2e228393790c.js",
+    "passphrase": "passphrase-packs.fdcfc66d0f6e.js",
+    "pinRisk": "pin-risk.a206560ebac9.js",
+    "analyticsFrame": "analytics-frame.c31fe24976cf.html",
+    "css": "app.2c5b8562ccc3.css",
+    "bip39": {
+      "czech": "bip39.czech.c47781d55ca2.js",
+      "english": "bip39.english.578979e364c7.js",
+      "french": "bip39.french.01ad15097527.js",
+      "italian": "bip39.italian.83979a47d02a.js",
+      "japanese": "bip39.japanese.e83317a29f4d.js",
+      "korean": "bip39.korean.4b83baeffe54.js",
+      "portuguese": "bip39.portuguese.f324307e8628.js",
+      "simplified-chinese": "bip39.simplified-chinese.c86bdfda71da.js",
+      "spanish": "bip39.spanish.17f2be90d72a.js",
+      "traditional-chinese": "bip39.traditional-chinese.718f85bb9c0f.js"
+    },
+    "app": "app.a26d6bad353d.js"
+  }
+}

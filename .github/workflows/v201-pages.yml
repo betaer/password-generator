@@ -1,4 +1,4 @@
-name: V2.0.1 verified Pages deployment
+name: V2.1 verified Pages deployment
 
 on:
   push:
@@ -8,12 +8,12 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: pages-v201
+  group: pages-v21
   cancel-in-progress: false
 
 jobs:
   verify:
-    name: V2.0.1 security gate
+    name: V2.1 security gate
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -35,11 +35,11 @@ jobs:
       - name: Install Chromium and system dependencies
         run: npx playwright install --with-deps chromium
 
-      - name: Run complete V1, V2 and V2.0.1 verification
-        run: npm run verify:v201
+      - name: Run complete V1, V2, V2.0.1 and V2.1 verification
+        run: npm run verify:v21
 
-      - name: Prove committed V2.0.1 artifacts are reproducible
-        run: git diff --exit-code -- v2.01.html assets/v2.01
+      - name: Prove committed V2.0.1 and V2.1 artifacts are reproducible
+        run: git diff --exit-code -- v2.01.html assets/v2.01 index-2.1.html assets/v2.1
 
   package:
     name: Package verified Pages artifact
@@ -58,7 +58,7 @@ jobs:
       - name: Stage immutable static site
         run: |
           mkdir _site
-          cp index.html index-2.0.html v2.01.html _site/
+          cp index.html index-2.0.html v2.01.html index-2.1.html _site/
           cp password-generator-icon.png password-generator-icon.svg _site/
           cp robots.txt sitemap.xml llms.txt README.md THIRD_PARTY_NOTICES.md _site/
           cp -R assets _site/assets

@@ -1,5 +1,6 @@
-# Security Random Generator V2.0.1｜安全随机数据生成器
+# Security Random Generator V2.1｜安全随机数据生成器
 
+V2.1：https://betaer.github.io/password-generator/index-2.1.html
 V2.0.1：https://betaer.github.io/password-generator/v2.01.html
 V2.0：https://betaer.github.io/password-generator/index-2.0.html
 V1.7.5：https://betaer.github.io/password-generator/
@@ -16,14 +17,14 @@ V1.7.5：https://betaer.github.io/password-generator/
 - UUID、Random Bytes、Token、Hex 与 BIP39 不展示通用密码哈希破解时间。
 - Random Bytes 使用 2^n 符号空间、延迟编码、SHA-256 和 8 MiB 总资源预算。
 - PIN 使用 completion-count DP；批量默认精确无放回；常见 PIN 过滤明确标为启发式策略。
-- Passphrase 与 BIP39 使用 V2.0.1 独立内容哈希词表，结果记录 SHA-256。
+- Passphrase 与 BIP39 使用 V2.1 独立内容哈希词表，结果记录 SHA-256。
 - zxcvbn 在独立 Worker 中只提供 Observed Pattern Estimate；固定 PIN 来源包含 68,202 个唯一六位数字候选。
 - Password/Passphrase 的三种攻击模型分别是在线限速、慢速 KDF/密码哈希与快速离线估算，均不是安全保证。
 
 ## 隐私边界
 
 - 生成不会自动复制；只有显式点击才写入系统剪贴板。
-- 结果默认固定 24 个遮蔽符；主动显示时明文才进入 DOM，超长结果只显示摘要。
+- V2.1 结果默认显示明文；隐藏按钮只改变视觉呈现且不触发布局位移，超长结果只显示摘要。
 - Model Details 脱敏 prefix、symbol pool、separator 候选与完整 words。
 - History 每次会话默认关闭，仅内存、最多 100 条与 8 MiB，不使用 sessionStorage 或 IndexedDB。
 - localStorage 只保存白名单结构化非秘密设置，不保存结果、History 或自由文本字段。
@@ -39,6 +40,6 @@ V1.7.5：https://betaer.github.io/password-generator/
 
 ## 发布
 
-- `v2.01.html` 与 `assets/v2.01/` 使用内容哈希资源和 runtime 版本握手。
-- CI 强制执行 V1/V2/V2.0.1 单测、80% 覆盖率、浏览器 E2E、GA 网络验收、npm audit 与 git diff --exit-code。
+- `index-2.1.html` 与 `assets/v2.1/` 使用内容哈希资源和 runtime/product 双版本握手；V2.0.1 制品保持不变。
+- CI 强制执行 V1/V2/V2.0.1/V2.1 单测、80% 覆盖率、浏览器 E2E、GA 网络验收、npm audit 与 git diff --exit-code。
 - 通过后才上传 Pages 制品并创建 build provenance attestation。
