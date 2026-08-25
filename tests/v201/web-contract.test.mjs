@@ -48,3 +48,27 @@ test('页面源代码包含竞态、预算、剪贴板与按类型结果卡保�
   assert.match(source, /Attack Scenario Estimate/);
   assert.doesNotMatch(source, /textarea\.style\.|EmbeddedWordPacksV1|PasswordGeneratorV2\b/);
 });
+
+test('V2.0.1 工作区、九类结果与快捷操作采用完整中文交互', async () => {
+  const [html, source, css] = await Promise.all([
+    read('src/v201/web/page.v201.html'),
+    read('src/v201/web/app.v201.js'),
+    read('src/v201/web/app.v201.css'),
+  ]);
+  assert.match(html, /1、选择生成类型/);
+  assert.match(html, /2、策略配置/);
+  assert.match(html, /3、生成结果/);
+  assert.match(html, /生成记录 History/);
+  assert.match(html, /site-floating-actions/);
+  for (const label of ['密码', '口令', 'PIN', '助记词', 'Token', 'API 密钥', 'Hex', '随机字节', 'UUID']) {
+    assert.match(source, new RegExp(label));
+  }
+  for (const label of ['精确生成器指标', '观察模式估算', '攻击场景估算', '生成模型详情']) {
+    assert.match(source, new RegExp(label));
+  }
+  assert.match(source, /updateSecretPresentation/);
+  assert.match(source, /copySharePromotion/);
+  assert.match(source, /SHARE_PROMOTION_TEXT/);
+  assert.match(css, /\.history-row/);
+  assert.doesNotMatch(css, /\.result-card\s*\{[^}]*animation:/su);
+});
