@@ -12,6 +12,15 @@
 
 浏览器端分析器只返回猜测次数、评分，以及去除原文后的“模式类型 + 长度”摘要；不返回、记录或上报被分析的密码。
 
+## @scure/bip39
+
+- 组件：`@scure/bip39` 2.3.0
+- 用途：构建期导入 BIP39 官方十种词表，并以已知向量交叉验证 ENT、checksum 和助记词编码。
+- 许可证：MIT
+- 上游：https://github.com/paulmillr/scure-bip39
+
+浏览器只加载本站生成的版本化静态词表；生成助记词时不会访问上游服务。Checksum 是确定性字段，不被计入随机熵。
+
 ## SecLists PIN risk corpus
 
 - 项目：https://github.com/danielmiessler/SecLists
@@ -38,3 +47,11 @@
 - 用途：仅作为主题词包的构建期候选词来源。
 
 候选词经过项目侧清洗、过滤与跨包去重后，作为本站版本化静态词包发布；用户生成记忆短语时不会调用 Datamuse API。
+
+## Google Analytics
+
+- 组件：Google tag (`gtag.js`)
+- Measurement ID：`G-DWZ72TFWQF`
+- 用途：固定 V2.0 页面访问统计。
+
+V2.0 将 Google JavaScript 限制在只有 `allow-scripts`、没有 `allow-same-origin` 的 sandbox iframe。统计 frame 使用固定的 `page_location`、`page_path` 和 `page_referrer`，拒绝广告个性化与客户端统计存储，不读取父页面、查询参数、hash 或 referrer，也不建立 `postMessage` 桥。父页面 CSP 不加载或信任 Google 脚本域。
