@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import { createPasswordModel } from '../../src/v2/password-model.mjs';
 import {
+  DEFAULT_PASSWORD_SYMBOL_POOL,
   PASSWORD_COMPLEXITY_PRESETS,
   PASSWORD_LENGTH_PRESETS,
   PASSWORD_QUANTITY_PRESETS,
@@ -53,4 +54,13 @@ test('复杂度配方拒绝未知等级且不会改写调用方配置', () => {
   assert.throws(() => applyPasswordComplexityPreset(mutable, 'L9'), /complexity level/u);
   applyPasswordComplexityPreset(mutable, 'L8');
   assert.deepEqual(mutable, before);
+});
+
+test('复杂度快捷方案会从空自定义符号池恢复可用的安全默认值', () => {
+  const emptyPool = { ...BASE_CONFIG, symbolPool: '' };
+  for (const level of ['L1', 'L8']) {
+    const config = applyPasswordComplexityPreset(emptyPool, level);
+    assert.equal(config.symbolPool, DEFAULT_PASSWORD_SYMBOL_POOL);
+    assert.doesNotThrow(() => createPasswordModel(config));
+  }
 });

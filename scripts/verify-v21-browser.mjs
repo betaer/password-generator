@@ -81,15 +81,23 @@ try {
 
   assert.equal(await page.locator('[data-complexity-level]').count(), 8);
   assert.equal(await page.locator('[data-complexity-level="L8"]').getAttribute('aria-pressed'), 'true');
+  await page.locator('input[name="symbolPool"]').fill('');
   await page.locator('[data-complexity-level="L1"]').click();
   assert.equal(await page.locator('input[name="length"]').inputValue(), '4');
   assert.equal(await page.locator('input[name="digits"]').isChecked(), true);
   assert.equal(await page.locator('input[name="lowercase"]').isChecked(), false);
+  assert.notEqual(await page.locator('input[name="symbolPool"]').inputValue(), '');
+  await clickGenerate(page);
+  assert.equal(await page.locator('#result-container article').count(), 1, '空符号池后 L1 仍可生成');
+  await page.locator('input[name="symbolPool"]').fill('');
   await page.locator('[data-complexity-level="L8"]').click();
   assert.equal(await page.locator('input[name="length"]').inputValue(), '20');
   for (const name of ['lowercase', 'uppercaseLetters', 'digits', 'symbols']) {
     assert.equal(await page.locator(`input[name="${name}"]`).isChecked(), true);
   }
+  assert.notEqual(await page.locator('input[name="symbolPool"]').inputValue(), '');
+  await clickGenerate(page);
+  assert.equal(await page.locator('#result-container article').count(), 1, '空符号池后 L8 仍可生成');
   await page.locator('[data-password-length-preset="32"]').click();
   assert.equal(await page.locator('input[name="length"]').inputValue(), '32');
   assert.match(await page.locator('#complexity-description').textContent(), /自定义配置/u);

@@ -1,5 +1,6 @@
 import { shouldCommitMnemonicResourceState } from '../mnemonic-resource-state.mjs';
 import {
+  DEFAULT_PASSWORD_SYMBOL_POOL,
   PASSWORD_COMPLEXITY_PRESETS,
   PASSWORD_LENGTH_PRESETS,
   PASSWORD_QUANTITY_PRESETS,
@@ -183,7 +184,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
       uppercase: Boolean(form.elements.uppercaseLetters?.checked),
       digits: Boolean(form.elements.digits?.checked),
       symbols: Boolean(form.elements.symbols?.checked),
-      symbolPool: form.elements.symbolPool?.value || '!@#$%^&*()-_=+[]{};:,.?',
+      symbolPool: form.elements.symbolPool?.value || DEFAULT_PASSWORD_SYMBOL_POOL,
       allowSpace: Boolean(form.elements.allowSpace?.checked),
       requireEach: Boolean(form.elements.requireEach?.checked),
       allowRepeated: Boolean(form.elements.allowRepeated?.checked),
@@ -239,6 +240,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
       uppercaseLetters: next.uppercase,
       digits: next.digits,
       symbols: next.symbols,
+      symbolPool: next.symbolPool,
       allowSpace: next.allowSpace,
       requireEach: next.requireEach,
       allowRepeated: next.allowRepeated,
@@ -537,8 +539,11 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > max) throw new RangeError('生成数量超出当前类型允许范围。');
     let config;
     if (mode === 'password') {
-      const symbolPool = runtime.inputValidation.normalizePrintableAscii(data.get('symbolPool'), '符号池', 64);
-      config = { length: numberField('length', 20), lowercase: data.has('lowercase'), uppercase: data.has('uppercaseLetters'), digits: data.has('digits'), symbols: data.has('symbols'), symbolPool, allowSpace: data.has('allowSpace'), requireEach: data.has('requireEach'), allowRepeated: data.has('allowRepeated'), symbolRatioRange: [numberField('symbolMin', 0), numberField('symbolMax', 100)], startsWith: data.get('startsWith'), endsWith: data.get('endsWith') };
+      const symbols = data.has('symbols');
+      const symbolPool = symbols
+        ? runtime.inputValidation.normalizePrintableAscii(data.get('symbolPool'), '符号池', 64)
+        : DEFAULT_PASSWORD_SYMBOL_POOL;
+      config = { length: numberField('length', 20), lowercase: data.has('lowercase'), uppercase: data.has('uppercaseLetters'), digits: data.has('digits'), symbols, symbolPool, allowSpace: data.has('allowSpace'), requireEach: data.has('requireEach'), allowRepeated: data.has('allowRepeated'), symbolRatioRange: [numberField('symbolMin', 0), numberField('symbolMax', 100)], startsWith: data.get('startsWith'), endsWith: data.get('endsWith') };
     } else if (mode === 'passphrase') {
       const packId = data.get('pack'); const pack = runtime.passphraseAssets.getPassphrasePack(packId);
       const wordCount = numberField('wordCount', 6); const capitalization = data.get('capitalization');

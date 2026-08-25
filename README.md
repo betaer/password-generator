@@ -1,27 +1,29 @@
-# Security Random Generator V2.0.1｜安全随机数据生成器
+# Security Random Generator V2.1｜安全随机数据生成器
 
 [简体中文](README.md) · [English](docs/readme-en.md)
 
-浏览器本地运行的安全随机数据工作台，覆盖 Password、Passphrase、PIN、Token、API Secret、UUID、Hex、Random Bytes 与 BIP39 Mnemonic。V2.0.1 采用“统一概率契约 + 各类型专用模型”，不会把九类数据都套进同一套密码强度结论。
+浏览器本地运行的安全随机数据工作台，覆盖 Password、Passphrase、PIN、Token、API Secret、UUID、Hex、Random Bytes 与 BIP39 Mnemonic。V2.1 采用“统一概率契约 + 各类型专用模型”，不会把九类数据都套进同一套密码强度结论。
 
-[在线使用 V2.0.1](https://betaer.github.io/password-generator/v2.01.html) · [V2.0](https://betaer.github.io/password-generator/index-2.0.html) · [稳定版 V1.7.5](https://betaer.github.io/password-generator/) · [源代码](https://github.com/betaer/password-generator) · [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.password-generator)](https://github.com/betaer/password-generator)
+[在线使用 V2.1](https://betaer.github.io/password-generator/index-2.1.html) · [V2.0.1](https://betaer.github.io/password-generator/v2.01.html) · [V2.0](https://betaer.github.io/password-generator/index-2.0.html) · [稳定版 V1.7.5](https://betaer.github.io/password-generator/) · [源代码](https://github.com/betaer/password-generator) · [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.password-generator)](https://github.com/betaer/password-generator)
 
-> 根入口 `index.html` 继续保留 V1.7.5；`index-2.0.html` 继续保留 V2.0；V2.0.1 独立发布为 `v2.01.html`，资源目录与旧版完全隔离。
+> 根入口 `index.html` 继续保留 V1.7.5；`index-2.0.html` 与 `v2.01.html` 分别保留 V2.0、V2.0.1；V2.1 独立发布为 `index-2.1.html`，资源目录与旧版完全隔离。
 
-## V2.0.1 的核心变化
+## V2.1 的核心能力
 
 - 每个批次冻结 `mode / config / quantity`，生成器切换会取消旧任务；Worker 回包必须匹配 generation epoch，失败、取消和过期任务会清理未提交结果。
 - Password、Passphrase 与 PIN 每批只编译一次模型。PIN 批量默认使用精确 rank/unrank 无放回抽样，保证批内唯一。
 - 均匀有限空间的 Expected Guess Count 使用精确 `(N + 1) / 2`，不再使用 `N / 2` 近似。
 - Random Bytes 使用精确的 `2^n` 符号空间，不创建数百万位十进制 BigInt；完整 Hex/Base64 只在显式复制时生成。
-- Passphrase 词包与 BIP39 词表是 V2.0.1 独立内容哈希资源；结果记录源词表 SHA-256 与有效词池 SHA-256。
+- Passphrase 词包与 BIP39 词表是 V2.1 独立内容哈希资源；结果记录源词表 SHA-256 与有效词池 SHA-256。
 - zxcvbn 位于单并发独立 Worker，输入最长 512 字符；late-ready 会重分析仍存活结果，stale 回调不会写回。
 - API Secret 只保留 Generic 与无厂商含义的 `demo_test_v1_` Synthetic Demo，不再生成容易触发真实服务 Secret Scanner 的外观。
 - “生成”与“复制”完全分离；History 每次会话默认关闭，只在内存中按条数与总字节预算保留。
 - 工作区按“1、选择生成类型 → 2、策略配置 → 3、生成结果”组织；左侧中文居左、英文居右，九类配置与结果卡使用完整中文显示。
 - 当前结果默认显示明文；隐藏/显示只原地改变视觉呈现，不重建结果卡、不改变滚动位置或键盘焦点。
 - “生成记录 History”采用紧凑单行列表，支持点击复制、逐条删除以及 hover/focus 临时完整内容气泡；右下角恢复回顶、GitHub 999+ 与固定分享文案操作。
-- 所有浏览器资源采用内容哈希文件名，并通过 HTML/runtime `2.0.1` 版本握手防止混合缓存。
+- Password 恢复 L1～L8 复杂度方案、常用长度/数量快捷档位和精确自定义输入；快捷方案会恢复有效默认符号池。
+- BIP39 英语资源在后台预加载完成后会正确提交“已就绪”，不再因当前仍处 Password 模式而卡在“加载中”。
+- 所有浏览器资源采用内容哈希文件名，并通过 HTML product `2.1.0` / runtime `2.0.1` 双版本握手防止混合缓存。
 
 ## 九个生成器与结果语义
 
@@ -41,7 +43,7 @@
 
 ## 三层安全度量
 
-V2.0.1 不再使用统一的 “Exact Effective Guess Count / Exact Crack Time”。结果卡分成三层：
+V2.1 不使用统一的 “Exact Effective Guess Count / Exact Crack Time”。结果卡分成三层：
 
 | 层级 | 性质 | 适用范围 |
 |---|---|---|
@@ -85,7 +87,7 @@ UUID v4 提供 122 个随机位，UUID v7 提供 74 个随机位并包含 48-bit
 
 ## 隐私、DOM 与资源预算
 
-| 数据或能力 | V2.0.1 行为 |
+| 数据或能力 | V2.1 行为 |
 |---|---|
 | 生成 | 只生成，不自动写入系统剪贴板 |
 | 复制 | 只有显式点击才写入；超过 1 MiB 二次确认，超过 4 MiB 拒绝并建议下载 |
@@ -94,10 +96,10 @@ UUID v4 提供 122 个随机位，UUID v7 提供 74 个随机位并包含 48-bit
 | Random Bytes | `≥64 KiB` 时 quantity 必须为 1；批次原始数据总量上限 8 MiB；大结果延迟编码 |
 | 生成记录 History | 每次会话默认关闭；紧凑单行显示，最多 100 条且秘密总量最多 8 MiB；不写入 storage |
 | localStorage | 只保存白名单结构化设置；不保存结果、History、自由文本 prefix、symbol pool 或 separator 候选 |
-| sessionStorage / IndexedDB | 不保存 V2.0.1 生成历史 |
+| sessionStorage / IndexedDB | 不保存 V2.1 生成历史 |
 | 删除 | 覆写可控 `Uint8Array` 并释放引用；不承诺 JavaScript String 被可靠清零 |
 
-简要说：只生成，不自动写入剪贴板。生成记录默认关闭；启用后只保存在当前页面内存，并继续受 100 条与 8 MiB 双重预算限制。右下角“复制分享”只复制固定公开介绍和 V2.0.1 地址，不读取当前类型、配置、结果、History、hash 或 query。JavaScript String 不可变，因此只能释放引用，不能证明底层内存已被立即擦除。
+简要说：只生成，不自动写入剪贴板。生成记录默认关闭；启用后只保存在当前页面内存，并继续受 100 条与 8 MiB 双重预算限制。右下角“复制分享”只复制固定公开介绍和 V2.1 地址，不读取当前类型、配置、结果、History、hash 或 query。JavaScript String 不可变，因此只能释放引用，不能证明底层内存已被立即擦除。
 
 ## Google Analytics 隔离
 
@@ -105,7 +107,7 @@ GA 保留，但只作为“隔离、无本站 Analytics Cookie 的页面访问�
 
 - Google JS 不在生成器父页面执行；父页面 CSP 不信任 Google 域；
 - iframe 只有 `sandbox="allow-scripts"`，没有 `allow-same-origin`、消息桥、referrer 或父页面 URL 数据；
-- 只配置固定的 `https://betaer.github.io/password-generator/v2.01.html`、固定 path/title 和空 referrer；
+- 只配置固定的 `https://betaer.github.io/password-generator/index-2.1.html`、固定 path/title 和空 referrer；
 - 不向 iframe 发送生成器类型、配置、输入、prefix、结果或 BIP39；
 - `analytics_storage='denied'` 下仍会发送 cookieless measurement ping，Google 仍可能收到 User-Agent、IP、时间等标准浏览器/网络层元数据，因此不使用“完全匿名”表述。
 
@@ -117,20 +119,20 @@ Playwright 验收会拦截实际 `g/collect`，解析 URL、body 和 headers，�
 
 ```bash
 npm ci
-npm run build:v201
+npm run build:v21
 npm run serve
 ```
 
-访问 `http://127.0.0.1:8765/v2.01.html`。
+访问 `http://127.0.0.1:8765/index-2.1.html`。
 
 ```bash
-npm run test:v201             # V2.0.1 单元与集成测试
-npm run test:coverage:v201    # 80% branches/functions/lines/statements 门槛
-npm run test:e2e:v201         # 九类中文结果、无抖动切换、记录列表、竞态、预算、剪贴板、GA 网络与响应式验收
-npm run verify:v201           # V1 + V2 + V2.0.1 + coverage + E2E + audit + artifact diff
+npm run test:v21             # V2.1 单元、集成与发布契约测试
+npm run test:coverage:v21    # V2.1 辅助模型 80% branches/functions/lines/statements 门槛
+npm run test:e2e:v21         # BIP39 就绪、复杂度/长度/数量、九类结果、History、隐私、GA 与响应式验收
+npm run verify:v21           # V1 + V2 + V2.0.1 + V2.1 + coverage + E2E + audit + artifact diff
 ```
 
-`build:v201` 会重建 `v2.01.html` 与 `assets/v2.01/`，所有浏览器资源使用 SHA-256 前 12 位内容哈希命名。连续构建必须产生完全相同的文件，`git diff --exit-code` 才允许部署。
+`build:v21` 会重建 `index-2.1.html` 与 `assets/v2.1/`，所有浏览器资源使用 SHA-256 前 12 位内容哈希命名。完整门禁也会重建并核对冻结的 V2.0.1 制品；`git diff --exit-code` 通过后才允许部署。
 
 GitHub Pages 自定义 workflow 强制执行完整门禁，上传独立 `_site` 制品，并创建 Sigstore/GitHub build provenance attestation 后才部署。主页面 meta CSP 无法实现 `frame-ancestors`；需要反向代理响应头时请参考 [`docs/security-headers.v201.example`](docs/security-headers.v201.example)，该文件不会被 GitHub Pages 自动应用。
 
@@ -141,11 +143,13 @@ GitHub Pages 自定义 workflow 强制执行完整门禁，上传独立 `_site` 
 ├── index.html                    # V1.7.5 稳定入口
 ├── index-2.0.html                # V2.0 保留入口
 ├── v2.01.html                    # V2.0.1 发布入口
-├── src/v201/                     # 概率契约、任务、预算、专用结果语义与 UI 源码
-├── assets/v2.01/                 # 内容哈希 runtime/UI/Workers/GA/词表/风险资源
-├── scripts/build-v201.mjs        # 可复现内容哈希构建
-├── scripts/verify-v201-browser.mjs # 浏览器与真实 GA 网络参数验收
-├── tests/v201/                   # V2.0.1 单元、集成、发布契约测试
+├── index-2.1.html                # V2.1 当前发布入口
+├── src/v201/                     # 共享的概率契约、任务、预算与专用结果语义
+├── src/v21/                      # V2.1 控件模型、资源状态与页面源码
+├── assets/v2.1/                  # V2.1 内容哈希 runtime/UI/Workers/GA/词表/风险资源
+├── scripts/build-v21.mjs         # V2.1 可复现内容哈希构建
+├── scripts/verify-v21-browser.mjs # V2.1 浏览器与真实 GA 网络参数验收
+├── tests/v21/                    # V2.1 单元、集成、发布契约测试
 └── .github/workflows/v201-pages.yml # 强制验证后部署
 ```
 

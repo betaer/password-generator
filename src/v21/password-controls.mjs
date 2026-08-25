@@ -5,6 +5,8 @@ function freezeRecipe(recipe) {
   });
 }
 
+export const DEFAULT_PASSWORD_SYMBOL_POOL = '!@#$%^&*()-_=+[]{};:,.?';
+
 export const PASSWORD_COMPLEXITY_PRESETS = Object.freeze([
   Object.freeze({ level: 'L1', label: '瞬间破解', tone: '#c62828', recipe: freezeRecipe({ length: 4, lowercase: false, uppercase: false, digits: true, symbols: false, symbolRatioRange: [0, 0] }) }),
   Object.freeze({ level: 'L2', label: '极易破解', tone: '#c2410c', recipe: freezeRecipe({ length: 6, lowercase: true, uppercase: false, digits: false, symbols: false, symbolRatioRange: [0, 0] }) }),
@@ -28,6 +30,7 @@ export function applyPasswordComplexityPreset(currentConfig, level) {
   const next = {
     ...currentConfig,
     ...preset.recipe,
+    symbolPool: DEFAULT_PASSWORD_SYMBOL_POOL,
     allowSpace: false,
     requireEach: true,
     allowRepeated: true,

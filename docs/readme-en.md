@@ -1,12 +1,12 @@
-# Security Random Generator V2.0.1
+# Security Random Generator V2.1
 
 [简体中文](../README.md) · [English](readme-en.md)
 
 A browser-local utility for Password, Passphrase, PIN, Token, API Secret, UUID, Hex, Random Bytes, and BIP39 Mnemonic generation.
 
-[Use V2.0.1](https://betaer.github.io/password-generator/v2.01.html) · [V2.0](https://betaer.github.io/password-generator/index-2.0.html) · [V1.7.5](https://betaer.github.io/password-generator/) · [Source](https://github.com/betaer/password-generator) · [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.password-generator)](https://github.com/betaer/password-generator)
+[Use V2.1](https://betaer.github.io/password-generator/index-2.1.html) · [V2.0.1](https://betaer.github.io/password-generator/v2.01.html) · [V2.0](https://betaer.github.io/password-generator/index-2.0.html) · [V1.7.5](https://betaer.github.io/password-generator/) · [Source](https://github.com/betaer/password-generator) · [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.password-generator)](https://github.com/betaer/password-generator)
 
-V2.0.1 uses one probability contract with nine specialized models. It separates exact generator metrics from empirical pattern analysis and attack-scenario estimates:
+V2.1 uses one probability contract with nine specialized models. It separates exact generator metrics from empirical pattern analysis and attack-scenario estimates:
 
 - Exact expected guess rank for a uniform finite space is `(N + 1) / 2`.
 - Password and Passphrase may show local zxcvbn pattern estimates and explicit-rate attack scenarios.
@@ -14,12 +14,14 @@ V2.0.1 uses one probability contract with nine specialized models. It separates 
 - Generation jobs freeze mode, config, and quantity. Epoch checks and cancellable Workers prevent stale mixed-mode results.
 - PIN uses completion-count sampling and defaults to exact without-replacement batches.
 - Random Bytes keeps an exact symbolic `2^n` space, lazy encoding, SHA-256, and global memory/clipboard budgets.
-- V2.0.1 Passphrase and BIP39 assets are independent, content-hashed, and SHA-256 verified.
+- V2.1 Passphrase and BIP39 assets are independent, content-hashed, and SHA-256 verified.
 - BIP39 generation requires a non-persistent acknowledgement of browser, extension, clipboard, and wallet-compatibility boundaries.
 - The workspace follows three Chinese steps, with Chinese labels on the left and English navigation aids on the right. All nine configuration and result views use Chinese product copy.
 - Results are visible by default. Hide/show updates only the existing presentation layer, preserving card geometry, scroll position, and keyboard focus.
 - “生成记录 History” is a compact single-line list with click-to-copy, per-entry deletion, and temporary hover/focus tooltips. Back-to-top, GitHub 999+, and fixed public share-copy actions are restored at the lower right.
-- Browser assets use content-hashed filenames plus an HTML/runtime version handshake.
+- Password restores L1–L8 complexity recipes, common length/quantity shortcuts, and exact custom inputs. Applying a recipe also restores a valid default symbol pool.
+- Background BIP39 English preloading now commits the ready state even while Password remains the active mode.
+- Browser assets use content-hashed filenames plus an HTML product `2.1.0` / runtime `2.0.1` handshake.
 
 All random choices use the browser Web Crypto API, rejection sampling, and unbiased Fisher–Yates. Local zxcvbn analysis is empirical and separate from generator probability. The pinned PIN source contains 68,202 unique six-digit numeric candidates, while the disclosed heuristic policy blocks only its configured rank threshold and the exact constraint intersection.
 
@@ -31,7 +33,7 @@ Password and Passphrase show three explicit assumptions: an online rate-limited 
 - Results are plaintext-visible by default. Hide/show uses a fixed-length visual mask without rebuilding the card; plaintext remains in the DOM, and large results show a short preview or summary.
 - Generation-model details redact free-text pools, prefixes, separators, and complete word arrays.
 - History is off by default, memory-only when enabled, not persisted across browser sessions, can be cleared at any time, and is limited to 100 entries plus an 8 MiB secret-byte budget.
-- The share button copies only fixed public V2.0.1 promotional text and URL; it does not read mode, configuration, generated values, History, hash, or query.
+- The share button copies only fixed public V2.1 promotional text and URL; it does not read mode, configuration, generated values, History, hash, or query.
 - `localStorage` contains only allow-listed structured settings, never results, History, or free-text fields.
 - JavaScript strings cannot be reliably zeroized. Mutable byte arrays are overwritten where controllable.
 
@@ -47,20 +49,20 @@ For an independent check, open DevTools → Network, generate/reveal/copy sample
 
 ```bash
 npm ci
-npm run build:v201
+npm run build:v21
 npm run serve
 ```
 
-Open `http://127.0.0.1:8765/v2.01.html`.
+Open `http://127.0.0.1:8765/index-2.1.html`.
 
 ```bash
-npm run test:v201
-npm run test:coverage:v201
-npm run test:e2e:v201
-npm run verify:v201
+npm run test:v21
+npm run test:coverage:v21
+npm run test:e2e:v21
+npm run verify:v21
 ```
 
-The Pages workflow deploys only after V1, V2, and V2.0.1 tests, coverage, browser/GA network checks, `npm audit`, reproducible artifact comparison, and build-provenance attestation pass.
+The Pages workflow deploys only after V1, V2, V2.0.1, and V2.1 tests, coverage, browser/GA network checks, `npm audit`, reproducible artifact comparison, and build-provenance attestation pass.
 
 ## Boundaries
 

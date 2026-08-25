@@ -54,10 +54,12 @@ test('密码配置提供复杂度、长度和生成数量三套完整控件', as
 });
 
 test('V2.1 发布入口与 Pages 门禁同时覆盖新版本制品', async () => {
-  const [workflow, sitemap, llms] = await Promise.all([
+  const [workflow, sitemap, llms, readme, english] = await Promise.all([
     read('.github/workflows/v201-pages.yml'),
     read('sitemap.xml'),
     read('llms.txt'),
+    read('README.md'),
+    read('docs/readme-en.md'),
   ]);
   assert.match(workflow, /name:\s*V2\.1 security gate/u);
   assert.match(workflow, /npm run verify:v21/u);
@@ -65,4 +67,10 @@ test('V2.1 发布入口与 Pages 门禁同时覆盖新版本制品', async () =>
   assert.match(workflow, /cp index\.html index-2\.0\.html v2\.01\.html index-2\.1\.html _site\//u);
   assert.match(sitemap, /https:\/\/betaer\.github\.io\/password-generator\/index-2\.1\.html/u);
   assert.match(llms, /V2\.1：https:\/\/betaer\.github\.io\/password-generator\/index-2\.1\.html/u);
+  assert.match(readme, /^# Security Random Generator V2\.1/mu);
+  assert.match(readme, /在线使用 V2\.1[^\n]*index-2\.1\.html/u);
+  assert.match(readme, /npm run verify:v21/u);
+  assert.match(english, /^# Security Random Generator V2\.1/mu);
+  assert.match(english, /Use V2\.1[^\n]*index-2\.1\.html/u);
+  assert.match(english, /npm run verify:v21/u);
 });
