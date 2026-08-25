@@ -317,8 +317,10 @@ function sampleChoice(values, cryptoLike) {
   return values[secureInt(values.length, cryptoLike)];
 }
 
-export function generatePassphrase(config, cryptoLike = globalThis.crypto) {
-  const model = createPassphraseModel(config);
+export function generatePassphraseFromModel(model, cryptoLike = globalThis.crypto) {
+  if (!model || model.kind !== 'uniform-passphrase' || !model.normalized || typeof model.searchSpace !== 'bigint') {
+    throw new TypeError('model 必须是 createPassphraseModel 返回的已编译短语模型');
+  }
   const { normalized } = model;
   const selectedWords = Array.from(
     { length: normalized.wordCount },
@@ -340,4 +342,8 @@ export function generatePassphrase(config, cryptoLike = globalThis.crypto) {
     configSnapshot,
     generationModel,
   });
+}
+
+export function generatePassphrase(config, cryptoLike = globalThis.crypto) {
+  return generatePassphraseFromModel(createPassphraseModel(config), cryptoLike);
 }
