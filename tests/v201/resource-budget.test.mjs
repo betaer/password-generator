@@ -69,3 +69,18 @@ test('大结果可以明确拒绝进入 History', () => {
   assert.equal(history.entries.length, 0);
 });
 
+test('History 可按 id 删除并只清理实际移除项', () => {
+  const cleared = [];
+  const history = createHistoryBudget({
+    maxEntries: 10,
+    maxBytes: 100,
+    estimateBytes: (entry) => entry.bytes,
+    clearEntry: (entry) => cleared.push(entry.id),
+  });
+  history.add([{ id: 'a', bytes: 2 }, { id: 'b', bytes: 3 }]);
+  assert.equal(history.removeById('a'), true);
+  assert.equal(history.removeById('missing'), false);
+  assert.deepEqual(history.entries.map(({ id }) => id), ['b']);
+  assert.equal(history.totalBytes, 3);
+  assert.deepEqual(cleared, ['a']);
+});

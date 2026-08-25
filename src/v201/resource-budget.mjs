@@ -69,6 +69,14 @@ export function createHistoryBudget({
       entries = [];
       totalBytes = 0;
     },
+    removeById(id) {
+      const index = entries.findIndex((entry) => entry.id === id);
+      if (index === -1) return false;
+      const [removed] = entries.splice(index, 1);
+      totalBytes -= estimateBytes(removed);
+      clearEntry(removed);
+      return true;
+    },
     get entries() { return Object.freeze([...entries]); },
     get totalBytes() { return totalBytes; },
   };
@@ -82,4 +90,3 @@ export function estimateResultRetentionBytes(result) {
   const preview = typeof result.preview === 'string' ? result.preview.length * 2 : 0;
   return binary + text + preview;
 }
-
