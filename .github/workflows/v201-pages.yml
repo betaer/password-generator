@@ -1,0 +1,93 @@
+name: V2.0.1 verified Pages deployment
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: pages-v201
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: V2.0.1 security gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Install Chromium and system dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Run complete V1, V2 and V2.0.1 verification
+        run: npm run verify:v201
+
+      - name: Prove committed V2.0.1 artifacts are reproducible
+        run: git diff --exit-code -- v2.01.html assets/v2.01
+
+  package:
+    name: Package verified Pages artifact
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Checkout verified commit
+        uses: actions/checkout@v6
+
+      - name: Stage immutable static site
+        run: |
+          mkdir _site
+          cp index.html index-2.0.html v2.01.html _site/
+          cp password-generator-icon.png password-generator-icon.svg _site/
+          cp robots.txt sitemap.xml llms.txt README.md THIRD_PARTY_NOTICES.md _site/
+          cp -R assets _site/assets
+          touch _site/.nojekyll
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Attest deployed file provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: _site/**
+
+      - name: Upload verified Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy verified artifact
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

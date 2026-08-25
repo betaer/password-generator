@@ -1,31 +1,44 @@
-# Security Random Generator V2.0｜安全随机数据生成器
+# Security Random Generator V2.0.1｜安全随机数据生成器
 
-V2.0 规范地址：https://betaer.github.io/password-generator/index-2.0.html
-V1.7.5 规范地址：https://betaer.github.io/password-generator/
+V2.0.1：https://betaer.github.io/password-generator/v2.01.html
+V2.0：https://betaer.github.io/password-generator/index-2.0.html
+V1.7.5：https://betaer.github.io/password-generator/
+规范地址：https://betaer.github.io/password-generator/
 源代码：https://github.com/betaer/password-generator
 
-## V2.0 核心能力
+## 核心契约
 
-- 九个独立生成器：Password、Passphrase、PIN、Token、API Secret、UUID、Hex、Random Bytes、BIP39 Mnemonic。
-- 所有随机数据使用浏览器 Web Crypto API；索引选择使用拒绝采样，排列使用无偏 Fisher–Yates，不使用 Math.random()。
-- Password 的 sampler 与 estimator 共用同一约束概率模型，处理符号比例范围、requireEach、首尾、Space 和禁止重复。
-- Passphrase 按实际唯一词数计算，并计入随机大小写位置和每个随机分隔符。
-- PIN 使用 completion-count DP 均匀采样；本地风险模型包含 10,000 个四位排名与 68,202 个唯一六位数字组合，不使用固定 bit 修正。
-- Token、API Secret、Hex、Random Bytes 的 Generator Min-Entropy 严格等于随机字节数乘八；固定前缀和编码格式不增加熵。
-- UUID 遵循 RFC 9562；BIP39 支持五种 ENT 长度和十种官方词表。
-- 每条结果携带不可变 generationModel，展示 Generator Min-Entropy、Search Space、Effective Guess Count 和三种攻击模型；zxcvbn 只能让结果更保守。这些估算不是安全保证。
+- 九类生成器共享 Unified Probability Contract，但使用各自专用概率模型和结果语义。
+- 所有随机数据使用浏览器 Web Crypto API；整数拒绝采样、无偏 Fisher–Yates，不使用 Math.random()。
+- 每批冻结 mode/config/quantity；generation epoch、Worker jobId 与主动取消防止模式切换竞态。
+- Expected Guess Count 对均匀有限空间精确使用 (N + 1) / 2。
+- 指标分为 Exact Generator Metrics、Observed Pattern Estimate、Attack Scenario Estimate。
+- UUID、Random Bytes、Token、Hex 与 BIP39 不展示通用密码哈希破解时间。
+- Random Bytes 使用 2^n 符号空间、延迟编码、SHA-256 和 8 MiB 总资源预算。
+- PIN 使用 completion-count DP；批量默认精确无放回；常见 PIN 过滤明确标为启发式策略。
+- Passphrase 与 BIP39 使用 V2.0.1 独立内容哈希词表，结果记录 SHA-256。
+- zxcvbn 在独立 Worker 中只提供 Observed Pattern Estimate；固定 PIN 来源包含 68,202 个唯一六位数字候选。
+- Password/Passphrase 的三种攻击模型分别是在线限速、慢速 KDF/密码哈希与快速离线估算，均不是安全保证。
 
-## V2.0 隐私边界
+## 隐私边界
 
-- “生成”不会自动复制；只有显式点击复制才写入系统剪贴板。
-- 结果默认遮蔽；主动显示时明文才进入可见 DOM，超过 4,096 字符的明文不渲染到 DOM。
-- History 默认关闭，启用后只存在当前页面内存，最多 100 条，可随时清空；不使用 sessionStorage 或 IndexedDB 保存 V2 历史。
-- localStorage 只保存白名单非秘密设置，不保存结果或 History。
-- Google Analytics 位于只有 allow-scripts、没有 allow-same-origin 的 sandbox iframe，使用固定 V2 页面位置，不接收父页面消息或 generated_value。
-- JavaScript String 不可可靠清零，项目不承诺删除后从内存彻底擦除。
+- 生成不会自动复制；只有显式点击才写入系统剪贴板。
+- 结果默认固定 24 个遮蔽符；主动显示时明文才进入 DOM，超长结果只显示摘要。
+- Model Details 脱敏 prefix、symbol pool、separator 候选与完整 words。
+- History 每次会话默认关闭，仅内存、最多 100 条与 8 MiB，不使用 sessionStorage 或 IndexedDB。
+- localStorage 只保存白名单结构化非秘密设置，不保存结果、History 或自由文本字段。
+- JavaScript String 不可可靠清零；只主动覆写可控 Uint8Array。
 
-## 能力边界
+## GA
 
-- 本项目不是密码管理器、钱包、密钥托管服务或硬件随机数设备。
-- API 服务商前缀和钱包私钥外观只用于测试，不代表真实签发或曲线有效性。
-- V1.7.5 继续保留在根入口；其行为和 V2.0 隔离。
+- 保留隔离、无本站 Analytics Cookie 的固定 page-view。
+- GA 只在 sandbox="allow-scripts" iframe 中执行，无 allow-same-origin、referrer 或消息桥。
+- 父页面不加载 Google JS，也不向 iframe 发送生成器类型、配置、输入或结果。
+- cookieless ping 仍可能包含标准浏览器/网络层元数据，因此不称为“完全匿名”。
+- Playwright 拦截实际 g/collect，验证固定 dl/dp/dr、无 Cookie、无 sentinel secret。
+
+## 发布
+
+- `v2.01.html` 与 `assets/v2.01/` 使用内容哈希资源和 runtime 版本握手。
+- CI 强制执行 V1/V2/V2.0.1 单测、80% 覆盖率、浏览器 E2E、GA 网络验收、npm audit 与 git diff --exit-code。
+- 通过后才上传 Pages 制品并创建 build provenance attestation。
