@@ -3,4 +3,5 @@
 .playwright-cli/
 node_modules/
 output/
+coverage/
 *.log

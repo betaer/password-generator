@@ -23,7 +23,7 @@ test('V2 documentation names all nine generators and keeps V1 as a separate entr
 
 test('privacy documentation does not preserve the V1 auto-copy or session history claims', () => {
   assert.match(readme, /只生成，不自动写入剪贴板/);
-  assert.match(readme, /History \| 默认关闭；启用后只保存在当前页面内存/);
+  assert.match(readme, /生成记录默认关闭；启用后只保存在当前页面内存/);
   assert.doesNotMatch(readme, /结果会自动复制到剪贴板/);
   assert.doesNotMatch(readme, /历史记录只使用 `sessionStorage`/);
   assert.match(english, /History is off by default, memory-only/);

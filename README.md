@@ -18,6 +18,9 @@
 - zxcvbn 位于单并发独立 Worker，输入最长 512 字符；late-ready 会重分析仍存活结果，stale 回调不会写回。
 - API Secret 只保留 Generic 与无厂商含义的 `demo_test_v1_` Synthetic Demo，不再生成容易触发真实服务 Secret Scanner 的外观。
 - “生成”与“复制”完全分离；History 每次会话默认关闭，只在内存中按条数与总字节预算保留。
+- 工作区按“1、选择生成类型 → 2、策略配置 → 3、生成结果”组织；左侧中文居左、英文居右，九类配置与结果卡使用完整中文显示。
+- 当前结果默认显示明文；隐藏/显示只原地改变视觉呈现，不重建结果卡、不改变滚动位置或键盘焦点。
+- “生成记录 History”采用紧凑单行列表，支持点击复制、逐条删除以及 hover/focus 临时完整内容气泡；右下角恢复回顶、GitHub 999+ 与固定分享文案操作。
 - 所有浏览器资源采用内容哈希文件名，并通过 HTML/runtime `2.0.1` 版本握手防止混合缓存。
 
 ## 九个生成器与结果语义
@@ -29,7 +32,7 @@
 | PIN | completion-count 加权抽样；批量可精确无放回 | 合法空间、精确期望次序、批次碰撞概率、启发式风险策略 |
 | Token | CSPRNG 字节后编码 | 随机位数、编码、固定前缀长度、碰撞语义 |
 | API Secret | Generic 或 Synthetic Demo 随机字节 Secret | 随机位数、合成凭据警告、碰撞语义 |
-| UUID | RFC 9562 v4 / v7 | Version、Variant、随机位、v7 时间戳；明确“Identifier, not a secret” |
+| UUID | RFC 9562 v4 / v7 | 版本、变体、随机位、v7 时间戳；明确“这是标识符，不是秘密” |
 | Hex | CSPRNG 字节的十六进制表示 | 随机位数、编码与用途边界 |
 | Random Bytes | 1～1,048,576 原始随机字节 | 字节数、Nominal CSPRNG Output Bits、SHA-256、下载 |
 | BIP39 | ENT + SHA-256 checksum，官方词表固定哈希 | ENT、CS、词数、语言、checksum 与钱包兼容性边界 |
@@ -42,9 +45,9 @@ V2.0.1 不再使用统一的 “Exact Effective Guess Count / Exact Crack Time�
 
 | 层级 | 性质 | 适用范围 |
 |---|---|---|
-| Exact Generator Metrics | 根据生成时不可变概率模型计算 Search Space、Min-Entropy、Shannon Entropy 和 `(N + 1) / 2` Expected Guess Count | 所有生成器，但字段按类型解释 |
-| Observed Pattern Estimate | zxcvbn 对结果外观的经验型字典/模式估算，不是生成分布的数学证明 | Password、Passphrase |
-| Attack Scenario Estimate | 按公开速率、锁定和验证函数假设估算攻击成本，不是安全保证 | Password、Passphrase；PIN 只披露设备重试策略 |
+| 精确生成器指标 | 根据生成时不可变概率模型计算生成空间、最小熵、香农熵和 `(N + 1) / 2` 期望猜测次数 | 所有生成器，但字段按类型解释 |
+| 观察模式估算 | zxcvbn 对结果外观的经验型字典/模式估算，不是生成分布的数学证明 | Password、Passphrase |
+| 攻击场景估算 | 按公开速率、锁定和验证函数假设估算攻击成本，不是安全保证 | Password、Passphrase；PIN 只披露设备重试策略 |
 
 Password / Passphrase 的攻击场景会明确展示：100 次/小时在线限速、`10⁴` 次/秒慢速密码哈希 / KDF、`10¹⁰` 次/秒快速离线验证。UUID、Random Bytes、Token、Hex 与 BIP39 不显示通用密码哈希破解时间。
 
@@ -86,15 +89,15 @@ UUID v4 提供 122 个随机位，UUID v7 提供 74 个随机位并包含 48-bit
 |---|---|
 | 生成 | 只生成，不自动写入系统剪贴板 |
 | 复制 | 只有显式点击才写入；超过 1 MiB 二次确认，超过 4 MiB 拒绝并建议下载 |
-| 当前结果 | 默认固定 24 个遮蔽符，不通过遮蔽 UI 泄露长度 |
-| DOM | 主动显示后才写入明文；超过 4,096 字符只显示摘要；Model Details 会脱敏自由文本字段 |
+| 当前结果 | 默认显示明文；隐藏/显示在原位置切换固定 24 个遮蔽符，不改变卡片几何位置或滚动位置 |
+| DOM | 当前结果默认以明文进入可见 DOM；隐藏仅改变视觉呈现；超过 4,096 字符只显示摘要；生成模型详情不展示自由文本秘密字段 |
 | Random Bytes | `≥64 KiB` 时 quantity 必须为 1；批次原始数据总量上限 8 MiB；大结果延迟编码 |
-| History | 每次会话默认关闭；最多 100 条且秘密总量最多 8 MiB；不写入 storage |
+| 生成记录 History | 每次会话默认关闭；紧凑单行显示，最多 100 条且秘密总量最多 8 MiB；不写入 storage |
 | localStorage | 只保存白名单结构化设置；不保存结果、History、自由文本 prefix、symbol pool 或 separator 候选 |
 | sessionStorage / IndexedDB | 不保存 V2.0.1 生成历史 |
 | 删除 | 覆写可控 `Uint8Array` 并释放引用；不承诺 JavaScript String 被可靠清零 |
 
-简要说：只生成，不自动写入剪贴板。History | 默认关闭；启用后只保存在当前页面内存，并继续受 100 条与 8 MiB 双重预算限制。JavaScript String 不可变，因此只能释放引用，不能证明底层内存已被立即擦除。
+简要说：只生成，不自动写入剪贴板。生成记录默认关闭；启用后只保存在当前页面内存，并继续受 100 条与 8 MiB 双重预算限制。右下角“复制分享”只复制固定公开介绍和 V2.0.1 地址，不读取当前类型、配置、结果、History、hash 或 query。JavaScript String 不可变，因此只能释放引用，不能证明底层内存已被立即擦除。
 
 ## Google Analytics 隔离
 
@@ -123,7 +126,7 @@ npm run serve
 ```bash
 npm run test:v201             # V2.0.1 单元与集成测试
 npm run test:coverage:v201    # 80% branches/functions/lines/statements 门槛
-npm run test:e2e:v201         # 九模式、竞态、预算、DOM、剪贴板、GA 网络与响应式验收
+npm run test:e2e:v201         # 九类中文结果、无抖动切换、记录列表、竞态、预算、剪贴板、GA 网络与响应式验收
 npm run verify:v201           # V1 + V2 + V2.0.1 + coverage + E2E + audit + artifact diff
 ```
 

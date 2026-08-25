@@ -45,11 +45,10 @@ test('BIP39 结果记录 ENT/CS/语言/词表哈希与校验和状态', async ()
   assert.equal(result.checksumValid, true);
 });
 
-test('非 English 词表和真实资产边界使用显著警告', () => {
+test('非英语词表和真实资产边界使用显著警告', () => {
   const englishNotice = bip39CompatibilityNotice('english');
   const localizedNotice = bip39CompatibilityNotice('japanese');
   assert.equal(englishNotice.compatibilityWarning, null);
-  assert.match(localizedNotice.compatibilityWarning, /多数钱包.*English/u);
+  assert.match(localizedNotice.compatibilityWarning, /多数钱包.*英语/u);
   assert.match(localizedNotice.assetSafetyWarning, /硬件钱包|离线构建/u);
 });
-

@@ -2,13 +2,13 @@
   "version": "2.0.1",
   "assets": {
     "version": "2.0.1",
-    "runtime": "runtime.4fa2988b4287.js",
-    "passwordWorker": "password-worker.544bb4714b68.js",
+    "runtime": "runtime.38793d36e4a8.js",
+    "passwordWorker": "password-worker.ed3f66dd9153.js",
     "zxcvbnWorker": "zxcvbn-worker.2e228393790c.js",
     "passphrase": "passphrase-packs.891f176b1e4b.js",
     "pinRisk": "pin-risk.ddbf314b53a5.js",
     "analyticsFrame": "analytics-frame.8bbdd811156b.html",
-    "css": "app.59360faffc30.css",
+    "css": "app.13356c9aa03e.css",
     "bip39": {
       "czech": "bip39.czech.c47781d55ca2.js",
       "english": "bip39.english.578979e364c7.js",
@@ -21,6 +21,6 @@
       "spanish": "bip39.spanish.17f2be90d72a.js",
       "traditional-chinese": "bip39.traditional-chinese.718f85bb9c0f.js"
     },
-    "app": "app.fd216fd8d021.js"
+    "app": "app.d14d7192f73f.js"
   }
 }
