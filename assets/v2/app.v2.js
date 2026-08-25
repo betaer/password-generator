@@ -8,6 +8,25 @@
   const runtime = globalThis.PasswordGeneratorV2;
   if (!runtime) {
     document.documentElement.dataset.passwordGeneratorError = 'true';
+    const generate = document.getElementById('generate-button');
+    if (generate) {
+      generate.disabled = true;
+      generate.textContent = '运行时不可用';
+    }
+    const strip = document.getElementById('resource-strip');
+    if (strip) {
+      const error = document.createElement('span');
+      error.className = 'resource-item';
+      error.dataset.state = 'error';
+      error.textContent = 'V2 核心运行时加载失败 · 已停止生成';
+      const reload = document.createElement('button');
+      reload.type = 'button';
+      reload.className = 'button button-small';
+      reload.textContent = '重新加载页面';
+      reload.addEventListener('click', () => location.reload());
+      error.append(' ', reload);
+      strip.replaceChildren(error);
+    }
     return;
   }
 
@@ -265,7 +284,7 @@
       const label = document.createElement('span');
       label.textContent = `${resource.detail} · ${resource.status}`;
       item.append(dot, label);
-      if (resource.status === 'error') {
+      if (resource.status === 'error' || resource.status === 'degraded') {
         const retry = actionButton('重试', () => retryResource(name));
         item.append(retry);
       }
@@ -327,17 +346,37 @@
     if (name === 'pinRisk') return initializePinRisk();
     if (name === 'passphrase') return initializePassphrase();
     if (name === 'zxcvbn') return initializeAnalyzer();
+    if (name === 'crypto') {
+      const ready = Boolean(globalThis.crypto?.getRandomValues);
+      setResource(
+        'crypto',
+        ready ? 'ready' : 'error',
+        ready ? 'Web Crypto 随机源' : 'Web Crypto 不可用 · 已停止生成',
+      );
+    }
   }
 
-  function initializePassphrase() {
-    const ready = Boolean(globalThis.EmbeddedWordPacksV1?.packs
-      && Object.keys(globalThis.EmbeddedWordPacksV1.packs).length);
-    setResource('passphrase', ready ? 'ready' : 'error', 'Passphrase 词包');
+  async function initializePassphrase() {
+    setResource('passphrase', 'loading', 'Passphrase 词包');
+    try {
+      await loadLocalScriptOnce(
+        './assets/js/embedded-word-packs.js',
+        () => Boolean(globalThis.EmbeddedWordPacksV1?.packs
+          && Object.keys(globalThis.EmbeddedWordPacksV1.packs).length),
+      );
+      setResource('passphrase', 'ready', 'Passphrase 词包');
+    } catch {
+      setResource('passphrase', 'error', 'Passphrase 词包');
+    }
   }
 
-  function initializePinRisk() {
+  async function initializePinRisk() {
     setResource('pinRisk', 'loading', 'PIN 风险库');
     try {
+      await loadLocalScriptOnce(
+        './assets/v2/pin-risk.v2.js',
+        () => Boolean(globalThis.PasswordGeneratorV2Assets?.pinRisk),
+      );
       state.pinRiskIndex = runtime.pin.createPinRiskIndex(
         globalThis.PasswordGeneratorV2Assets?.pinRisk,
       );
@@ -348,14 +387,17 @@
     }
   }
 
-  function initializeAnalyzer() {
+  async function initializeAnalyzer() {
     setResource('zxcvbn', 'loading', '模式分析');
-    const analyzer = globalThis.PasswordGeneratorV2Zxcvbn;
-    setResource(
-      'zxcvbn',
-      analyzer && typeof analyzer.analyzePassword === 'function' ? 'ready' : 'degraded',
-      '模式分析',
-    );
+    try {
+      await loadLocalScriptOnce(
+        './assets/v2/zxcvbn-analyzer.v2.min.js',
+        () => typeof globalThis.PasswordGeneratorV2Zxcvbn?.analyzePassword === 'function',
+      );
+      setResource('zxcvbn', 'ready', '模式分析');
+    } catch {
+      setResource('zxcvbn', 'degraded', '模式分析');
+    }
   }
 
   function readConfig() {
@@ -380,10 +422,20 @@
         const packId = data.get('pack');
         const pack = globalThis.EmbeddedWordPacksV1?.packs?.[packId];
         if (!pack) throw new Error('所选 Passphrase 词包尚未 ready。');
+        const wordCount = numberField('wordCount', 6);
+        const capitalization = data.get('capitalization');
+        const separator = data.get('separator');
+        const separatorSymbols = data.get('separatorSymbols');
+        const words = runtime.passphrase.getCompatiblePassphraseWords({
+          wordCount,
+          words: pack.entries,
+          capitalization,
+          separator,
+          separatorSymbols,
+        });
         return { quantity, config: {
-          wordCount: numberField('wordCount', 6), words: pack.entries, wordPackId: pack.id,
-          capitalization: data.get('capitalization'), separator: data.get('separator'),
-          separatorSymbols: data.get('separatorSymbols'),
+          wordCount, words, wordPackId: pack.id, capitalization, separator, separatorSymbols,
+          sourceWordPoolSize: pack.entries.length,
         } };
       }
       case 'pin':
@@ -449,7 +501,7 @@
           return;
         }
         try {
-          const { bytes, ...serializedResult } = data.result;
+          const { bytes, id: _workerId, ...serializedResult } = data.result;
           resolve(runtime.results.createGenerationResult({
             ...serializedResult,
             ...(bytes instanceof Uint8Array ? { bytes } : {}),
@@ -701,9 +753,13 @@
 
     const pattern = document.createElement('p');
     pattern.className = 'pattern-state';
-    pattern.textContent = ['password', 'passphrase'].includes(result.type)
+    const patternMessage = ['password', 'passphrase'].includes(result.type)
       ? assessment.patternMessage || RESOURCE_MESSAGES[assessment.patternStatus]
       : '此标准格式使用精确生成模型；常见密码模式分析不适用。';
+    pattern.textContent = result.type === 'passphrase'
+      && result.generationModel.excludedAmbiguousWordCount > 0
+      ? `已排除 ${result.generationModel.excludedAmbiguousWordCount} 个会造成输出歧义的词；实际词池 ${result.generationModel.wordPoolSize}。${patternMessage}`
+      : patternMessage;
     card.append(head, box, actions, metrics, attacks, pattern);
     return card;
   }

@@ -46,7 +46,7 @@ test('large random byte output is truncated unless the user explicitly copies or
 });
 
 test('worker results omit their null byte placeholder and reject failed rehydration', () => {
-  assert.match(app, /const \{ bytes, \.\.\.serializedResult \} = data\.result/);
+  assert.match(app, /const \{ bytes, id: _workerId, \.\.\.serializedResult \} = data\.result/);
   assert.match(app, /bytes instanceof Uint8Array \? \{ bytes \} : \{\}/);
   assert.match(app, /catch \(error\) \{\s*reject\(error\);\s*\}/);
 });

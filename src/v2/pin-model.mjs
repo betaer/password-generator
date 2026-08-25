@@ -306,7 +306,12 @@ function keypadPatternsForLength(length) {
   if (keypadPatternCache.has(length)) return keypadPatternCache.get(length);
   const values = new Set();
   for (const path of KEYPAD_PATHS) {
-    if (path.length > length) continue;
+    if (path.length >= length) {
+      for (let start = 0; start <= path.length - length; start += 1) {
+        values.add(path.slice(start, start + length));
+      }
+      continue;
+    }
     values.add(path.repeat(Math.ceil(length / path.length)).slice(0, length));
   }
   keypadPatternCache.set(length, values);

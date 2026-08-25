@@ -45,4 +45,8 @@ test('resource states and retry affordances are explicit', () => {
   assert.match(source, /重试/);
   assert.match(source, /安全分析正在加载/);
   assert.match(source, /安全资源加载失败/);
+  assert.match(source, /V2 核心运行时加载失败 · 已停止生成/);
+  assert.match(source, /\.\/assets\/v2\/pin-risk\.v2\.js/);
+  assert.match(source, /\.\/assets\/js\/embedded-word-packs\.js/);
+  assert.match(source, /\.\/assets\/v2\/zxcvbn-analyzer\.v2\.min\.js/);
 });

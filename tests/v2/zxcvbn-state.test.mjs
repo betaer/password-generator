@@ -96,10 +96,13 @@ test('classic analyzer asset is deterministic, frozen, and does not expose secre
   }
 });
 
-test('analyzer builder reports an absent source entry without emitting an asset', async () => {
+test('analyzer builder fails closed when its source entry is absent', async () => {
   const projectRoot = await mkdtemp(path.join(tmpdir(), 'password-generator-v2-zxcvbn-missing-'));
   try {
-    assert.deepEqual(await buildZxcvbnAssets({ projectRoot }), []);
+    await assert.rejects(
+      buildZxcvbnAssets({ projectRoot }),
+      /missing.*zxcvbn-entry/iu,
+    );
   } finally {
     await rm(projectRoot, { recursive: true, force: true });
   }

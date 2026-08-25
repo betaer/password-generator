@@ -1,9 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
 
 import {
   createPassphraseModel,
   generatePassphrase,
+  getCompatiblePassphraseWords,
 } from '../../src/v2/passphrase-model.mjs';
 
 const words = ['alpha', 'bravo', 'cider', 'delta'];
@@ -159,6 +162,154 @@ test('duplicate words are rejected so independent draws stay uniform over distin
     }),
     /重复.*单词|单词.*重复/,
   );
+});
+
+test('words containing an active separator are rejected to keep output mapping injective', () => {
+  assert.throws(
+    () => createPassphraseModel({
+      wordCount: 2,
+      words: ['a', 'b-c', 'a-b', 'c'],
+      wordPackId: 'collision-fixture',
+      capitalization: 'lowercase',
+      separator: 'hyphen',
+    }),
+    /分隔符.*单词/u,
+  );
+  assert.doesNotThrow(() => createPassphraseModel({
+    wordCount: 1,
+    words: ['single-word'],
+    wordPackId: 'one-word-fixture',
+    capitalization: 'lowercase',
+    separator: 'hyphen',
+  }));
+});
+
+test('capitalization transforms must remain injective over the configured word pool', () => {
+  for (const capitalization of ['first-word', 'every-word']) {
+    assert.throws(
+      () => createPassphraseModel({
+        wordCount: 1,
+        words: ['i', 'ı'],
+        wordPackId: 'unicode-case-collision',
+        capitalization,
+        separator: 'space',
+      }),
+      /大小写.*不同输出/u,
+    );
+  }
+  assert.throws(
+    () => createPassphraseModel({
+      wordCount: 1,
+      words: ['ß', 'ss'],
+      wordPackId: 'unicode-uppercase-collision',
+      capitalization: 'random-uppercase',
+      separator: 'space',
+    }),
+    /大小写.*不同输出/u,
+  );
+});
+
+test('separator safety is evaluated after capitalization transforms', () => {
+  assert.throws(
+    () => createPassphraseModel({
+      wordCount: 3,
+      words: ['a', 's', 'ß'],
+      capitalization: 'every-word',
+      separator: 'random-symbol',
+      separatorSymbols: 'S',
+    }),
+    /分隔符.*单词/u,
+  );
+  assert.deepEqual(getCompatiblePassphraseWords({
+    wordCount: 3,
+    words: ['a', 's', 'ß'],
+    capitalization: 'every-word',
+    separator: 'random-symbol',
+    separatorSymbols: 'S',
+  }), ['a']);
+});
+
+test('UI compatibility filtering keeps only words with an injective rendered form', () => {
+  const compatible = getCompatiblePassphraseWords({
+    wordCount: 2,
+    words: ['a', 'b-c', 'a-b', 'c'],
+    capitalization: 'lowercase',
+    separator: 'hyphen',
+  });
+  assert.deepEqual(compatible, ['a', 'c']);
+  assert.ok(Object.isFrozen(compatible));
+  const model = createPassphraseModel({
+    wordCount: 2,
+    words: compatible,
+    sourceWordPoolSize: 4,
+    capitalization: 'lowercase',
+    separator: 'hyphen',
+  });
+  assert.equal(model.wordPoolSize, 2);
+  assert.equal(model.sourceWordPoolSize, 4);
+  assert.equal(model.excludedAmbiguousWordCount, 2);
+  assert.equal(model.searchSpace, 4n);
+});
+
+test('every embedded word pack remains exactly modeled across all UI separator and casing modes', async () => {
+  const source = await readFile(
+    new URL('../../assets/js/embedded-word-packs.js', import.meta.url),
+    'utf8',
+  );
+  const context = {};
+  context.globalThis = context;
+  vm.runInNewContext(source, context, { filename: 'embedded-word-packs.js' });
+  const packs = context.EmbeddedWordPacksV1?.packs;
+  assert.ok(packs && typeof packs === 'object');
+
+  const capitalizations = ['lowercase', 'first-word', 'every-word', 'random-uppercase'];
+  const separators = [
+    ['hyphen', ''],
+    ['underscore', ''],
+    ['period', ''],
+    ['space', ''],
+    ['random-digit', ''],
+    ['random-symbol', '!@#$%&*+?'],
+  ];
+
+  for (const [packId, pack] of Object.entries(packs)) {
+    const packWords = Array.from(pack.entries ?? pack);
+    assert.ok(packWords.length > 0, `${packId} must contain words`);
+    for (const capitalization of capitalizations) {
+      for (const [separator, separatorSymbols] of separators) {
+        const compatible = getCompatiblePassphraseWords({
+          wordCount: 6,
+          words: packWords,
+          capitalization,
+          separator,
+          separatorSymbols,
+        });
+        const model = createPassphraseModel({
+          wordCount: 6,
+          words: compatible,
+          sourceWordPoolSize: packWords.length,
+          wordPackId: packId,
+          capitalization,
+          separator,
+          separatorSymbols,
+        });
+        assert.equal(model.wordPoolSize, compatible.length);
+        assert.equal(model.sourceWordPoolSize, packWords.length);
+        assert.ok(model.searchSpace > 0n);
+      }
+    }
+  }
+
+  for (const packId of ['technology', 'network-security']) {
+    const packWords = Array.from(packs[packId].entries ?? packs[packId]);
+    const compatible = getCompatiblePassphraseWords({
+      wordCount: 6,
+      words: packWords,
+      capitalization: 'lowercase',
+      separator: 'hyphen',
+    });
+    assert.ok(compatible.length < packWords.length, `${packId} must filter hyphenated words`);
+  }
 });
 
 test('invalid configuration fails explicitly', () => {

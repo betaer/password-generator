@@ -273,17 +273,25 @@ test('classic assets queue safely when loaded before the V2 runtime', async () =
   }
 });
 
-test('runtime builder skips a missing entry and reproducibly bundles a present one', async () => {
+test('runtime builder fails closed on a missing entry and reproducibly bundles present entries', async () => {
   const missingProject = await mkdtemp(path.join(tmpdir(), 'password-generator-v2-runtime-missing-'));
   const projectRoot = await mkdtemp(path.join(tmpdir(), 'password-generator-v2-runtime-present-'));
   try {
-    assert.deepEqual(await buildRuntimeAssets({ projectRoot: missingProject }), []);
+    await assert.rejects(
+      buildRuntimeAssets({ projectRoot: missingProject }),
+      /missing.*runtime-entry/iu,
+    );
 
     const sourceDirectory = path.join(projectRoot, 'src/v2');
     await mkdir(sourceDirectory, { recursive: true });
     await writeFile(
       path.join(sourceDirectory, 'runtime-entry.mjs'),
       "export const runtimeVersion = '2.0.0-test';\n",
+      'utf8',
+    );
+    await writeFile(
+      path.join(sourceDirectory, 'zxcvbn-entry.mjs'),
+      "export default Object.freeze({ analyzePassword() { return Object.freeze({ guesses: 1, patternGuesses: 1, patterns: Object.freeze([]) }); } });\n",
       'utf8',
     );
 
@@ -299,7 +307,7 @@ test('runtime builder skips a missing entry and reproducibly bundles a present o
     assert.equal(context.PasswordGeneratorV2.runtimeVersion, '2.0.0-test');
 
     const allOutputs = await buildV2Runtime({ projectRoot });
-    assert.equal(allOutputs.length, 11);
+    assert.equal(allOutputs.length, 12);
     assert.equal((await readdir(path.join(projectRoot, 'assets/v2/bip39'))).length, 10);
   } finally {
     await Promise.all([

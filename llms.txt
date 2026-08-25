@@ -1,13 +1,13 @@
 # Security Random Generator V2.0｜安全随机数据生成器
 
-V2.0：https://betaer.github.io/password-generator/index-2.0.html
-V1.7.5 稳定版：https://betaer.github.io/password-generator/
+V2.0 规范地址：https://betaer.github.io/password-generator/index-2.0.html
+V1.7.5 规范地址：https://betaer.github.io/password-generator/
 源代码：https://github.com/betaer/password-generator
 
 ## V2.0 核心能力
 
 - 九个独立生成器：Password、Passphrase、PIN、Token、API Secret、UUID、Hex、Random Bytes、BIP39 Mnemonic。
-- 所有随机数据使用 Web Crypto；索引选择使用拒绝采样，排列使用无偏 Fisher–Yates，不使用 Math.random()。
+- 所有随机数据使用浏览器 Web Crypto API；索引选择使用拒绝采样，排列使用无偏 Fisher–Yates，不使用 Math.random()。
 - Password 的 sampler 与 estimator 共用同一约束概率模型，处理符号比例范围、requireEach、首尾、Space 和禁止重复。
 - Passphrase 按实际唯一词数计算，并计入随机大小写位置和每个随机分隔符。
 - PIN 使用 completion-count DP 均匀采样；本地风险模型包含 10,000 个四位排名与 68,202 个唯一六位数字组合，不使用固定 bit 修正。

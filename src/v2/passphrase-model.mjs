@@ -89,12 +89,61 @@ function normalizeSeparator(separator, separatorSymbols, gapCount) {
   return choices;
 }
 
-function assertRandomUppercaseIsDistinct(words, capitalization) {
-  if (capitalization !== 'random-uppercase') return;
-  const invariant = words.find((word) => word.toUpperCase() === word);
-  if (invariant !== undefined) {
-    throw new TypeError(`random-uppercase 要求每个单词都具有大小写形式：${invariant}`);
+function capitalizationTransform(word, capitalization) {
+  if (capitalization === 'first-word' || capitalization === 'every-word') {
+    return capitalizeFirst(word);
   }
+  if (capitalization === 'random-uppercase') return word.toUpperCase();
+  return word;
+}
+
+function assertCapitalizationIsInjective(words, capitalization) {
+  if (capitalization === 'lowercase') return;
+  const transformed = words.map((word) => capitalizationTransform(word, capitalization));
+  if (new Set(transformed).size !== transformed.length) {
+    throw new TypeError('大小写转换必须让每个候选单词保持不同输出');
+  }
+  if (capitalization !== 'random-uppercase') return;
+  const originals = new Set(words);
+  if (transformed.some((word, index) => word === words[index] || originals.has(word))) {
+    throw new TypeError('random-uppercase 的大小写结果必须与所有原始单词保持不同输出');
+  }
+}
+
+function filterCapitalizationCollisions(words, capitalization) {
+  if (capitalization === 'lowercase') return words;
+  const accepted = [];
+  const acceptedOriginals = new Set();
+  const acceptedTransforms = new Set();
+  for (const word of words) {
+    const transformed = capitalizationTransform(word, capitalization);
+    const randomCollision = capitalization === 'random-uppercase'
+      && (transformed === word
+        || acceptedOriginals.has(transformed)
+        || acceptedTransforms.has(word));
+    if (randomCollision || acceptedTransforms.has(transformed)) continue;
+    accepted.push(word);
+    acceptedOriginals.add(word);
+    acceptedTransforms.add(transformed);
+  }
+  return accepted;
+}
+
+function renderedWordVariants(word, capitalization, wordCount) {
+  if (capitalization === 'first-word') {
+    return wordCount === 1 ? [capitalizeFirst(word)] : [word, capitalizeFirst(word)];
+  }
+  if (capitalization === 'every-word') return [capitalizeFirst(word)];
+  if (capitalization === 'random-uppercase') {
+    return wordCount === 1 ? [word.toUpperCase()] : [word, word.toUpperCase()];
+  }
+  return [word];
+}
+
+function wordConflictsWithSeparators(word, capitalization, wordCount, separatorChoices) {
+  return renderedWordVariants(word, capitalization, wordCount).some((variant) => (
+    separatorChoices.some((choice) => variant.includes(choice))
+  ));
 }
 
 function capitalizationChoiceCount(capitalization, wordCount) {
@@ -106,6 +155,8 @@ function buildConfigSnapshot(normalized) {
     wordCount: normalized.wordCount,
     wordPackId: normalized.wordPackId,
     wordPoolSize: normalized.words.length,
+    sourceWordPoolSize: normalized.sourceWordPoolSize,
+    excludedAmbiguousWordCount: normalized.sourceWordPoolSize - normalized.words.length,
     capitalization: normalized.capitalization,
     separator: normalized.separator,
     separatorSymbols: normalized.separator === 'random-symbol'
@@ -138,6 +189,8 @@ function buildGenerationModel(normalized) {
     searchSpace,
     averageGuessBits: Math.max(0, entropyBits - 1),
     wordPoolSize,
+    sourceWordPoolSize: normalized.sourceWordPoolSize,
+    excludedAmbiguousWordCount: normalized.sourceWordPoolSize - wordPoolSize,
     wordCount: normalized.wordCount,
     independentWordDraws: true,
     capitalization: normalized.capitalization,
@@ -174,12 +227,22 @@ export function normalizePassphraseConfig(config) {
     config.separatorSymbols,
     separatorGapCount,
   );
+  if (separatorGapCount > 0 && words.some((word) => (
+    wordConflictsWithSeparators(word, capitalization, wordCount, separatorChoices)
+  ))) {
+    throw new RangeError('分隔符候选不能出现在单词中，否则无法保证不同抽样路径对应不同输出');
+  }
+  const sourceWordPoolSize = config.sourceWordPoolSize ?? words.length;
+  if (!Number.isSafeInteger(sourceWordPoolSize) || sourceWordPoolSize < words.length) {
+    throw new RangeError('sourceWordPoolSize 必须是不小于实际词池的安全整数');
+  }
 
-  assertRandomUppercaseIsDistinct(words, capitalization);
+  assertCapitalizationIsInjective(words, capitalization);
 
   return deepFreeze({
     wordCount,
     words,
+    sourceWordPoolSize,
     wordPackId: typeof config.wordPackId === 'string' && config.wordPackId
       ? config.wordPackId
       : 'custom',
@@ -187,6 +250,39 @@ export function normalizePassphraseConfig(config) {
     separator,
     separatorChoices,
   });
+}
+
+/**
+ * Returns the deterministic, order-preserving subset whose rendered phrases
+ * remain uniquely decodable for the selected separator and casing mode.
+ * The UI uses this before creating the model; the model itself still rejects
+ * ambiguous caller input instead of silently changing a public API request.
+ */
+export function getCompatiblePassphraseWords(config) {
+  if (!config || typeof config !== 'object' || Array.isArray(config)) {
+    throw new TypeError('config 必须是对象');
+  }
+  const wordCount = normalizeWordCount(config.wordCount);
+  const words = normalizeWords(config.words);
+  const capitalization = normalizeCapitalization(config.capitalization);
+  const separatorChoices = normalizeSeparator(
+    config.separator,
+    config.separatorSymbols,
+    wordCount - 1,
+  );
+  const separatorSafe = wordCount === 1
+    ? words
+    : words.filter((word) => !wordConflictsWithSeparators(
+      word,
+      capitalization,
+      wordCount,
+      separatorChoices,
+    ));
+  const compatible = filterCapitalizationCollisions(separatorSafe, capitalization);
+  if (compatible.length === 0) {
+    throw new RangeError('当前分隔符与大小写设置没有可安全区分的候选单词');
+  }
+  return Object.freeze(compatible);
 }
 
 export function createPassphraseModel(config) {

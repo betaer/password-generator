@@ -143,6 +143,8 @@ test('弱模式检测覆盖全部支持长度和所有规则类别', () => {
   assert.ok(detectWeakPinPatterns('11111111').includes('全部重复'));
   assert.ok(detectWeakPinPatterns('12121212').includes('短周期循环'));
   assert.ok(detectWeakPinPatterns('25802580').includes('键盘路径'));
+  assert.ok(detectWeakPinPatterns('14725803').includes('键盘路径'));
+  assert.ok(detectWeakPinPatterns('963085').includes('键盘路径'));
   assert.ok(detectWeakPinPatterns('082519').includes('日期样式'));
   assert.ok(detectWeakPinPatterns('20240229').includes('日期样式'));
   assert.ok(detectWeakPinPatterns('12345678').includes('连续数字'));

@@ -2,9 +2,10 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 
-const ROOT = resolve(import.meta.dirname, '..');
+const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const MIME_TYPES = Object.freeze({
   '.css': 'text/css; charset=utf-8',
   '.html': 'text/html; charset=utf-8',
@@ -63,6 +64,15 @@ try {
     globalThis.__v2ClipboardCalls = 0;
   });
   const page = await context.newPage();
+  await page.route('**/assets/v2/password-worker.v2.js', async (route) => {
+    const response = await route.fetch();
+    const source = await response.text();
+    await route.fulfill({
+      response,
+      body: source.replace("'use strict';", "'use strict';\nDate.now = () => 1000;"),
+      contentType: 'text/javascript; charset=utf-8',
+    });
+  });
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
   await page.goto(`${baseUrl}/index-2.0.html#password`, { waitUntil: 'domcontentloaded' });
@@ -83,6 +93,19 @@ try {
     assert.match(await page.locator('#result-container .secret-value').textContent(), /^•+$/);
   }
   assert.equal(await page.evaluate(() => globalThis.__v2ClipboardCalls), 0);
+
+  await page.locator('.mode-link[data-mode="password"]').click();
+  await page.locator('input[name="quantity"]').fill('2');
+  await page.getByRole('button', { name: '生成' }).click();
+  await waitForGeneration(page);
+  const batchIds = await page.locator('#result-container article').evaluateAll((cards) => (
+    cards.map((card) => card.dataset.resultId)
+  ));
+  assert.equal(batchIds.length, 2);
+  assert.equal(new Set(batchIds).size, 2);
+  await page.locator('#result-container article').first().getByRole('button', { name: '显示明文' }).click();
+  assert.equal(await page.locator('.secret-value[data-secret-state="revealed"]').count(), 1);
+  await page.locator('#result-container article').first().getByRole('button', { name: '隐藏明文' }).click();
 
   await page.locator('.mode-link[data-mode="mnemonic"]').click();
   await page.locator('select[name="language"]').selectOption('japanese');
@@ -164,6 +187,52 @@ try {
   assert.equal(await noCryptoPage.locator('#generate-button').isDisabled(), true);
   assert.match(await noCryptoPage.locator('#resource-strip').textContent(), /Web Crypto 不可用/);
   await noCryptoContext.close();
+
+  const recoveryContext = await browser.newContext();
+  const recoveryPage = await recoveryContext.newPage();
+  let blockPinRisk = true;
+  let blockPassphrase = true;
+  let blockAnalyzer = true;
+  await recoveryPage.route('**/assets/v2/pin-risk.v2.js', (route) => (
+    blockPinRisk ? route.abort() : route.continue()
+  ));
+  await recoveryPage.route('**/assets/js/embedded-word-packs.js', (route) => (
+    blockPassphrase ? route.abort() : route.continue()
+  ));
+  await recoveryPage.route('**/assets/v2/zxcvbn-analyzer.v2.min.js', (route) => (
+    blockAnalyzer ? route.abort() : route.continue()
+  ));
+  await recoveryPage.goto(`${baseUrl}/index-2.0.html`, { waitUntil: 'domcontentloaded' });
+  await recoveryPage.waitForFunction(() => document.documentElement.dataset.passwordGeneratorReady === 'true');
+  await recoveryPage.waitForFunction(() => [...document.querySelectorAll('.resource-item')].filter((item) => (
+    ['error', 'degraded'].includes(item.dataset.state)
+  )).length >= 3);
+  blockPinRisk = false;
+  blockPassphrase = false;
+  blockAnalyzer = false;
+  for (const label of ['PIN 风险库', 'Passphrase 词包', '模式分析']) {
+    const item = recoveryPage.locator('.resource-item').filter({ hasText: label });
+    await item.getByRole('button', { name: '重试' }).click();
+    await recoveryPage.waitForFunction((resourceLabel) => (
+      [...document.querySelectorAll('.resource-item')].some((node) => (
+        node.textContent.includes(resourceLabel) && node.dataset.state === 'ready'
+      ))
+    ), label);
+  }
+  assert.match(await recoveryPage.locator('#resource-strip').textContent(), /PIN 风险库 · ready/);
+  assert.match(await recoveryPage.locator('#resource-strip').textContent(), /Passphrase 词包 · ready/);
+  assert.match(await recoveryPage.locator('#resource-strip').textContent(), /模式分析 · ready/);
+  await recoveryContext.close();
+
+  const missingRuntimeContext = await browser.newContext();
+  const missingRuntimePage = await missingRuntimeContext.newPage();
+  await missingRuntimePage.route('**/assets/v2/runtime.v2.min.js', (route) => route.abort());
+  await missingRuntimePage.goto(`${baseUrl}/index-2.0.html`, { waitUntil: 'domcontentloaded' });
+  await missingRuntimePage.waitForFunction(() => document.documentElement.dataset.passwordGeneratorError === 'true');
+  assert.equal(await missingRuntimePage.locator('#generate-button').isDisabled(), true);
+  assert.match(await missingRuntimePage.locator('#resource-strip').textContent(), /核心运行时加载失败/);
+  assert.equal(await missingRuntimePage.getByRole('button', { name: '重新加载页面' }).count(), 1);
+  await missingRuntimeContext.close();
   await context.close();
 
   console.log('V2 browser verification passed: 9 modes, privacy controls, GA sandbox, responsive layout, Web Crypto fail-closed.');
