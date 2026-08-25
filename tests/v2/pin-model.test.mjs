@@ -78,6 +78,13 @@ function cyclingCrypto() {
   };
 }
 
+const zeroCrypto = {
+  getRandomValues(target) {
+    target.fill(0);
+    return target;
+  },
+};
+
 test('默认六位模型返回审计确认的精确约束空间', () => {
   const config = {
     length: 6,
@@ -211,6 +218,74 @@ test('blockWeak 精确扣除合法交集且没有固定 bit 修正', () => {
   assert.equal(blocked.searchSpace, open.searchSpace - expectedBlocked);
   assert.equal(blocked.minEntropyBits, Math.log2(Number(blocked.searchSpace)));
   assert.notEqual(blocked.minEntropyBits, open.minEntropyBits - 0.03);
+
+  const allowedPrefixCounts = new Map();
+  for (let value = 0; value < 10_000; value += 1) {
+    const pin = String(value).padStart(4, '0');
+    if (detectWeakPinPatterns(pin).length || riskIndex.isRankBlocked(pin)) continue;
+    for (let length = 0; length <= 2; length += 1) {
+      const prefix = pin.slice(0, length);
+      allowedPrefixCounts.set(prefix, (allowedPrefixCounts.get(prefix) ?? 0n) + 1n);
+    }
+  }
+  for (const [prefix, expected] of allowedPrefixCounts) {
+    assert.equal(blocked.completionCount(prefix), expected, `completionCount(${prefix})`);
+    assert.equal(
+      blocked.branchCompletionCounts(prefix).reduce((sum, branch) => sum + branch.count, 0n),
+      expected,
+      `branchCompletionCounts(${prefix})`,
+    );
+  }
+  assert.equal(blocked.completionCount(''), blocked.searchSpace);
+});
+
+test('blockWeak sampler directly weights allowed completions and cannot loop on a blocked draw', () => {
+  const config = {
+    length: 4,
+    allowLeadingZero: true,
+    allowRepeated: true,
+    limitSequential: false,
+    blockWeak: true,
+  };
+  const result = generatePin(config, riskIndex, zeroCrypto);
+
+  assert.equal(detectWeakPinPatterns(result.value).length, 0);
+  assert.equal(riskIndex.isRankBlocked(result.value), false);
+});
+
+test('四位 blockWeak 的每个三位前缀都与直接枚举的允许完成数一致', () => {
+  for (const allowLeadingZero of [false, true]) {
+    for (const allowRepeated of [false, true]) {
+      for (const limitSequential of [false, true]) {
+        const config = {
+          length: 4,
+          allowLeadingZero,
+          allowRepeated,
+          limitSequential,
+          blockWeak: true,
+        };
+        const model = createPinModel(config, riskIndex);
+        const expectedByPrefix = new Map();
+        for (let value = 0; value < 10_000; value += 1) {
+          const pin = String(value).padStart(4, '0');
+          if (!satisfiesBaseConstraints(pin, config)) continue;
+          if (detectWeakPinPatterns(pin).length || riskIndex.isRankBlocked(pin)) continue;
+          for (let length = 0; length < config.length; length += 1) {
+            const prefix = pin.slice(0, length);
+            expectedByPrefix.set(prefix, (expectedByPrefix.get(prefix) ?? 0n) + 1n);
+          }
+        }
+        for (const [prefix, expected] of expectedByPrefix) {
+          assert.equal(model.completionCount(prefix), expected, JSON.stringify({ config, prefix }));
+          assert.equal(
+            model.branchCompletionCounts(prefix).reduce((sum, branch) => sum + branch.count, 0n),
+            expected,
+            JSON.stringify({ config, prefix, branches: true }),
+          );
+        }
+      }
+    }
+  }
 });
 
 test('六位 blockWeak 的排名、日期、循环和键盘规则并集与直接枚举一致', () => {
@@ -225,6 +300,11 @@ test('六位 blockWeak 的排名、日期、循环和键盘规则并集与直接
 
   assert.equal(model.blockedCount, directBlockedCount(config, riskIndex));
   assert.equal(model.searchSpace, model.baseSearchSpace - model.blockedCount);
+  assert.equal(model.completionCount(''), model.searchSpace);
+  assert.equal(
+    model.branchCompletionCounts('').reduce((sum, branch) => sum + branch.count, 0n),
+    model.searchSpace,
+  );
 });
 
 test('风险排名只作用于四位和六位且使用各自阈值', () => {
@@ -264,12 +344,17 @@ test('8/12/32 位弱模式计数保持精确且不会枚举完整空间', () => 
     };
     const model = createPinModel(config, riskIndex);
     assert.equal(model.searchSpace, model.baseSearchSpace - model.blockedCount);
+    assert.equal(model.completionCount(''), model.searchSpace);
+    assert.equal(
+      model.branchCompletionCounts('').reduce((sum, branch) => sum + branch.count, 0n),
+      model.searchSpace,
+    );
     assert.ok(model.blockedCount > 0n);
     assert.ok(model.searchSpace > 0n);
   }
 });
 
-test('生成器通过 completion-count 权重均匀选择基础空间并排除弱终态', () => {
+test('生成器直接按允许 completion count 加权并保持最终输出均匀', () => {
   const configs = [
     { length: 4, allowLeadingZero: false, allowRepeated: false, limitSequential: true, blockWeak: false },
     { length: 8, allowLeadingZero: true, allowRepeated: true, limitSequential: true, blockWeak: true },

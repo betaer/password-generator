@@ -459,7 +459,7 @@ export function createPinModel(config, riskIndex);
 export function generatePin(config, riskIndex, cryptoLike = globalThis.crypto);
 ```
 
-Use memoized DP for leading zero, used-digit mask, sequence direction, and sequence length. Compile ranked 4/6 values into a prefix trie. Represent repeat, short-cycle, date, and keypad rules as exact terminal predicates plus countable pattern families; calculate the union with canonical generated pattern sets for 4/6 and finite-state counts for longer supported lengths. Sample uniformly from the base constrained DP and reject blocked terminal values; rejection preserves uniformity over the allowed set. The model's `blockedCount` must be computed independently and exactly, so `searchSpace` equals base count minus the blocked intersection.
+Use memoized DP for leading zero, used-digit mask, sequence direction, and sequence length. Compile ranked 4/6 values into a searchable prefix index. Represent repeat, short-cycle, date, and keypad rules as exact terminal predicates plus countable pattern families; calculate their prefix-conditioned union with canonical generated pattern sets for 4/6 and finite-state counts for longer supported lengths. Subtract blocked suffix counts at every prefix, then sample each next digit directly by its allowed completion count. The public completion helpers, sampler, `blockedCount`, and `searchSpace` must therefore describe the same filtered output space without terminal rejection.
 
 `scripts/build-v2-pin-risk.mjs` converts `assets/data/pin-risk.v1.json` into a classic script that assigns a frozen payload to `globalThis.PasswordGeneratorV2Assets.pinRisk`. It must preserve the source version, counts, thresholds, and hash.
 

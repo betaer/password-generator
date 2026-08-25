@@ -12,7 +12,8 @@ const KEYPAD_PATHS = Object.freeze([
   '2580', '0852', '1470', '0741', '3690', '0963',
 ]);
 const riskInternals = new WeakMap();
-const blockedCountCaches = new WeakMap();
+const blockedCompletionCounterCaches = new WeakMap();
+const explicitBlockedIndexCaches = new WeakMap();
 const datePatternCache = new Map();
 const keypadPatternCache = new Map();
 const sequencePatternCache = new Map();
@@ -350,24 +351,60 @@ function hasForbiddenTriple(first, second, third) {
   return second - first === third - second && Math.abs(second - first) === 1;
 }
 
-function countPeriodDividing(normalized, period) {
-  if (!normalized.allowRepeated) return 0n;
-  const firstDigits = normalized.allowLeadingZero ? DIGITS : DIGITS.slice(1);
-  if (!normalized.limitSequential) {
-    return BigInt(firstDigits.length) * (10n ** BigInt(period - 1));
+function fixedDigitsForPeriod(prefix, period) {
+  const fixedDigits = Array(period).fill(-1);
+  for (let position = 0; position < prefix.length; position += 1) {
+    const periodPosition = position % period;
+    const digit = Number(prefix[position]);
+    if (fixedDigits[periodPosition] >= 0 && fixedDigits[periodPosition] !== digit) return null;
+    fixedDigits[periodPosition] = digit;
   }
-  if (period === 1) return BigInt(firstDigits.length);
-  if (period === 2) return BigInt(firstDigits.length * 10);
+  return fixedDigits;
+}
+
+function choicesAtPosition(fixedDigits, position, allowLeadingZero) {
+  if (fixedDigits[position] >= 0) return [fixedDigits[position]];
+  return position === 0 && !allowLeadingZero
+    ? [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+}
+
+function countPeriodDividing(normalized, period, prefix = '') {
+  if (!normalized.allowRepeated) return 0n;
+  const fixedDigits = fixedDigitsForPeriod(prefix, period);
+  if (!fixedDigits) return 0n;
+  if (!normalized.allowLeadingZero && fixedDigits[0] === 0) return 0n;
+  if (!normalized.limitSequential) {
+    let total = 1n;
+    for (let position = 0; position < period; position += 1) {
+      total *= BigInt(choicesAtPosition(
+        fixedDigits,
+        position,
+        normalized.allowLeadingZero,
+      ).length);
+    }
+    return total;
+  }
+  if (period <= 2) {
+    let total = BigInt(choicesAtPosition(
+      fixedDigits,
+      0,
+      normalized.allowLeadingZero,
+    ).length);
+    if (period === 2) {
+      total *= BigInt(choicesAtPosition(fixedDigits, 1, true).length);
+    }
+    return total;
+  }
   let total = 0n;
-  for (const firstCharacter of firstDigits) {
-    const first = Number(firstCharacter);
-    for (let second = 0; second <= 9; second += 1) {
+  for (const first of choicesAtPosition(fixedDigits, 0, normalized.allowLeadingZero)) {
+    for (const second of choicesAtPosition(fixedDigits, 1, true)) {
       let states = new Map([[`${first}|${second}`, 1n]]);
       for (let position = 2; position < period; position += 1) {
         const nextStates = new Map();
         for (const [key, count] of states) {
           const [beforeLast, last] = key.split('|').map(Number);
-          for (let digit = 0; digit <= 9; digit += 1) {
+          for (const digit of choicesAtPosition(fixedDigits, position, true)) {
             if (hasForbiddenTriple(beforeLast, last, digit)) continue;
             const nextKey = `${last}|${digit}`;
             nextStates.set(nextKey, (nextStates.get(nextKey) ?? 0n) + count);
@@ -386,7 +423,7 @@ function countPeriodDividing(normalized, period) {
   return total;
 }
 
-function countPeriodicBlocked(normalized) {
+function countPeriodicBlocked(normalized, prefix = '') {
   if (!normalized.allowRepeated) return 0n;
   const divisors = [];
   for (let divisor = 1; divisor < normalized.length; divisor += 1) {
@@ -395,7 +432,7 @@ function countPeriodicBlocked(normalized) {
   const primitiveCounts = new Map();
   let total = 0n;
   for (const divisor of divisors) {
-    let primitive = countPeriodDividing(normalized, divisor);
+    let primitive = countPeriodDividing(normalized, divisor, prefix);
     for (const [smaller, count] of primitiveCounts) {
       if (divisor % smaller === 0) primitive -= count;
     }
@@ -416,11 +453,25 @@ function explicitWeakCandidates(length, riskIndex) {
   return values;
 }
 
-function countBlockedIntersection(normalized, riskIndex) {
-  let cache = blockedCountCaches.get(riskIndex);
+function lowerBound(values, target, inclusiveUpper = false) {
+  let low = 0;
+  let high = values.length;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    const beforeBoundary = inclusiveUpper
+      ? values[middle] <= target
+      : values[middle] < target;
+    if (beforeBoundary) low = middle + 1;
+    else high = middle;
+  }
+  return low;
+}
+
+function explicitBlockedPrefixCounter(normalized, riskIndex) {
+  let cache = explicitBlockedIndexCaches.get(riskIndex);
   if (!cache) {
     cache = new Map();
-    blockedCountCaches.set(riskIndex, cache);
+    explicitBlockedIndexCaches.set(riskIndex, cache);
   }
   const cacheKey = [
     normalized.length,
@@ -430,14 +481,52 @@ function countBlockedIntersection(normalized, riskIndex) {
   ].join('|');
   if (cache.has(cacheKey)) return cache.get(cacheKey);
 
-  let explicitCount = 0n;
-  for (const value of explicitWeakCandidates(normalized.length, riskIndex)) {
-    if (isShortCycle(value)) continue;
-    if (baseConstraintAllows(value, normalized)) explicitCount += 1n;
+  const values = [...explicitWeakCandidates(normalized.length, riskIndex)]
+    .filter((value) => !isShortCycle(value) && baseConstraintAllows(value, normalized))
+    .sort();
+  const count = (prefix) => {
+    const remaining = normalized.length - prefix.length;
+    const first = `${prefix}${'0'.repeat(remaining)}`;
+    const last = `${prefix}${'9'.repeat(remaining)}`;
+    return BigInt(
+      lowerBound(values, last, true) - lowerBound(values, first),
+    );
+  };
+  cache.set(cacheKey, count);
+  return count;
+}
+
+function createBlockedCompletionCounter(normalized, riskIndex) {
+  let cache = blockedCompletionCounterCaches.get(riskIndex);
+  if (!cache) {
+    cache = new Map();
+    blockedCompletionCounterCaches.set(riskIndex, cache);
   }
-  const total = countPeriodicBlocked(normalized) + explicitCount;
-  cache.set(cacheKey, total);
-  return total;
+  const cacheKey = [
+    normalized.length,
+    normalized.allowLeadingZero,
+    normalized.allowRepeated,
+    normalized.limitSequential,
+  ].join('|');
+  if (cache.has(cacheKey)) return cache.get(cacheKey);
+
+  const explicitCount = explicitBlockedPrefixCounter(normalized, riskIndex);
+  const memo = new Map();
+  const count = (prefix = '') => {
+    const value = String(prefix ?? '');
+    if (!stateForPrefix(value, normalized)) return 0n;
+    const cached = memo.get(value);
+    if (cached !== undefined) return cached;
+    const total = countPeriodicBlocked(normalized, value) + explicitCount(value);
+    memo.set(value, total);
+    return total;
+  };
+  cache.set(cacheKey, count);
+  return count;
+}
+
+function countBlockedIntersection(normalized, riskIndex) {
+  return createBlockedCompletionCounter(normalized, riskIndex)('');
 }
 
 export function countPinCompletions(config, riskIndex) {
@@ -457,6 +546,9 @@ export function createPinModel(config, riskIndex) {
   const blockedCount = normalized.blockWeak
     ? countBlockedIntersection(normalized, riskIndex)
     : 0n;
+  const blockedCompletionCount = normalized.blockWeak
+    ? createBlockedCompletionCounter(normalized, riskIndex)
+    : () => 0n;
   const searchSpace = baseSearchSpace - blockedCount;
   if (searchSpace <= 0n) throw new RangeError('当前 PIN 约束下没有合法输出。');
   const minEntropyBits = log2BigInt(searchSpace);
@@ -464,7 +556,14 @@ export function createPinModel(config, riskIndex) {
   const completionCount = (prefix = '') => {
     const state = stateForPrefix(prefix, normalized);
     if (!state) return 0n;
-    return counter(state.position, state.lastDigit, state.direction, state.runLength, state.usedMask);
+    const baseCount = counter(
+      state.position,
+      state.lastDigit,
+      state.direction,
+      state.runLength,
+      state.usedMask,
+    );
+    return baseCount - blockedCompletionCount(prefix);
   };
   const branchCompletionCounts = (prefix = '') => {
     const value = String(prefix ?? '');
@@ -501,11 +600,7 @@ export function createPinModel(config, riskIndex) {
   });
 }
 
-function isBlockedPin(pin, riskIndex) {
-  return detectWeakPinPatterns(pin).length > 0 || riskIndex.isRankBlocked(pin);
-}
-
-function sampleBasePin(model, cryptoLike) {
+function sampleAllowedPin(model, cryptoLike) {
   let value = '';
   while (value.length < model.normalized.length) {
     const branches = model.branchCompletionCounts(value);
@@ -520,10 +615,7 @@ function sampleBasePin(model, cryptoLike) {
 
 export function generatePin(config, riskIndex, cryptoLike = globalThis.crypto) {
   const model = createPinModel(config, riskIndex);
-  let value;
-  do {
-    value = sampleBasePin(model, cryptoLike);
-  } while (model.normalized.blockWeak && isBlockedPin(value, riskIndex));
+  const value = sampleAllowedPin(model, cryptoLike);
 
   const {
     normalized: _normalized,
