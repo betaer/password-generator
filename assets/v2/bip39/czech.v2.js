@@ -10,8 +10,15 @@
     root.PasswordGeneratorV2Bip39Assets = assets;
   }
   assets[language] = marker;
-  if (root.PasswordGeneratorV2 && typeof root.PasswordGeneratorV2.registerBip39Wordlist === 'function') {
-    root.PasswordGeneratorV2.registerBip39Wordlist(language, words);
+  var runtime = root.PasswordGeneratorV2;
+  var registerWordlist = null;
+  if (runtime && runtime.bip39 && typeof runtime.bip39.registerBip39Wordlist === 'function') {
+    registerWordlist = runtime.bip39.registerBip39Wordlist;
+  } else if (runtime && typeof runtime.registerBip39Wordlist === 'function') {
+    registerWordlist = runtime.registerBip39Wordlist;
+  }
+  if (registerWordlist) {
+    registerWordlist(language, words);
     return;
   }
   var pending = root.PasswordGeneratorV2PendingWordlists;

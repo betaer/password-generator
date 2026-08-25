@@ -49,7 +49,7 @@ function createWordlistAsset(language, words) {
   requireOfficialWordlist(language, words);
   const serializedLanguage = escapeJavaScriptJson(language);
   const serializedWords = escapeJavaScriptJson(words);
-  return `/* BIP39 ${language} wordlist | @scure/bip39 ${BIP39_PACKAGE_VERSION} | MIT */\n(function registerBip39Asset(root) {\n  'use strict';\n  var language = ${serializedLanguage};\n  var words = Object.freeze(${serializedWords});\n  var marker = Object.freeze({ language: language, version: 'bip39@${BIP39_PACKAGE_VERSION}', wordCount: words.length });\n  var assets = root.PasswordGeneratorV2Bip39Assets;\n  if (!assets || typeof assets !== 'object') {\n    assets = Object.create(null);\n    root.PasswordGeneratorV2Bip39Assets = assets;\n  }\n  assets[language] = marker;\n  if (root.PasswordGeneratorV2 && typeof root.PasswordGeneratorV2.registerBip39Wordlist === 'function') {\n    root.PasswordGeneratorV2.registerBip39Wordlist(language, words);\n    return;\n  }\n  var pending = root.PasswordGeneratorV2PendingWordlists;\n  if (!Array.isArray(pending)) {\n    pending = [];\n    root.PasswordGeneratorV2PendingWordlists = pending;\n  }\n  pending.push(Object.freeze({ language: language, version: marker.version, words: words }));\n})(globalThis);\n`;
+  return `/* BIP39 ${language} wordlist | @scure/bip39 ${BIP39_PACKAGE_VERSION} | MIT */\n(function registerBip39Asset(root) {\n  'use strict';\n  var language = ${serializedLanguage};\n  var words = Object.freeze(${serializedWords});\n  var marker = Object.freeze({ language: language, version: 'bip39@${BIP39_PACKAGE_VERSION}', wordCount: words.length });\n  var assets = root.PasswordGeneratorV2Bip39Assets;\n  if (!assets || typeof assets !== 'object') {\n    assets = Object.create(null);\n    root.PasswordGeneratorV2Bip39Assets = assets;\n  }\n  assets[language] = marker;\n  var runtime = root.PasswordGeneratorV2;\n  var registerWordlist = null;\n  if (runtime && runtime.bip39 && typeof runtime.bip39.registerBip39Wordlist === 'function') {\n    registerWordlist = runtime.bip39.registerBip39Wordlist;\n  } else if (runtime && typeof runtime.registerBip39Wordlist === 'function') {\n    registerWordlist = runtime.registerBip39Wordlist;\n  }\n  if (registerWordlist) {\n    registerWordlist(language, words);\n    return;\n  }\n  var pending = root.PasswordGeneratorV2PendingWordlists;\n  if (!Array.isArray(pending)) {\n    pending = [];\n    root.PasswordGeneratorV2PendingWordlists = pending;\n  }\n  pending.push(Object.freeze({ language: language, version: marker.version, words: words }));\n})(globalThis);\n`;
 }
 
 async function pathExists(filePath) {
@@ -67,6 +67,9 @@ async function bundleReproducibly({ entryPoint, globalName, outputFile }) {
     bundle: true,
     format: 'iife',
     globalName,
+    footer: {
+      js: `${globalName} = ${globalName}.default || ${globalName};`,
+    },
     legalComments: 'inline',
     minify: true,
     platform: 'browser',
@@ -115,12 +118,29 @@ export async function buildRuntimeAssets({ projectRoot = PROJECT_ROOT } = {}) {
   return Object.freeze([outputFile]);
 }
 
+export async function buildZxcvbnAssets({
+  projectRoot = PROJECT_ROOT,
+  outputFile = path.join(projectRoot, 'assets/v2/zxcvbn-analyzer.v2.min.js'),
+} = {}) {
+  const entryPoint = path.join(projectRoot, 'src/v2/zxcvbn-entry.mjs');
+  if (!(await pathExists(entryPoint))) {
+    return Object.freeze([]);
+  }
+  await bundleReproducibly({
+    entryPoint,
+    globalName: 'PasswordGeneratorV2Zxcvbn',
+    outputFile,
+  });
+  return Object.freeze([outputFile]);
+}
+
 export async function buildV2Runtime({ projectRoot = PROJECT_ROOT } = {}) {
-  const [wordlistAssets, runtimeAssets] = await Promise.all([
+  const [wordlistAssets, runtimeAssets, zxcvbnAssets] = await Promise.all([
     buildBip39Assets({ outputDirectory: path.join(projectRoot, 'assets/v2/bip39') }),
     buildRuntimeAssets({ projectRoot }),
+    buildZxcvbnAssets({ projectRoot }),
   ]);
-  return Object.freeze([...runtimeAssets, ...wordlistAssets]);
+  return Object.freeze([...runtimeAssets, ...zxcvbnAssets, ...wordlistAssets]);
 }
 
 const isMain = process.argv[1]
