@@ -84,6 +84,28 @@ try {
   }
   assert.equal(await page.evaluate(() => globalThis.__v2ClipboardCalls), 0);
 
+  await page.locator('.mode-link[data-mode="mnemonic"]').click();
+  await page.locator('select[name="language"]').selectOption('japanese');
+  await page.waitForFunction(() => globalThis.PasswordGeneratorV2.bip39
+    .getBip39WordlistStatus('japanese').state === 'ready');
+  await waitForGeneration(page);
+  await page.getByRole('button', { name: '生成' }).click();
+  await waitForGeneration(page);
+  assert.equal(await page.locator('#result-container article').count(), 1);
+  assert.match(await page.locator('#resource-strip').textContent(), /BIP39 日本語 · ready/);
+
+  await page.locator('.mode-link[data-mode="randomBytes"]').click();
+  await page.locator('input[name="byteLength"]').fill('1048576');
+  await page.getByRole('button', { name: '生成' }).click();
+  await waitForGeneration(page);
+  await page.getByRole('button', { name: '显示明文' }).click();
+  assert.equal(
+    await page.locator('#result-container .secret-value').textContent(),
+    '明文过长，未渲染到 DOM。请显式复制或下载。',
+  );
+  assert.equal(await page.getByRole('button', { name: '下载原始字节' }).count(), 1);
+  await page.getByRole('button', { name: '隐藏明文' }).click();
+
   await page.getByRole('button', { name: '显示明文' }).click();
   assert.equal(await page.locator('#result-container .secret-value').getAttribute('data-secret-state'), 'revealed');
   await page.getByRole('button', { name: '隐藏明文' }).click();
@@ -93,6 +115,15 @@ try {
   assert.equal(await page.evaluate(() => globalThis.__v2ClipboardCalls), 1);
   assert.ok(await page.evaluate(() => globalThis.__v2ClipboardLength > 0));
 
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
+    document.execCommand = () => { throw new Error('forced copy failure'); };
+  });
+  await page.getByRole('button', { name: '复制当前结果' }).click();
+  assert.equal(await page.locator('textarea[aria-hidden="true"]').count(), 0);
+  assert.match(await page.locator('#toast').textContent(), /复制失败/);
+
+  await page.locator('.mode-link[data-mode="uuid"]').click();
   await page.locator('#history-toggle').check();
   await page.getByRole('button', { name: '生成' }).click();
   await waitForGeneration(page);
