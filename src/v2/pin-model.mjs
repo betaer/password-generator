@@ -648,8 +648,10 @@ function sampleAllowedPin(model, cryptoLike) {
   return value;
 }
 
-export function generatePin(config, riskIndex, cryptoLike = globalThis.crypto) {
-  const model = createPinModel(config, riskIndex);
+export function generatePinFromModel(model, cryptoLike = globalThis.crypto) {
+  if (!model || model.type !== 'pin' || !model.normalized || typeof model.searchSpace !== 'bigint') {
+    throw new TypeError('model 必须是 createPinModel 返回的已编译 PIN 模型。');
+  }
   const value = sampleAllowedPin(model, cryptoLike);
 
   const {
@@ -667,4 +669,8 @@ export function generatePin(config, riskIndex, cryptoLike = globalThis.crypto) {
     configSnapshot,
     generationModel,
   });
+}
+
+export function generatePin(config, riskIndex, cryptoLike = globalThis.crypto) {
+  return generatePinFromModel(createPinModel(config, riskIndex), cryptoLike);
 }

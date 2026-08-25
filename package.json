@@ -1,6 +1,6 @@
 {
   "name": "password-generator",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": true,
   "description": "浏览器本地运行的九模式安全随机数据生成器",
   "scripts": {
@@ -9,10 +9,15 @@
     "build:pin-risk": "node scripts/build-pin-risk-data.mjs",
     "build:security-assets": "npm run build:security-runtime && npm run build:zxcvbn && npm run build:pin-risk",
     "build:v2": "node scripts/build-v2-runtime.mjs && node scripts/build-v2-pin-risk.mjs",
+    "build:v201": "node scripts/build-v201.mjs",
     "test": "node --test tests/*.test.mjs",
     "test:v2": "node --test tests/v2/*.test.mjs",
     "test:coverage:v2": "c8 --check-coverage --branches 80 --functions 80 --lines 80 --statements 80 node --test tests/v2/*.test.mjs",
     "test:e2e:v2": "node scripts/verify-v2-browser.mjs",
+    "test:v201": "node --test tests/v201/*.test.mjs",
+    "test:coverage:v201": "c8 --include='src/v201/*.mjs' --check-coverage --branches 80 --functions 80 --lines 80 --statements 80 node --test tests/v201/*.test.mjs",
+    "test:e2e:v201": "node scripts/verify-v201-browser.mjs",
+    "verify:v201": "npm run build:v201 && npm test && npm run test:v2 && npm run test:v201 && npm run test:coverage:v201 && npm run test:e2e:v201 && npm audit --audit-level=high && git diff --exit-code -- v2.01.html assets/v2.01",
     "serve": "python3 -m http.server 8765 --bind 127.0.0.1"
   },
   "devDependencies": {

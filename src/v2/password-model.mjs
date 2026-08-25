@@ -873,8 +873,10 @@ function sampleRepeatedFullRangePassword(normalized, searchSpace, cryptoLike) {
   return sampleConditionedFullRangePassword(normalized, cryptoLike);
 }
 
-export function generatePassword(config, cryptoLike = globalThis.crypto, now = Date.now) {
-  const model = createPasswordModel(config);
+export function generatePasswordFromModel(model, cryptoLike = globalThis.crypto, now = Date.now) {
+  if (!model || model.type !== 'password' || !model.normalized || typeof model.searchSpace !== 'bigint') {
+    throw new TypeError('model 必须是 createPasswordModel 返回的已编译密码模型。');
+  }
   const normalized = model.normalized;
   let value;
   if (normalized.allowRepeated && hasFullSymbolRange(normalized)) {
@@ -894,6 +896,10 @@ export function generatePassword(config, cryptoLike = globalThis.crypto, now = D
     generationModel: model,
     createdAt,
   });
+}
+
+export function generatePassword(config, cryptoLike = globalThis.crypto, now = Date.now) {
+  return generatePasswordFromModel(createPasswordModel(config), cryptoLike, now);
 }
 
 export const PASSWORD_CLASS_BITS = CLASS_BIT;
