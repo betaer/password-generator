@@ -175,12 +175,19 @@ export function createGenerationResult({
  * Overwrites mutable byte storage and returns null so callers can release their
  * result reference with `result = clearGenerationResult(result)`.
  */
-export function clearGenerationResult(result) {
+export function clearGenerationResult(result, seen = new WeakSet()) {
   if (!isObject(result) || result[RESULT_BRAND] !== true) {
     throw new TypeError('result must be a GenerationResult');
   }
+  if (seen.has(result)) return null;
+  seen.add(result);
   if (result.bytes instanceof Uint8Array) {
     result.bytes.fill(0);
+  }
+  for (const value of Object.values(result)) {
+    if (isObject(value) && value[RESULT_BRAND] === true) {
+      clearGenerationResult(value, seen);
+    }
   }
   return null;
 }
