@@ -38,10 +38,11 @@ test('documentation records generator metrics, memory limits, and the analytics 
   assert.match(notices, /不建立 `postMessage` 桥/);
 });
 
-test('package metadata publishes the V2 version and a runnable browser verification command', () => {
+test('package metadata publishes the current version and keeps runnable V2/V2.0.1 browser verification commands', () => {
   const metadata = JSON.parse(packageJson);
-  assert.equal(metadata.version, '2.0.0');
+  assert.equal(metadata.version, '2.0.1');
   assert.equal(metadata.scripts['test:e2e:v2'], 'node scripts/verify-v2-browser.mjs');
+  assert.equal(metadata.scripts['test:e2e:v201'], 'node scripts/verify-v201-browser.mjs');
 });
 
 test('discovery metadata points to V2 without carrying the V1 session-history claim', () => {

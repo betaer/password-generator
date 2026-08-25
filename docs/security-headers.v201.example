@@ -1,0 +1,13 @@
+# V2.0.1 reverse-proxy response-header example
+#
+# GitHub Pages 不会读取本文件，也不会把这些行自动变成 HTTP 响应头。
+# 只有把站点放到可控制响应头的 Cloudflare Worker/Pages、CDN 或自有服务器后，
+# 才能按实际域名和资源策略启用。页面中的 meta CSP 不能实现 frame-ancestors。
+
+Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; frame-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+X-Frame-Options: DENY
+X-Content-Type-Options: nosniff
+Referrer-Policy: no-referrer
+Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=()
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
