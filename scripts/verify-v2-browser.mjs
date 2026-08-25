@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
-import { chromium } from 'playwright';
+import { chromium } from '@playwright/test';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const MIME_TYPES = Object.freeze({
