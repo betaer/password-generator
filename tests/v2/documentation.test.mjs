@@ -3,11 +3,13 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const readText = (path) => readFile(new URL(path, import.meta.url), 'utf8');
-const [readme, english, notices, packageJson] = await Promise.all([
+const [readme, english, notices, packageJson, llms, sitemap] = await Promise.all([
   readText('../../README.md'),
   readText('../../docs/readme-en.md'),
   readText('../../THIRD_PARTY_NOTICES.md'),
   readText('../../package.json'),
+  readText('../../llms.txt'),
+  readText('../../sitemap.xml'),
 ]);
 
 test('V2 documentation names all nine generators and keeps V1 as a separate entry', () => {
@@ -40,4 +42,12 @@ test('package metadata publishes the V2 version and a runnable browser verificat
   const metadata = JSON.parse(packageJson);
   assert.equal(metadata.version, '2.0.0');
   assert.equal(metadata.scripts['test:e2e:v2'], 'node scripts/verify-v2-browser.mjs');
+});
+
+test('discovery metadata points to V2 without carrying the V1 session-history claim', () => {
+  assert.match(llms, /index-2\.0\.html/);
+  assert.match(llms, /不使用 sessionStorage/);
+  assert.doesNotMatch(llms, /历史记录仅使用当前标签页的 sessionStorage/);
+  assert.match(sitemap, /index-2\.0\.html/);
+  assert.match(sitemap, /2026-08-25/);
 });

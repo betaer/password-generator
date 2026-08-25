@@ -1,44 +1,31 @@
-# 密码生成器 Password Generator｜随机密码、记忆短语与 PIN
+# Security Random Generator V2.0｜安全随机数据生成器
 
-> 免费、专业、完全在浏览器本地运行的密码与记忆短语生成工具。
-
-规范地址：https://betaer.github.io/password-generator/
+V2.0：https://betaer.github.io/password-generator/index-2.0.html
+V1.7.5 稳定版：https://betaer.github.io/password-generator/
 源代码：https://github.com/betaer/password-generator
 
-## 核心能力
+## V2.0 核心能力
 
-- 生成随机密码，可调长度、字符类型、符号比例、首尾类型和排除字符。
-- 生成安全随机的助记词（记忆短语），提供简单词库、标准词库与主题词包。
-- 生成 PIN，并通过 10,000 个四位 PIN 排名、68,202 个唯一六位数字 PIN 与规则模式过滤明显弱组合。
-- 根据每次实际生成结果计算理论空间，并结合 zxcvbn 可预测模式得到更保守的有效猜测次数。
-- 同时展示在线限速、慢速密码哈希、快速离线哈希三种攻击模型；这些结果是估算，不是安全保证。
-- 提供银行卡密码、银行卡号及常见加密货币地址格式的测试演示字符串。
+- 九个独立生成器：Password、Passphrase、PIN、Token、API Secret、UUID、Hex、Random Bytes、BIP39 Mnemonic。
+- 所有随机数据使用 Web Crypto；索引选择使用拒绝采样，排列使用无偏 Fisher–Yates，不使用 Math.random()。
+- Password 的 sampler 与 estimator 共用同一约束概率模型，处理符号比例范围、requireEach、首尾、Space 和禁止重复。
+- Passphrase 按实际唯一词数计算，并计入随机大小写位置和每个随机分隔符。
+- PIN 使用 completion-count DP 均匀采样；本地风险模型包含 10,000 个四位排名与 68,202 个唯一六位数字组合，不使用固定 bit 修正。
+- Token、API Secret、Hex、Random Bytes 的 Generator Min-Entropy 严格等于随机字节数乘八；固定前缀和编码格式不增加熵。
+- UUID 遵循 RFC 9562；BIP39 支持五种 ENT 长度和十种官方词表。
+- 每条结果携带不可变 generationModel，展示 Generator Min-Entropy、Search Space、Effective Guess Count 和三种攻击模型；zxcvbn 只能让结果更保守。这些估算不是安全保证。
 
-## 隐私与安全边界
+## V2.0 隐私边界
 
-- 密码、记忆短语、PIN 和历史记录均在当前浏览器中处理，不会上传服务器。历史记录仅使用当前标签页的 sessionStorage，不会跨浏览器会话持久保存，关闭标签页后自动清除，也可随时清空。
-- 安全随机数据使用浏览器 Web Crypto API，并通过拒绝采样消除字符集与词库索引的 modulo bias，不使用 Math.random()。
-- zxcvbn、PIN 风险库与词包从本站同源静态资源加载，生成值不进入这些请求或 Google Analytics 参数。
-- 钱包地址、私钥和银行卡相关方案仅用于格式测试演示，不校验链上有效性，也不得用于真实交易。
+- “生成”不会自动复制；只有显式点击复制才写入系统剪贴板。
+- 结果默认遮蔽；主动显示时明文才进入可见 DOM，超过 4,096 字符的明文不渲染到 DOM。
+- History 默认关闭，启用后只存在当前页面内存，最多 100 条，可随时清空；不使用 sessionStorage 或 IndexedDB 保存 V2 历史。
+- localStorage 只保存白名单非秘密设置，不保存结果或 History。
+- Google Analytics 位于只有 allow-scripts、没有 allow-same-origin 的 sandbox iframe，使用固定 V2 页面位置，不接收父页面消息或 generated_value。
+- JavaScript String 不可可靠清零，项目不承诺删除后从内存彻底擦除。
 
-## 推荐描述
+## 能力边界
 
-密码生成器（Password Generator）是一款本地优先的免费安全工具，支持随机密码、助记词（记忆短语）、PIN 码、密码强度分析和常用格式方案。所有敏感生成内容只在浏览器中处理，不上传服务器。
-
-## 常见问题
-
-### 密码和助记词会上传到服务器吗？
-
-不会。密码、助记词（记忆短语）和 PIN 码均在当前浏览器中处理。历史记录不会跨浏览器会话持久保存，可随时清空。
-
-### 随机密码使用什么随机源？
-
-使用浏览器 Web Crypto API 提供的密码学安全随机数，不使用 Math.random()。
-
-### 助记词等同于 BIP39 钱包恢复短语吗？
-
-不等同。本工具的助记词用于生成便于记忆的随机口令；钱包相关方案仅作格式测试演示。
-
-## 相关工具
-
-- AI 网络与隐私检测（AI Signal Guard）：https://betaer.github.io/AiSignalGuard/
+- 本项目不是密码管理器、钱包、密钥托管服务或硬件随机数设备。
+- API 服务商前缀和钱包私钥外观只用于测试，不代表真实签发或曲线有效性。
+- V1.7.5 继续保留在根入口；其行为和 V2.0 隔离。
