@@ -371,9 +371,13 @@ try {
       quantity: geometry('quantity'),
     };
   });
-  assert.ok(horizontalSliderGeometry.configWidth >= 900, '1280px 桌面端配置面板必须为老版横向控件保留足够总宽度');
+  assert.ok(horizontalSliderGeometry.configWidth >= 860 && horizontalSliderGeometry.configWidth <= 900, '1280px 桌面端配置面板必须使用紧凑宽度');
   const sliderLefts = ['complexity', 'length', 'quantity'].map((kind) => horizontalSliderGeometry[kind].scroll.left);
   assert.ok(Math.max(...sliderLefts) - Math.min(...sliderLefts) <= 1, '三条进度条必须共用相同起始线');
+  for (const kind of ['complexity', 'length', 'quantity']) {
+    const state = horizontalSliderGeometry[kind];
+    assert.ok(state.scroll.left - state.label.right >= 12 && state.scroll.left - state.label.right <= 16, `${kind} 标签与进度条之间不得保留过宽空白`);
+  }
   for (const kind of ['length', 'quantity']) {
     const state = horizontalSliderGeometry[kind];
     assert.equal(state.scrollable, false, `${kind} 在 1280px 桌面端必须完整展示全部快捷数值与自定义刻度`);
@@ -381,6 +385,8 @@ try {
     assert.ok(state.exact.top < state.scroll.bottom && state.exact.bottom > state.scroll.top, `${kind} 自定义输入必须与进度条同排`);
     assert.ok(state.custom.right <= state.scroll.right + 1, `${kind} 自定义刻度不得被右侧裁切`);
     assert.ok(state.custom.right < state.input.left, `${kind} 自定义刻度必须位于输入框之前`);
+    assert.ok(state.exact.width <= 156, `${kind} 精确值区域必须保持紧凑`);
+    assert.ok(state.input.width <= 128, `${kind} 精确值输入框不得占用过宽空间`);
     assert.ok(state.unit.left - state.input.right >= 0 && state.unit.left - state.input.right <= 12, `${kind} 单位必须紧邻输入框`);
     assert.ok(Math.abs((state.unit.top + state.unit.bottom) / 2 - (state.input.top + state.input.bottom) / 2) <= 2, `${kind} 单位与输入框必须垂直居中`);
   }
@@ -389,10 +395,44 @@ try {
     const scrollRect = root.querySelector('.preset-slider-scroll').getBoundingClientRect();
     return [...root.querySelectorAll('.preset-slider-mark')].every((mark) => {
       const markRect = mark.getBoundingClientRect();
-      return markRect.left >= scrollRect.left && markRect.right <= scrollRect.right;
+      return markRect.left >= scrollRect.left - 1 && markRect.right <= scrollRect.right + 1;
     });
   });
   assert.equal(complexityMarksVisible, true, '桌面配置栏必须同时展示完整的 L1～L8');
+  for (const viewportWidth of [780, 781, 900, 901, 1160, 1161]) {
+    await page.setViewportSize({ width: viewportWidth, height: 900 });
+    await page.evaluate(() => scrollTo(0, 0));
+    const boundaryState = await page.evaluate(() => {
+      const workspace = document.querySelector('.workspace').getBoundingClientRect();
+      const mode = document.querySelector('.mode-panel').getBoundingClientRect();
+      const config = document.querySelector('.config-panel').getBoundingClientRect();
+      const layout = document.querySelector('[data-preset-slider="length"] .preset-slider-layout');
+      const scroll = layout.querySelector('.preset-slider-scroll').getBoundingClientRect();
+      const exact = layout.querySelector('.preset-exact-input').getBoundingClientRect();
+      return {
+        workspace,
+        mode,
+        config,
+        scroll,
+        exact,
+        singleColumn: Math.abs(config.left - workspace.left) <= 1,
+        exactBelow: exact.top >= scroll.bottom,
+      };
+    });
+    assert.equal(boundaryState.singleColumn, viewportWidth <= 1160, `${viewportWidth}px 导航与配置布局边界`);
+    assert.equal(boundaryState.exactBelow, viewportWidth <= 900, `${viewportWidth}px 精确输入换行边界`);
+    assert.ok(boundaryState.scroll.width >= 460, `${viewportWidth}px 进度条必须保留足够可视宽度`);
+  }
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.evaluate(() => scrollTo(0, 0));
+  const threeColumnGeometry = await page.evaluate(() => {
+    const config = document.querySelector('.config-panel').getBoundingClientRect();
+    const result = document.querySelector('.result-panel').getBoundingClientRect();
+    return { config, result };
+  });
+  assert.ok(threeColumnGeometry.config.width >= 780 && threeColumnGeometry.config.width <= 820, '1600px 桌面端必须收窄中间策略配置列');
+  assert.ok(threeColumnGeometry.result.width >= 390, '1600px 桌面端必须为生成结果保留独立可读列');
+  assert.ok(Math.abs(threeColumnGeometry.config.top - threeColumnGeometry.result.top) <= 1, '1600px 桌面端配置与结果必须并排顶对齐');
   await page.setViewportSize({ width: 960, height: 900 });
   for (const kind of ['length', 'quantity']) {
     const layoutState = await page.locator(`[data-preset-slider="${kind}"] .preset-slider-layout`).evaluate((layout) => {
@@ -449,7 +489,18 @@ try {
     { width: 390, height: 844 },
     { width: 430, height: 900 },
     { width: 780, height: 900 },
+    { width: 781, height: 900 },
+    { width: 900, height: 900 },
+    { width: 901, height: 900 },
+    { width: 960, height: 900 },
+    { width: 1160, height: 900 },
+    { width: 1161, height: 900 },
     { width: 1280, height: 900 },
+    { width: 1500, height: 900 },
+    { width: 1560, height: 900 },
+    { width: 1561, height: 900 },
+    { width: 1600, height: 900 },
+    { width: 2138, height: 1000 },
     { width: 2560, height: 1200 },
   ]) {
     await layoutPage.setViewportSize(viewport);
@@ -478,12 +529,15 @@ try {
         return {
           overflow: document.documentElement.scrollWidth > innerWidth,
           actionPosition: getComputedStyle(document.querySelector('.site-floating-actions')).position,
+          configOffsetLeft: document.querySelector('.config-panel').offsetLeft,
+          resultOffsetLeft: document.querySelector('.result-panel').offsetLeft,
           overlaps,
         };
       });
       assert.equal(state.overflow, false, `${viewport.width}px ${position} 不得横向溢出`);
       assert.deepEqual(state.overlaps, [], `${viewport.width}px ${position} 浮动操作不得遮挡交互元素`);
       assert.equal(state.actionPosition, viewport.width <= 780 ? 'static' : 'fixed', `${viewport.width}px 快捷操作定位策略`);
+      assert.equal(state.resultOffsetLeft > state.configOffsetLeft, viewport.width > 1560, `${viewport.width}px ${position} 策略与结果面板响应式排布`);
     }
   }
   await layoutContext.close();
