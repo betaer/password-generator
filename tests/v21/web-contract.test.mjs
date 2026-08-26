@@ -47,7 +47,6 @@ test('密码配置提供复杂度、长度和生成数量三套完整控件', as
     "sliderShell\\(\\{ kind: 'length'",
     "sliderShell\\(\\{ kind: 'quantity'",
     'class="preset-slider-range"',
-    'data-preset-custom="complexity"',
     'data-preset-custom="\\$\\{kind\\}"',
     'data-complexity-level',
     'data-password-length-preset',
@@ -55,10 +54,13 @@ test('密码配置提供复杂度、长度和生成数量三套完整控件', as
     'name="length" type="number"',
     'name="quantity" type="number"',
   ]) assert.match(app, new RegExp(required));
+  assert.match(app, /kind: 'complexity',[^\n]*maximumIndex: PASSWORD_COMPLEXITY_PRESETS\.length - 1/u);
+  assert.doesNotMatch(app, /data-preset-custom="complexity"/u);
   assert.match(css, /\.preset-slider-control/u);
   assert.match(css, /\.preset-slider-range/u);
   assert.match(css, /\.preset-slider-mark/u);
   assert.match(css, /\.preset-exact-input/u);
+  assert.match(css, /\.preset-slider-layout\s*\{[^}]*flex-wrap:\s*wrap/su);
   assert.doesNotMatch(app, /style="--(?:mark|preset|slider)-/u);
   assert.doesNotMatch(css, /\.complexity-grid/u);
   assert.doesNotMatch(css, /\.preset-number-control/u);

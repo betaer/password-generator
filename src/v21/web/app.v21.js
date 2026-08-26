@@ -212,27 +212,33 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     const activeMark = rootElement?.querySelector('.preset-slider-mark.is-active');
     const scrollArea = rootElement?.querySelector('.preset-slider-scroll');
     if (!activeMark || !scrollArea) return;
-    const markCenter = activeMark.offsetLeft + (activeMark.offsetWidth / 2);
-    const visibleStart = scrollArea.scrollLeft;
-    const visibleEnd = visibleStart + scrollArea.clientWidth;
-    if (markCenter < visibleStart + 36 || markCenter > visibleEnd - 36) {
-      scrollArea.scrollLeft = Math.max(0, markCenter - (scrollArea.clientWidth / 2));
-    }
+    const inset = 8;
+    const scrollRect = scrollArea.getBoundingClientRect();
+    const markRect = activeMark.getBoundingClientRect();
+    const clippedLeft = (scrollRect.left + inset) - markRect.left;
+    const clippedRight = markRect.right - (scrollRect.right - inset);
+    if (clippedLeft > 0) scrollArea.scrollLeft -= clippedLeft;
+    else if (clippedRight > 0) scrollArea.scrollLeft += clippedRight;
   }
 
-  function syncDiscreteSlider(kind, currentValue, presetValues, valueText) {
+  function syncDiscreteSlider(kind, currentValue, presetValues, valueText, { hasCustomEndpoint = true } = {}) {
     const rootElement = sliderRoot(kind);
     if (!rootElement) return;
     const revealInitialSelection = rootElement.dataset.sliderInitialized !== 'true';
     rootElement.dataset.sliderInitialized = 'true';
     const forceCustom = rootElement.dataset.forceCustom === 'true';
-    const index = forceCustom ? presetValues.length : discreteSliderIndex(currentValue, presetValues);
     const range = rootElement.querySelector('.preset-slider-range');
-    range.value = String(index);
-    range.setAttribute('aria-valuetext', valueText(index));
-    rootElement.dataset.sliderIndex = String(index);
+    const requestedIndex = forceCustom ? presetValues.length : discreteSliderIndex(currentValue, presetValues);
+    const isCustom = requestedIndex === presetValues.length;
+    const visibleIndex = isCustom && !hasCustomEndpoint
+      ? Math.min(Number(range.value) || 0, presetValues.length - 1)
+      : requestedIndex;
+    range.value = String(visibleIndex);
+    range.setAttribute('aria-valuetext', valueText(requestedIndex));
+    rootElement.dataset.sliderIndex = String(visibleIndex);
+    rootElement.dataset.sliderCustom = String(isCustom);
     rootElement.querySelectorAll('.preset-slider-mark').forEach((button) => {
-      const active = Number(button.dataset.sliderIndex) === index;
+      const active = Number(button.dataset.sliderIndex) === visibleIndex && (hasCustomEndpoint || !isCustom);
       button.classList.toggle('is-active', active);
       button.setAttribute('aria-pressed', String(active));
     });
@@ -248,8 +254,9 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
       selectedLevel,
       PASSWORD_COMPLEXITY_PRESETS.map(({ level }) => level),
       (index) => index === PASSWORD_COMPLEXITY_PRESETS.length
-        ? '自定义复杂度'
+        ? '自定义配置；移动滑块即可重新应用 L1～L8 档位'
         : `${PASSWORD_COMPLEXITY_PRESETS[index].level}，${PASSWORD_COMPLEXITY_PRESETS[index].label}`,
+      { hasCustomEndpoint: false },
     );
     const description = document.getElementById('complexity-description');
     if (description) description.textContent = selectedPreset
@@ -361,10 +368,9 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
   };
   const checkbox = (name, label, checked = false) => `<label class="check"><input name="${name}" type="checkbox"${checked ? ' checked' : ''}>${label}</label>`;
   const quantityMarkup = (max = 100) => `<div class="field"><label for="quantity">生成数量</label><input id="quantity" name="quantity" type="number" min="1" max="${max}" value="1"><small>当前结果默认显示明文；PIN 码批量默认唯一。</small></div>`;
-  const complexitySliderMarks = () => [
-    ...PASSWORD_COMPLEXITY_PRESETS.map((preset, index) => `<button class="preset-slider-mark${preset.level === 'L8' ? ' is-active' : ''}" type="button" data-slider-index="${index}" data-complexity-level="${preset.level}" aria-label="${preset.level}，${preset.label}" aria-pressed="${preset.level === 'L8'}"><strong>${preset.level}</strong><span>${preset.label}</span></button>`),
-    `<button class="preset-slider-mark preset-slider-custom" type="button" data-slider-index="${PASSWORD_COMPLEXITY_PRESETS.length}" data-preset-custom="complexity" aria-pressed="false"><strong>Custom</strong><span>自定义</span></button>`,
-  ].join('');
+  const complexitySliderMarks = () => PASSWORD_COMPLEXITY_PRESETS
+    .map((preset, index) => `<button class="preset-slider-mark${preset.level === 'L8' ? ' is-active' : ''}" type="button" data-slider-index="${index}" data-complexity-level="${preset.level}" aria-label="${preset.level}，${preset.label}" aria-pressed="${preset.level === 'L8'}"><strong>${preset.level}</strong><span>${preset.label}</span></button>`)
+    .join('');
   const numericSliderMarks = (kind, values, attribute, active) => [
     ...values.map((value, index) => `<button class="preset-slider-mark${value === active ? ' is-active' : ''}" type="button" data-slider-index="${index}" ${attribute}="${value}" aria-pressed="${value === active}"><strong>${value}</strong></button>`),
     `<button class="preset-slider-mark preset-slider-custom" type="button" data-slider-index="${values.length}" data-preset-custom="${kind}" aria-pressed="false"><strong>自定义</strong></button>`,
@@ -384,7 +390,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     </div>
   </div>`;
   const complexityMarkup = () => `<div class="field full password-complexity-control">
-    ${sliderShell({ kind: 'complexity', label: '按照复杂度生成', maximumIndex: PASSWORD_COMPLEXITY_PRESETS.length, value: 7, valueText: 'L8，几乎无法破解', marks: complexitySliderMarks() })}
+    ${sliderShell({ kind: 'complexity', label: '按照复杂度生成', maximumIndex: PASSWORD_COMPLEXITY_PRESETS.length - 1, value: 7, valueText: 'L8，几乎无法破解', marks: complexitySliderMarks() })}
     <input name="complexityPreset" type="hidden" value="L8">
     <small id="complexity-description">L8 会应用完整配方；最终安全结果仍按实际生成模型精确计算。</small>
   </div>`;

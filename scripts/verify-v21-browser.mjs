@@ -80,10 +80,11 @@ try {
   assert.equal(await page.evaluate(() => [...document.scripts].some((script) => /google|gtag/iu.test(script.src))), false);
 
   assert.equal(await page.locator('.preset-slider-range').count(), 3);
-  assert.equal(await page.locator('[data-preset-slider="complexity"] .preset-slider-range').getAttribute('max'), '8');
+  assert.equal(await page.locator('[data-preset-slider="complexity"] .preset-slider-range').getAttribute('max'), '7');
   assert.equal(await page.locator('[data-preset-slider="length"] .preset-slider-range').getAttribute('max'), '11');
   assert.equal(await page.locator('[data-preset-slider="quantity"] .preset-slider-range').getAttribute('max'), '7');
   assert.equal(await page.locator('[data-complexity-level]').count(), 8);
+  assert.equal(await page.locator('[data-preset-custom="complexity"]').count(), 0);
   assert.equal(await page.locator('[data-complexity-level="L8"]').getAttribute('aria-pressed'), 'true');
   await page.locator('input[name="symbolPool"]').fill('');
   await page.locator('[data-complexity-level="L1"]').click();
@@ -133,9 +134,10 @@ try {
   await complexitySlider.press('Home');
   assert.equal(await page.locator('input[name="length"]').inputValue(), '4');
   assert.equal(await page.locator('[data-complexity-level="L1"]').getAttribute('aria-pressed'), 'true');
-  await page.locator('[data-preset-custom="complexity"]').click();
+  await page.locator('input[name="uppercaseLetters"]').check();
   assert.equal(await page.locator('input[name="complexityPreset"]').inputValue(), 'custom');
-  assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('name')), 'lowercase');
+  assert.equal(await page.locator('[data-preset-slider="complexity"] .preset-slider-mark.is-active').count(), 0);
+  assert.match(await complexitySlider.getAttribute('aria-valuetext'), /自定义配置/u);
   await page.getByRole('button', { name: '恢复默认' }).click();
   assert.equal(await page.locator('input[name="length"]').inputValue(), '20');
   assert.equal(await page.locator('input[name="quantity"]').inputValue(), '1');
@@ -309,6 +311,14 @@ try {
         const range = page.locator(`[data-preset-slider="${kind}"] .preset-slider-range`);
         await range.focus();
         await range.press('Home');
+        const firstMarkVisible = await page.locator(`[data-preset-slider="${kind}"]`).evaluate((root) => {
+          const scrollArea = root.querySelector('.preset-slider-scroll');
+          const firstMark = root.querySelector('.preset-slider-mark:first-child');
+          const scrollRect = scrollArea.getBoundingClientRect();
+          const markRect = firstMark.getBoundingClientRect();
+          return markRect.left >= scrollRect.left && markRect.right <= scrollRect.right;
+        });
+        assert.equal(firstMarkVisible, true, `${kind} first mark must remain fully visible on mobile`);
         await range.press('End');
         const sliderState = await page.locator(`[data-preset-slider="${kind}"]`).evaluate((root) => {
           const scrollArea = root.querySelector('.preset-slider-scroll');
@@ -318,12 +328,46 @@ try {
           return {
             scrollable: scrollArea.scrollWidth > scrollArea.clientWidth,
             lastMarkVisible: markRect.left >= scrollRect.left && markRect.right <= scrollRect.right,
+            allMarksVisible: [...root.querySelectorAll('.preset-slider-mark')].every((mark) => {
+              const rect = mark.getBoundingClientRect();
+              return rect.left >= scrollRect.left && rect.right <= scrollRect.right;
+            }),
           };
         });
-        assert.equal(sliderState.scrollable, true, `${kind} mobile slider must scroll inside its own control`);
-        assert.equal(sliderState.lastMarkVisible, true, `${kind} custom mark must remain reachable on mobile`);
+        assert.equal(sliderState.scrollable, kind !== 'complexity', `${kind} mobile slider scrolling contract`);
+        if (kind === 'complexity') {
+          assert.equal(sliderState.allMarksVisible, true, '移动端复杂度必须一次展示完整的 L1～L8');
+        }
+        assert.equal(sliderState.lastMarkVisible, true, `${kind} last mark must remain fully visible on mobile`);
       }
     }
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const complexityMarksVisible = await page.locator('[data-preset-slider="complexity"]').evaluate((root) => {
+    const scrollRect = root.querySelector('.preset-slider-scroll').getBoundingClientRect();
+    return [...root.querySelectorAll('.preset-slider-mark')].every((mark) => {
+      const markRect = mark.getBoundingClientRect();
+      return markRect.left >= scrollRect.left && markRect.right <= scrollRect.right;
+    });
+  });
+  assert.equal(complexityMarksVisible, true, '桌面配置栏必须同时展示完整的 L1～L8');
+  await page.setViewportSize({ width: 960, height: 900 });
+  for (const kind of ['length', 'quantity']) {
+    const layoutState = await page.locator(`[data-preset-slider="${kind}"] .preset-slider-layout`).evaluate((layout) => {
+      const scrollArea = layout.querySelector('.preset-slider-scroll');
+      const exactInput = layout.querySelector('.preset-exact-input');
+      const scrollRect = scrollArea.getBoundingClientRect();
+      const exactRect = exactInput.getBoundingClientRect();
+      return {
+        separatedHorizontally: scrollRect.right <= exactRect.left,
+        wrappedBelow: exactRect.top >= scrollRect.bottom,
+      };
+    });
+    assert.equal(
+      layoutState.separatedHorizontally || layoutState.wrappedBelow,
+      true,
+      `${kind} exact input must not overlap or clip the slider viewport`,
+    );
   }
   await page.setViewportSize({ width: 1280, height: 600 });
   await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
