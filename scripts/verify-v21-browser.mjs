@@ -188,6 +188,59 @@ try {
   assert.equal(await page.locator('input[name="quantity"]').inputValue(), '1');
   assert.equal(await page.locator('[data-complexity-level="L8"]').getAttribute('aria-pressed'), 'true');
 
+  await page.locator('input[name="quantity"]').fill('5');
+  await clickGenerate(page);
+  assert.equal(await page.locator('.compact-result-row').count(), 5, '批量结果必须使用五条紧凑行');
+  assert.equal(await page.locator('.result-card').count(), 0, '不得继续为每条结果渲染完整安全卡');
+  assert.equal(await page.locator('[data-batch-assessment]').count(), 1, '同一批次只有一份公共安全说明');
+  const batchAssessment = page.locator('[data-batch-assessment]');
+  assert.equal(await batchAssessment.getByText('精确生成器指标', { exact: true }).count(), 1);
+  assert.equal(await batchAssessment.getByText('攻击场景估算', { exact: true }).count(), 1);
+  assert.equal(await batchAssessment.getByText('生成模型详情', { exact: true }).count(), 1);
+  const firstInfo = page.getByRole('button', { name: '第 1 条结果说明' });
+  await firstInfo.click();
+  assert.equal(await page.locator('.result-pattern-indicator .result-tooltip').count(), 1);
+  await firstInfo.click();
+  assert.equal(await page.locator('.result-pattern-indicator .result-tooltip').count(), 0);
+  const batchInfo = page.getByRole('button', { name: '批次级安全分析说明' });
+  await batchInfo.click();
+  assert.equal(await batchAssessment.getAttribute('open'), null, '点击说明气泡不得误展开批次详情');
+  assert.equal(await batchAssessment.locator('.result-tooltip').count(), 1);
+  await batchInfo.click();
+  const compactViewport = await page.evaluate(() => {
+    const scroll = document.querySelector('.result-scroll').getBoundingClientRect();
+    const third = document.querySelectorAll('.compact-result-row')[2].getBoundingClientRect();
+    return { visibleRows: [...document.querySelectorAll('.compact-result-row')].filter((row) => row.getBoundingClientRect().bottom <= scroll.bottom + 1).length, thirdBottom: third.bottom, scrollBottom: scroll.bottom };
+  });
+  assert.ok(compactViewport.visibleRows >= 3, `结果首屏必须看见至少三条，当前 ${compactViewport.visibleRows} 条`);
+
+  const beforeRegenerate = await page.locator('.compact-result-row').evaluateAll((rows) => rows.map((row) => ({
+    id: row.dataset.resultId,
+    value: row.querySelector('.compact-result-value')?.textContent,
+  })));
+  const clipboardBeforeRegenerate = await page.evaluate(() => globalThis.__v21Clipboard.length);
+  await page.locator('.compact-result-row').nth(1).locator('[data-regenerate-result]').click();
+  await page.waitForFunction((previousId) => document.querySelectorAll('.compact-result-row')[1]?.dataset.resultId !== previousId, beforeRegenerate[1].id);
+  const afterRegenerate = await page.locator('.compact-result-row').evaluateAll((rows) => rows.map((row) => ({
+    id: row.dataset.resultId,
+    value: row.querySelector('.compact-result-value')?.textContent,
+  })));
+  assert.equal(afterRegenerate.length, beforeRegenerate.length);
+  assert.notEqual(afterRegenerate[1].id, beforeRegenerate[1].id, '只替换目标行 id');
+  assert.notEqual(afterRegenerate[1].value, beforeRegenerate[1].value, '只替换目标行值');
+  for (const index of [0, 2, 3, 4]) assert.deepEqual(afterRegenerate[index], beforeRegenerate[index], `第 ${index + 1} 行保持不变`);
+  assert.equal(await page.evaluate(() => globalThis.__v21Clipboard.length), clipboardBeforeRegenerate, '单条重新生成不得写入 Clipboard');
+  if (process.env.V21_QA_SCREENSHOT) {
+    await page.locator('#toast').waitFor({ state: 'hidden' });
+    await page.setViewportSize({ width: 413, height: 980 });
+    await page.locator('.result-panel').screenshot({ path: resolve(ROOT, process.env.V21_QA_SCREENSHOT) });
+    await page.setViewportSize({ width: 1280, height: 900 });
+  }
+
+  await page.getByRole('button', { name: '恢复默认' }).click();
+  await clickGenerate(page);
+  assert.equal(await page.locator('.compact-result-row').count(), 1);
+
   const modeLabels = new Map([
     ['password', ['密码', 'Password', '密码策略配置', '密码生成结果']],
     ['passphrase', ['口令', 'Passphrase', '口令策略配置', '口令生成结果']],
@@ -211,15 +264,15 @@ try {
     assert.equal(await page.locator('#result-container article').count(), 1, `${mode} result`);
     assert.equal(await page.locator('#config-title').textContent(), configTitle);
     assert.equal(await page.locator('#result-title').textContent(), resultTitle);
-    assert.equal(await page.locator('#result-container .result-type').textContent(), zh);
-    assert.doesNotMatch(await page.locator('#result-container .secret-value').textContent(), /^•+$/u);
+    assert.equal(await page.locator('#result-container .compact-result-row').getAttribute('data-result-type'), mode === 'apiSecret' ? 'api-secret' : mode === 'randomBytes' ? 'random-bytes' : mode);
+    assert.doesNotMatch(await page.locator('#result-container .compact-result-value').textContent(), /^•+$/u);
     assert.match(await page.locator('#result-container').textContent(), /精确生成器指标/u);
   }
   assert.equal(await page.evaluate(() => globalThis.__v21Clipboard.length), 0, '生成不得自动复制');
 
   await page.locator('.mode-link[data-mode="password"]').click();
   await clickGenerate(page);
-  const resultCard = page.locator('#result-container .result-card').first();
+  const resultCard = page.locator('#result-container .compact-result-row').first();
   const toggleButton = resultCard.locator('[data-secret-toggle]');
   await toggleButton.evaluate((node) => node.scrollIntoView({ block: 'center', inline: 'nearest' }));
   const beforeToggle = await resultCard.boundingBox();
@@ -230,14 +283,14 @@ try {
   assert.deepEqual(afterHide, beforeToggle, '隐藏内容不得改变结果卡几何位置');
   assert.equal(await page.evaluate(() => scrollY), beforePageScroll, '隐藏内容不得晃动页面滚动位置');
   assert.equal(await page.locator('.result-scroll').evaluate((node) => node.scrollTop), beforeScrollTop);
-  assert.equal(await resultCard.locator('.secret-value').getAttribute('data-secret-state'), 'masked');
-  assert.match(await resultCard.locator('.secret-value').evaluate((node) => getComputedStyle(node, '::before').content), /•+/u);
+  assert.equal(await resultCard.locator('.compact-result-value').getAttribute('data-secret-state'), 'masked');
+  assert.match(await resultCard.locator('.compact-result-value').evaluate((node) => getComputedStyle(node, '::before').content), /•+/u);
   assert.equal(await toggleButton.evaluate((node) => document.activeElement === node), true, '切换后保持键盘焦点');
   assert.equal(await resultCard.evaluate((node) => getComputedStyle(node).animationName), 'none');
   await toggleButton.click();
   assert.deepEqual(await resultCard.boundingBox(), beforeToggle, '显示内容不得改变结果卡几何位置');
   assert.equal(await page.evaluate(() => scrollY), beforePageScroll, '显示内容不得晃动页面滚动位置');
-  assert.equal(await resultCard.locator('.secret-value').getAttribute('data-secret-state'), 'revealed');
+  assert.equal(await resultCard.locator('.compact-result-value').getAttribute('data-secret-state'), 'revealed');
 
   await page.locator('.mode-link[data-mode="uuid"]').click();
   await clickGenerate(page);
@@ -284,7 +337,7 @@ try {
   await page.locator('input[name="prefix"]').fill(`${sentinel}_`);
   await clickGenerate(page);
   await page.locator('input[name="prefix"]').fill('');
-  assert.match(await page.locator('#result-container .secret-value').textContent(), new RegExp(sentinel), '当前结果默认显示明文');
+  assert.match(await page.locator('#result-container .compact-result-value').textContent(), new RegExp(sentinel), '当前结果默认显示明文');
   assert.equal(await page.locator('.history-row').count(), 1);
   assert.equal(await page.locator('.history-type').count(), 0, '记录列表不再重复显示类型文案');
   const historyPreview = page.locator('.history-preview').first();
@@ -345,17 +398,17 @@ try {
   assert.match(await page.locator('#result-container').textContent(), /2\^8,388,608/u);
   const randomBytesToggle = page.locator('#result-container [data-secret-toggle]');
   await randomBytesToggle.click();
-  assert.equal(await randomBytesToggle.textContent(), '显示内容');
+  assert.match(await randomBytesToggle.getAttribute('aria-label'), /^显示第 1 条/u);
   await randomBytesToggle.click();
-  assert.equal(await randomBytesToggle.textContent(), '隐藏内容');
-  assert.ok((await page.locator('#result-container .secret-value').textContent()).length < 200);
+  assert.match(await randomBytesToggle.getAttribute('aria-label'), /^隐藏第 1 条/u);
+  assert.ok((await page.locator('#result-container .compact-result-value').textContent()).length < 200);
   assert.ok((await page.locator('#result-container').textContent()).length < 20_000);
 
   await page.evaluate(() => {
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
     document.execCommand = () => { throw new Error('forced copy failure'); };
   });
-  await page.getByRole('button', { name: '复制当前结果' }).click();
+  await page.getByRole('button', { name: '复制第一条' }).click();
   assert.equal(await page.locator('[data-v21-clipboard-fallback]').count(), 0);
   assert.match(await page.locator('#toast').textContent(), /forced copy failure|复制/u);
 

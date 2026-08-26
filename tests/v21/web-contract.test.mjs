@@ -101,6 +101,25 @@ test('首屏不再渲染低价值的数字统计卡', async () => {
   assert.doesNotMatch(css, /\.intro-proof/u);
 });
 
+test('批量结果只渲染一份公共安全说明并提供单条重新生成', async () => {
+  const [app, css, page] = await Promise.all([
+    read('src/v21/web/app.v21.js'),
+    read('src/v21/web/app.v21.css'),
+    read('src/v21/web/page.v21.html'),
+  ]);
+  assert.match(app, /buildCompactResultRow/u);
+  assert.match(app, /buildBatchAssessment/u);
+  assert.match(app, /regenerateResult/u);
+  assert.match(app, /createBatchRequestSnapshot/u);
+  assert.doesNotMatch(app, /buildResultCard/u);
+  assert.match(css, /\.compact-result-list/u);
+  assert.match(css, /\.compact-result-row/u);
+  assert.match(css, /\.batch-assessment/u);
+  assert.match(css, /\.result-icon-button/u);
+  assert.match(page, /id="regenerate-all"/u);
+  assert.match(page, />重新生成全部</u);
+});
+
 test('V2.1 发布入口与 Pages 门禁同时覆盖新版本制品', async () => {
   const [workflow, sitemap, llms, readme, english] = await Promise.all([
     read('.github/workflows/v201-pages.yml'),
