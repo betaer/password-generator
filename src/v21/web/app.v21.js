@@ -6,6 +6,10 @@ import {
   PASSWORD_QUANTITY_PRESETS,
   applyPasswordComplexityPreset,
 } from '../password-controls.mjs';
+import {
+  discreteSliderIndex,
+  discreteSliderValue,
+} from '../preset-slider.mjs';
 
 (() => {
   const ASSETS = __V21_ASSET_MANIFEST__;
@@ -179,7 +183,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
 
   function currentPasswordFormConfig() {
     return {
-      length: Number(form.elements.length?.value || 20),
+      length: Number(form.elements.namedItem('length')?.value || 20),
       lowercase: Boolean(form.elements.lowercase?.checked),
       uppercase: Boolean(form.elements.uppercaseLetters?.checked),
       digits: Boolean(form.elements.digits?.checked),
@@ -194,29 +198,75 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     };
   }
 
-  function syncPresetButtonGroup(selector, currentValue, attribute) {
-    configBody.querySelectorAll(selector).forEach((button) => {
-      const active = Number(button.getAttribute(attribute)) === Number(currentValue);
+  function sliderRoot(kind) {
+    return configBody.querySelector(`[data-preset-slider="${kind}"]`);
+  }
+
+  function clearForcedCustomSlider(kind) {
+    const rootElement = sliderRoot(kind);
+    if (rootElement) delete rootElement.dataset.forceCustom;
+  }
+
+  function revealActiveSliderMark(kind) {
+    const rootElement = sliderRoot(kind);
+    const activeMark = rootElement?.querySelector('.preset-slider-mark.is-active');
+    const scrollArea = rootElement?.querySelector('.preset-slider-scroll');
+    if (!activeMark || !scrollArea) return;
+    const markCenter = activeMark.offsetLeft + (activeMark.offsetWidth / 2);
+    const visibleStart = scrollArea.scrollLeft;
+    const visibleEnd = visibleStart + scrollArea.clientWidth;
+    if (markCenter < visibleStart + 36 || markCenter > visibleEnd - 36) {
+      scrollArea.scrollLeft = Math.max(0, markCenter - (scrollArea.clientWidth / 2));
+    }
+  }
+
+  function syncDiscreteSlider(kind, currentValue, presetValues, valueText) {
+    const rootElement = sliderRoot(kind);
+    if (!rootElement) return;
+    const revealInitialSelection = rootElement.dataset.sliderInitialized !== 'true';
+    rootElement.dataset.sliderInitialized = 'true';
+    const forceCustom = rootElement.dataset.forceCustom === 'true';
+    const index = forceCustom ? presetValues.length : discreteSliderIndex(currentValue, presetValues);
+    const range = rootElement.querySelector('.preset-slider-range');
+    range.value = String(index);
+    range.setAttribute('aria-valuetext', valueText(index));
+    rootElement.dataset.sliderIndex = String(index);
+    rootElement.querySelectorAll('.preset-slider-mark').forEach((button) => {
+      const active = Number(button.dataset.sliderIndex) === index;
       button.classList.toggle('is-active', active);
       button.setAttribute('aria-pressed', String(active));
     });
+    if (revealInitialSelection) revealActiveSliderMark(kind);
   }
 
   function syncPasswordControls() {
     if (state.mode !== 'password') return;
     const selectedLevel = form.elements.complexityPreset?.value || 'custom';
     const selectedPreset = PASSWORD_COMPLEXITY_PRESETS.find(({ level }) => level === selectedLevel);
-    configBody.querySelectorAll('[data-complexity-level]').forEach((button) => {
-      const active = button.dataset.complexityLevel === selectedLevel;
-      button.classList.toggle('is-active', active);
-      button.setAttribute('aria-pressed', String(active));
-    });
+    syncDiscreteSlider(
+      'complexity',
+      selectedLevel,
+      PASSWORD_COMPLEXITY_PRESETS.map(({ level }) => level),
+      (index) => index === PASSWORD_COMPLEXITY_PRESETS.length
+        ? '自定义复杂度'
+        : `${PASSWORD_COMPLEXITY_PRESETS[index].level}，${PASSWORD_COMPLEXITY_PRESETS[index].label}`,
+    );
     const description = document.getElementById('complexity-description');
     if (description) description.textContent = selectedPreset
       ? `${selectedPreset.level} · ${selectedPreset.label}：已应用完整配方；最终安全结果仍按实际生成模型精确计算。`
       : '自定义配置：复杂度快捷方案已解除，安全结果按当前具体长度和约束精确计算。';
-    syncPresetButtonGroup('[data-password-length-preset]', form.elements.length?.value, 'data-password-length-preset');
-    syncPresetButtonGroup('[data-password-quantity-preset]', form.elements.quantity?.value, 'data-password-quantity-preset');
+    syncDiscreteSlider(
+      'length',
+      Number(form.elements.namedItem('length')?.value),
+      PASSWORD_LENGTH_PRESETS,
+      (index) => index === PASSWORD_LENGTH_PRESETS.length ? `自定义，当前 ${form.elements.namedItem('length')?.value} 位` : `${PASSWORD_LENGTH_PRESETS[index]} 位`,
+    );
+    syncDiscreteSlider(
+      'quantity',
+      Number(form.elements.quantity?.value),
+      PASSWORD_QUANTITY_PRESETS,
+      (index) => index === PASSWORD_QUANTITY_PRESETS.length ? `自定义，当前 ${form.elements.quantity?.value} 个` : `${PASSWORD_QUANTITY_PRESETS[index]} 个`,
+    );
   }
 
   function markPasswordComplexityCustom() {
@@ -233,6 +283,8 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
   }
 
   function applyComplexityLevel(level) {
+    clearForcedCustomSlider('complexity');
+    clearForcedCustomSlider('length');
     const next = applyPasswordComplexityPreset(currentPasswordFormConfig(), level);
     for (const [name, value] of Object.entries({
       length: next.length,
@@ -255,21 +307,89 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     updateAvailability();
   }
 
+  function activateCustomSlider(kind, { focusExact = false } = {}) {
+    const rootElement = sliderRoot(kind);
+    if (!rootElement) return;
+    if (kind === 'complexity') {
+      markPasswordComplexityCustom();
+      if (focusExact) form.elements.lowercase?.focus();
+      return;
+    }
+    rootElement.dataset.forceCustom = 'true';
+    syncPasswordControls();
+    if (focusExact) {
+      const exactInput = form.elements.namedItem(kind);
+      exactInput?.focus();
+      exactInput?.select?.();
+    }
+  }
+
+  function applySliderIndex(kind, rawIndex) {
+    const index = Number(rawIndex);
+    if (kind === 'complexity') {
+      const levels = PASSWORD_COMPLEXITY_PRESETS.map(({ level }) => level);
+      const level = discreteSliderValue(index, levels, 'custom');
+      if (level === 'custom') {
+        markPasswordComplexityCustom();
+        saveNonSecretSettings();
+        updateAvailability();
+      } else applyComplexityLevel(level);
+      revealActiveSliderMark(kind);
+      return;
+    }
+    const values = kind === 'length' ? PASSWORD_LENGTH_PRESETS : PASSWORD_QUANTITY_PRESETS;
+    const fieldName = kind;
+    const currentValue = Number(form.elements.namedItem(fieldName)?.value);
+    const nextValue = discreteSliderValue(index, values, currentValue);
+    if (index === values.length) {
+      activateCustomSlider(kind);
+      revealActiveSliderMark(kind);
+      return;
+    }
+    clearForcedCustomSlider(kind);
+    setPasswordFormValue(fieldName, nextValue);
+    if (kind === 'length') markPasswordComplexityCustom();
+    else syncPasswordControls();
+    saveNonSecretSettings();
+    updateAvailability();
+    revealActiveSliderMark(kind);
+  }
+
   const numberField = (name, fallback) => {
     const value = Number(new FormData(form).get(name));
     return Number.isFinite(value) ? value : fallback;
   };
   const checkbox = (name, label, checked = false) => `<label class="check"><input name="${name}" type="checkbox"${checked ? ' checked' : ''}>${label}</label>`;
   const quantityMarkup = (max = 100) => `<div class="field"><label for="quantity">生成数量</label><input id="quantity" name="quantity" type="number" min="1" max="${max}" value="1"><small>当前结果默认显示明文；PIN 码批量默认唯一。</small></div>`;
-  const presetButtons = (values, attribute, active) => values.map((value) => `<button class="preset-value-button${value === active ? ' is-active' : ''}" type="button" ${attribute}="${value}" aria-pressed="${value === active}">${value}</button>`).join('');
+  const complexitySliderMarks = () => [
+    ...PASSWORD_COMPLEXITY_PRESETS.map((preset, index) => `<button class="preset-slider-mark${preset.level === 'L8' ? ' is-active' : ''}" type="button" data-slider-index="${index}" data-complexity-level="${preset.level}" aria-label="${preset.level}，${preset.label}" aria-pressed="${preset.level === 'L8'}"><strong>${preset.level}</strong><span>${preset.label}</span></button>`),
+    `<button class="preset-slider-mark preset-slider-custom" type="button" data-slider-index="${PASSWORD_COMPLEXITY_PRESETS.length}" data-preset-custom="complexity" aria-pressed="false"><strong>Custom</strong><span>自定义</span></button>`,
+  ].join('');
+  const numericSliderMarks = (kind, values, attribute, active) => [
+    ...values.map((value, index) => `<button class="preset-slider-mark${value === active ? ' is-active' : ''}" type="button" data-slider-index="${index}" ${attribute}="${value}" aria-pressed="${value === active}"><strong>${value}</strong></button>`),
+    `<button class="preset-slider-mark preset-slider-custom" type="button" data-slider-index="${values.length}" data-preset-custom="${kind}" aria-pressed="false"><strong>自定义</strong></button>`,
+  ].join('');
+  const sliderShell = ({ kind, label, maximumIndex, value, valueText, marks, exactField = '' }) => `<div class="preset-slider-control" data-preset-slider="${kind}" data-slider-index="${value}">
+    <span class="field-label">${label}</span>
+    <div class="preset-slider-layout${exactField ? '' : ' preset-slider-layout-wide'}">
+      <div class="preset-slider-scroll" tabindex="-1">
+        <div class="preset-slider-axis">
+          <div class="preset-slider-track">
+            <input class="preset-slider-range" data-slider-input="${kind}" type="range" min="0" max="${maximumIndex}" step="1" value="${value}" aria-label="${label}" aria-valuetext="${valueText}">
+            <div class="preset-slider-mark-row" role="group" aria-label="${label}快捷刻度">${marks}</div>
+          </div>
+        </div>
+      </div>
+      ${exactField}
+    </div>
+  </div>`;
   const complexityMarkup = () => `<div class="field full password-complexity-control">
-    <span class="field-label">按照复杂度生成</span>
-    <div class="complexity-grid" role="group" aria-label="密码复杂度快捷方案">${PASSWORD_COMPLEXITY_PRESETS.map((preset) => `<button class="complexity-option${preset.level === 'L8' ? ' is-active' : ''}" type="button" data-complexity-level="${preset.level}" data-level="${preset.level}" aria-pressed="${preset.level === 'L8'}"><strong>${preset.level}</strong><span>${preset.label}</span></button>`).join('')}</div>
+    ${sliderShell({ kind: 'complexity', label: '按照复杂度生成', maximumIndex: PASSWORD_COMPLEXITY_PRESETS.length, value: 7, valueText: 'L8，几乎无法破解', marks: complexitySliderMarks() })}
     <input name="complexityPreset" type="hidden" value="L8">
     <small id="complexity-description">L8 会应用完整配方；最终安全结果仍按实际生成模型精确计算。</small>
   </div>`;
-  const passwordLengthMarkup = () => `<div class="field full"><span class="field-label">密码长度</span><div class="preset-number-control"><div class="preset-value-list" role="group" aria-label="常用密码长度">${presetButtons(PASSWORD_LENGTH_PRESETS, 'data-password-length-preset', 20)}</div><label class="exact-number-field" for="length"><span>自定义</span><input id="length" name="length" type="number" min="4" max="4096" value="20"><b>位</b></label></div><small>快捷档位与精确数字输入双向同步，可自定义 4～4096 位。</small></div>`;
-  const passwordQuantityMarkup = () => `<div class="field full"><span class="field-label">生成数量</span><div class="preset-number-control"><div class="preset-value-list" role="group" aria-label="常用生成数量">${presetButtons(PASSWORD_QUANTITY_PRESETS, 'data-password-quantity-preset', 1)}</div><label class="exact-number-field" for="quantity"><span>自定义</span><input id="quantity" name="quantity" type="number" min="1" max="100" value="1"><b>个</b></label></div><small>可自定义 1～100 个；整批只编译一次概率模型并在一个工作线程中采样。</small></div>`;
+  const passwordLengthMarkup = () => `<div class="field full">${sliderShell({ kind: 'length', label: '密码长度', maximumIndex: PASSWORD_LENGTH_PRESETS.length, value: 5, valueText: '20 位', marks: numericSliderMarks('length', PASSWORD_LENGTH_PRESETS, 'data-password-length-preset', 20), exactField: '<label class="preset-exact-input" for="length"><span>精确值</span><span class="preset-exact-value"><input id="length" name="length" type="number" min="4" max="4096" value="20"><b>位</b></span></label>' })}<small>拖动进度条、点击快捷数值或输入精确值，三者双向同步；支持 4～4096 位。</small></div>`;
+  const passwordQuantityMarkup = () => `<div class="field full">${sliderShell({ kind: 'quantity', label: '生成数量', maximumIndex: PASSWORD_QUANTITY_PRESETS.length, value: 0, valueText: '1 个', marks: numericSliderMarks('quantity', PASSWORD_QUANTITY_PRESETS, 'data-password-quantity-preset', 1), exactField: '<label class="preset-exact-input" for="quantity"><span>精确值</span><span class="preset-exact-value"><input id="quantity" name="quantity" type="number" min="1" max="100" value="1"><b>个</b></span></label>' })}<small>可自定义 1～100 个；整批只编译一次概率模型并在一个工作线程中采样。</small></div>`;
 
   const CONFIG_TEMPLATES = Object.freeze({
     password: () => `<div class="field-grid">
@@ -945,6 +1065,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     }
     const lengthButton = event.target.closest?.('[data-password-length-preset]');
     if (lengthButton) {
+      clearForcedCustomSlider('length');
       setPasswordFormValue('length', lengthButton.dataset.passwordLengthPreset);
       markPasswordComplexityCustom();
       saveNonSecretSettings();
@@ -952,13 +1073,25 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     }
     const quantityButton = event.target.closest?.('[data-password-quantity-preset]');
     if (quantityButton) {
+      clearForcedCustomSlider('quantity');
       setPasswordFormValue('quantity', quantityButton.dataset.passwordQuantityPreset);
       syncPasswordControls();
+      saveNonSecretSettings();
+      return;
+    }
+    const customButton = event.target.closest?.('[data-preset-custom]');
+    if (customButton) {
+      activateCustomSlider(customButton.dataset.presetCustom, { focusExact: true });
       saveNonSecretSettings();
     }
   });
   form.addEventListener('input', (event) => {
     if (state.mode !== 'password') return;
+    if (event.target.matches?.('[data-slider-input]')) {
+      applySliderIndex(event.target.dataset.sliderInput, event.target.value);
+      return;
+    }
+    if (event.target.name === 'length' || event.target.name === 'quantity') clearForcedCustomSlider(event.target.name);
     if (event.target.name === 'length') markPasswordComplexityCustom();
     if (event.target.name === 'length' || event.target.name === 'quantity') syncPasswordControls();
   });
@@ -978,7 +1111,10 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
   document.getElementById('copy-share').addEventListener('click', () => copySharePromotion().catch((error) => showToast(error.message, 'error')));
   document.getElementById('back-to-top').addEventListener('click', () => scrollTo({ top: 0, left: 0, behavior: 'auto' }));
   addEventListener('scroll', updateBackToTop, { passive: true });
-  addEventListener('resize', updateBackToTop, { passive: true });
+  addEventListener('resize', () => {
+    updateBackToTop();
+    if (state.mode === 'password') ['complexity', 'length', 'quantity'].forEach(revealActiveSliderMark);
+  }, { passive: true });
   addEventListener('pagehide', () => { cancelActiveGeneration('页面离开'); releaseCurrentResults(); historyBudget.clear(); analyzerWorker?.terminate(); }, { once: true });
 
   initializePassphrase(); initializePinRisk(); initializeAnalyzer(); ensureMnemonicLanguage('english');
