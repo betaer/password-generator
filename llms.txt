@@ -4,7 +4,8 @@ V2.1：https://betaer.github.io/password-generator/index-2.1.html
 V2.0.1：https://betaer.github.io/password-generator/v2.01.html
 V2.0：https://betaer.github.io/password-generator/index-2.0.html
 V1.7.5：https://betaer.github.io/password-generator/
-规范地址：https://betaer.github.io/password-generator/
+V2.1 规范地址：https://betaer.github.io/password-generator/index-2.1.html
+项目默认入口：https://betaer.github.io/password-generator/
 源代码：https://github.com/betaer/password-generator
 
 ## 核心契约
@@ -20,6 +21,18 @@ V1.7.5：https://betaer.github.io/password-generator/
 - Passphrase 与 BIP39 使用 V2.1 独立内容哈希词表，结果记录 SHA-256。
 - zxcvbn 在独立 Worker 中只提供 Observed Pattern Estimate；固定 PIN 来源包含 68,202 个唯一六位数字候选。
 - Password/Passphrase 的三种攻击模型分别是在线限速、慢速 KDF/密码哈希与快速离线估算，均不是安全保证。
+
+## 九类生成器
+
+- Password Generator：约束感知的随机密码、L1～L8 复杂度方案、密码长度与批量数量快捷刻度。
+- Passphrase Generator：独立内容哈希词包、大小写与随机分隔符模型。
+- PIN Generator：completion-count DP、启发式常见 PIN 排除策略与批内唯一抽样。
+- Token Generator：可选编码和固定前缀；固定前缀不增加随机位数。
+- API Secret Generator：通用字段与合成演示模板，不模拟真实厂商签发。
+- UUID Generator：RFC 9562 UUID v4/v7 标识符；不是密码或访问凭据。
+- Hex Generator：随机十六进制材料与仅供测试的私钥外观选项。
+- Random Bytes Generator：最多 1 MiB 原始字节、延迟编码、SHA-256 与资源预算。
+- BIP39 Mnemonic Generator：128～256 位 ENT、12～24 个词、十种官方词表和校验和；高价值用途优先离线或硬件钱包。
 
 ## 隐私边界
 

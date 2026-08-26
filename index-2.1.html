@@ -5,14 +5,106 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="light" />
   <meta name="referrer" content="no-referrer" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; frame-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'" />
-  <title>安全随机数据生成器 V2.1｜密码、令牌、UUID 与 BIP39</title>
-  <meta name="description" content="浏览器本地安全随机数据生成器 V2.1：九类生成器、复杂度快捷方案、统一概率契约、精确生成空间与明确攻击假设。" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-423jFwCR17yJjlLUGCkXZa5V+JFyMSdhGcQ9N9VfLm0='; style-src 'self'; connect-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; frame-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'" />
+  <title>安全随机数据生成器 V2.1｜密码、口令、PIN、Token、UUID 与 BIP39</title>
+  <meta name="title" content="安全随机数据生成器 V2.1｜密码、口令、PIN、Token、UUID 与 BIP39" />
   <meta name="application-name" content="安全随机数据生成器 V2.1" />
+  <meta name="description" content="免费、专业的浏览器本地安全随机数据生成器，支持 Password、Passphrase、PIN、Token、API Secret、UUID、Hex、Random Bytes 与 BIP39 Mnemonic。使用 Web Crypto API，生成内容不会作为生成数据上传。" />
+  <meta name="keywords" content="密码生成器,随机密码,强密码,口令,Passphrase,PIN码,Token,API Secret,UUID,Hex,Random Bytes,BIP39,Mnemonic,助记词,安全随机数据生成器,Web Crypto,Password Generator" />
+  <meta name="subject" content="浏览器本地密码、口令、PIN、Token、API Secret、UUID、Hex、随机字节与 BIP39 助记词生成工具" />
+  <meta name="abstract" content="A privacy-first security random data generator for Password, Passphrase, PIN, Token, API Secret, UUID, Hex, Random Bytes and BIP39 Mnemonic, powered by Web Crypto." />
+  <meta name="author" content="betaer" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="bingbot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
   <meta name="theme-color" content="#0b5cff" />
   <link rel="canonical" href="https://betaer.github.io/password-generator/index-2.1.html" />
+  <link rel="alternate" hreflang="zh-CN" href="https://betaer.github.io/password-generator/index-2.1.html" />
+  <link rel="alternate" hreflang="x-default" href="https://betaer.github.io/password-generator/index-2.1.html" />
   <link rel="icon" type="image/png" sizes="512x512" href="./password-generator-icon.png" />
-  <link rel="stylesheet" href="./assets/v2.1/app.ea80f7f864f6.css" />
+  <link rel="sitemap" type="application/xml" href="https://betaer.github.io/sitemap.xml" />
+  <link rel="alternate" type="text/plain" href="https://betaer.github.io/password-generator/llms.txt" title="生成式搜索与 AI 助手说明" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="安全随机数据生成器 · Security Random Generator" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:title" content="安全随机数据生成器 V2.1｜九类浏览器本地生成器" />
+  <meta property="og:description" content="浏览器本地生成 Password、Passphrase、PIN、Token、API Secret、UUID、Hex、Random Bytes 与 BIP39 Mnemonic；精确生成器指标与攻击场景估算分层展示。" />
+  <meta property="og:url" content="https://betaer.github.io/password-generator/index-2.1.html" />
+  <meta property="og:image" content="https://betaer.github.io/password-generator/assets/social-preview-v2.1.png" />
+  <meta property="og:image:secure_url" content="https://betaer.github.io/password-generator/assets/social-preview-v2.1.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="安全随机数据生成器 V2.1：九类数据在浏览器本地生成" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="安全随机数据生成器 V2.1｜九类浏览器本地生成器" />
+  <meta name="twitter:description" content="本地生成密码、口令、PIN、Token、API Secret、UUID、Hex、随机字节与 BIP39 助记词。" />
+  <meta name="twitter:image" content="https://betaer.github.io/password-generator/assets/social-preview-v2.1.png" />
+  <meta name="twitter:image:alt" content="安全随机数据生成器 V2.1：九类数据在浏览器本地生成" />
+
+  <script id="v21-structured-data" type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://betaer.github.io/#website",
+        "url": "https://betaer.github.io/",
+        "name": "betaer 项目主页",
+        "alternateName": "betaer Projects",
+        "description": "betaer 的公开项目与浏览器端工具集合。",
+        "inLanguage": "zh-CN",
+        "publisher": { "@id": "https://betaer.github.io/#author" }
+      },
+      {
+        "@type": "Person",
+        "@id": "https://betaer.github.io/#author",
+        "name": "betaer",
+        "url": "https://github.com/betaer"
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://betaer.github.io/password-generator/index-2.1.html#application",
+        "name": "安全随机数据生成器 V2.1",
+        "alternateName": ["Password Generator", "Passphrase Generator", "PIN Generator", "Token Generator", "API Secret Generator", "UUID Generator", "Hex Generator", "Random Bytes Generator", "BIP39 Mnemonic Generator"],
+        "url": "https://betaer.github.io/password-generator/index-2.1.html",
+        "description": "浏览器本地运行的九类安全随机数据生成器。精确计算生成空间，并将观察模式和攻击场景作为独立估算展示。生成内容不会作为生成数据上传。",
+        "keywords": ["密码生成器", "Passphrase", "PIN", "Token", "API Secret", "UUID", "Hex", "Random Bytes", "BIP39 Mnemonic", "Web Crypto"],
+        "inLanguage": "zh-CN",
+        "applicationCategory": "SecurityApplication",
+        "applicationSubCategory": "Security Random Data Generation",
+        "operatingSystem": "Web",
+        "browserRequirements": "需要支持 JavaScript、Web Crypto API 与 Web Worker 的现代浏览器",
+        "softwareVersion": "2.1.0",
+        "image": "https://betaer.github.io/password-generator/assets/social-preview-v2.1.png",
+        "isAccessibleForFree": true,
+        "isPartOf": { "@id": "https://betaer.github.io/#website" },
+        "author": { "@id": "https://betaer.github.io/#author" },
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "sameAs": "https://github.com/betaer/password-generator",
+        "featureList": [
+          "Password、Passphrase 与 PIN 人类凭据生成",
+          "Token、API Secret、Hex 与 Random Bytes 机器密钥材料生成",
+          "UUID v4 与 v7 标准标识符生成",
+          "BIP39 Mnemonic 官方十种语言词表与校验和",
+          "精确生成器指标、观察模式估算与攻击场景估算分层展示",
+          "浏览器 Web Crypto API 本地生成，敏感结果不进入统计字段"
+        ]
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://betaer.github.io/password-generator/index-2.1.html#breadcrumb",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "项目主页", "item": "https://betaer.github.io/" },
+          { "@type": "ListItem", "position": 2, "name": "安全随机数据生成器 V2.1", "item": "https://betaer.github.io/password-generator/index-2.1.html" }
+        ]
+      }
+    ]
+  }
+  </script>
+  <link rel="stylesheet" href="./assets/v2.1/app.f4ef23f5104c.css" />
   <link rel="preload" href="./assets/v2.1/passphrase-packs.fdcfc66d0f6e.js" as="script" />
   <link rel="preload" href="./assets/v2.1/pin-risk.a206560ebac9.js" as="script" />
   <link rel="preload" href="./assets/v2.1/bip39.english.578979e364c7.js" as="script" />
@@ -78,6 +170,26 @@
       <div><h3>剪贴板与隔离页面访问统计</h3><p>只有显式复制才写入系统剪贴板。Google Analytics 只在无 <code>allow-same-origin</code> 的 sandbox iframe 中运行；父页面不加载 Google JS，也不向 iframe 发送类型、配置、输入或结果。无 Cookie page-view ping 仍可能包含浏览器与标准网络层元数据。</p></div>
     </section>
 
+    <section id="v21-seo-content" class="seo-shell" aria-labelledby="v21-seo-title">
+      <details id="v21-security-verification" class="seo-shell-overview">
+        <summary class="seo-shell-overview-summary"><h2 id="v21-seo-title">V2.1 功能、数学模型与安全边界</h2></summary>
+        <div class="seo-shell-overview-content">
+          <section aria-labelledby="v21-generator-types">
+            <h3 id="v21-generator-types">九类生成器与适用边界</h3>
+            <p><strong>Password、Passphrase 与 PIN</strong> 面向人类凭据；<strong>Token、API Secret、Hex 与 Random Bytes</strong> 面向机器密钥材料；<strong>UUID</strong> 是标识符而不是秘密；<strong>BIP39 Mnemonic</strong> 面向兼容钱包的恢复短语，真实资产应优先使用硬件钱包或经验证的离线环境。</p>
+          </section>
+          <div class="seo-shell-grid">
+            <section><h3>精确生成器指标</h3><p>在页面声明的 CSPRNG 与均匀采样假设下，根据不可变生成模型计算生成空间、名义随机位数、最小熵、Shannon 熵和有限空间的期望猜测次数。</p></section>
+            <section><h3>观察模式估算</h3><p>仅对 Password 与 Passphrase 的具体结果提供经验型模式提示；它不是生成器概率分布的数学证明，也不会覆盖精确生成器指标。</p></section>
+            <section><h3>攻击场景估算</h3><p>破解时间只基于页面明确列出的在线限速、慢速 KDF 与快速离线速率假设。真实成本取决于锁定策略、MFA、哈希算法、参数和攻击硬件。</p></section>
+            <section><h3>浏览器本地数据边界</h3><p>随机核心使用 Web Crypto API；不可用时停止生成，不回退到 Math.random()。生成结果会进入当前页面 DOM 与 JavaScript 运行时，只有显式复制才写入系统剪贴板。</p></section>
+            <section><h3>无 Cookie GA 页面访问统计</h3><p>Google Analytics 仅在无 allow-same-origin 的 sandbox iframe 中执行，并只发送固定页面字段。父页面不发送生成器类型、配置、输入或结果；Google 仍可能接收无 Cookie 请求及标准网络元数据。</p></section>
+            <section><h3>公开验证与版本</h3><p>源代码、概率模型、Worker、资源哈希与浏览器验收均可在 GitHub 审计。历史版本仍可访问：<a href="./index.html">V1.7.5</a>、<a href="./index-2.0.html">V2.0</a>、<a href="./v2.01.html">V2.0.1</a>。</p></section>
+          </div>
+        </div>
+      </details>
+    </section>
+
     <footer class="footer"><span>安全随机数据生成器 V2.1 · Web Crypto · 统一概率契约</span><span><a href="./index.html">V1.7.5</a> · <a href="./index-2.0.html">V2.0</a> · <a href="./v2.01.html">V2.0.1</a> · <a href="https://github.com/betaer/password-generator" rel="noopener noreferrer" target="_blank">GitHub</a></span></footer>
   </main>
 
@@ -90,7 +202,7 @@
   <iframe src="./assets/v2.1/analytics-frame.c31fe24976cf.html" title="隔离页面访问统计" aria-hidden="true" tabindex="-1" sandbox="allow-scripts" referrerpolicy="no-referrer" hidden></iframe>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
   <script src="./assets/v2.1/runtime.38793d36e4a8.js"></script>
-  <script src="./assets/v2.1/app.ba5c573b275c.js"></script>
+  <script src="./assets/v2.1/app.55f8bf6645bb.js"></script>
   <noscript><div class="noscript">需要启用 JavaScript 与 Web Crypto 才能安全生成随机数据。</div></noscript>
 </body>
 </html>

@@ -376,7 +376,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     `<button class="preset-slider-mark preset-slider-custom" type="button" data-slider-index="${values.length}" data-preset-custom="${kind}" aria-pressed="false"><strong>自定义</strong></button>`,
   ].join('');
   const sliderShell = ({ kind, label, maximumIndex, value, valueText, marks, exactField = '' }) => `<div class="preset-slider-control" data-preset-slider="${kind}" data-slider-index="${value}">
-    <span class="field-label">${label}</span>
+    <span class="preset-slider-label field-label">${label}</span>
     <div class="preset-slider-layout${exactField ? '' : ' preset-slider-layout-wide'}">
       <div class="preset-slider-scroll" tabindex="-1">
         <div class="preset-slider-axis">
@@ -394,8 +394,8 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     <input name="complexityPreset" type="hidden" value="L8">
     <small id="complexity-description">L8 会应用完整配方；最终安全结果仍按实际生成模型精确计算。</small>
   </div>`;
-  const passwordLengthMarkup = () => `<div class="field full">${sliderShell({ kind: 'length', label: '密码长度', maximumIndex: PASSWORD_LENGTH_PRESETS.length, value: 5, valueText: '20 位', marks: numericSliderMarks('length', PASSWORD_LENGTH_PRESETS, 'data-password-length-preset', 20), exactField: '<label class="preset-exact-input" for="length"><span>精确值</span><span class="preset-exact-value"><input id="length" name="length" type="number" min="4" max="4096" value="20"><b>位</b></span></label>' })}<small>拖动进度条、点击快捷数值或输入精确值，三者双向同步；支持 4～4096 位。</small></div>`;
-  const passwordQuantityMarkup = () => `<div class="field full">${sliderShell({ kind: 'quantity', label: '生成数量', maximumIndex: PASSWORD_QUANTITY_PRESETS.length, value: 0, valueText: '1 个', marks: numericSliderMarks('quantity', PASSWORD_QUANTITY_PRESETS, 'data-password-quantity-preset', 1), exactField: '<label class="preset-exact-input" for="quantity"><span>精确值</span><span class="preset-exact-value"><input id="quantity" name="quantity" type="number" min="1" max="100" value="1"><b>个</b></span></label>' })}<small>可自定义 1～100 个；整批只编译一次概率模型并在一个工作线程中采样。</small></div>`;
+  const passwordLengthMarkup = () => `<div class="field full password-slider-field">${sliderShell({ kind: 'length', label: '密码长度', maximumIndex: PASSWORD_LENGTH_PRESETS.length, value: 5, valueText: '20 位', marks: numericSliderMarks('length', PASSWORD_LENGTH_PRESETS, 'data-password-length-preset', 20), exactField: '<label class="preset-exact-input" aria-label="精确密码长度" for="length"><span class="preset-exact-value"><input id="length" name="length" type="number" min="4" max="4096" value="20"><b data-exact-unit="length">位</b></span></label>' })}<small>拖动进度条、点击快捷数值或输入精确值，三者双向同步；支持 4～4096 位。</small></div>`;
+  const passwordQuantityMarkup = () => `<div class="field full password-slider-field">${sliderShell({ kind: 'quantity', label: '生成数量', maximumIndex: PASSWORD_QUANTITY_PRESETS.length, value: 0, valueText: '1 个', marks: numericSliderMarks('quantity', PASSWORD_QUANTITY_PRESETS, 'data-password-quantity-preset', 1), exactField: '<label class="preset-exact-input" aria-label="精确生成数量" for="quantity"><span class="preset-exact-value"><input id="quantity" name="quantity" type="number" min="1" max="100" value="1"><b data-exact-unit="quantity">个</b></span></label>' })}<small>可自定义 1～100 个；整批只编译一次概率模型并在一个工作线程中采样。</small></div>`;
 
   const CONFIG_TEMPLATES = Object.freeze({
     password: () => `<div class="field-grid">

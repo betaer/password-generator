@@ -127,6 +127,9 @@ async function buildPage(assets) {
     __V21_APP__: assets.app,
   };
   let html = await readFile(path.join(sourceDirectory, 'page.v21.html'), 'utf8');
+  const structuredData = html.match(/<script id="v21-structured-data" type="application\/ld\+json">([\s\S]*?)<\/script>/u);
+  if (!structuredData) throw new Error('Missing V2.1 structured data script');
+  html = html.replace('__V21_SEO_HASH__', `sha256-${sha256(structuredData[1], 'base64')}`);
   for (const [placeholder, value] of Object.entries(replacements)) html = html.replaceAll(placeholder, value);
   if (/__V21_[A-Z_]+__/u.test(html)) throw new Error('Unresolved V2.1 page placeholder');
   await writeFile(path.join(projectRoot, 'index-2.1.html'), html);
