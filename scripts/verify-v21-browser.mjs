@@ -343,6 +343,40 @@ try {
     }
   }
   await page.setViewportSize({ width: 1280, height: 900 });
+  const horizontalSliderGeometry = await page.evaluate(() => {
+    document.querySelectorAll('.preset-slider-scroll').forEach((node) => { node.scrollLeft = 0; });
+    const geometry = (kind) => {
+      const root = document.querySelector(`[data-preset-slider="${kind}"]`);
+      const scrollNode = root.querySelector('.preset-slider-scroll');
+      const label = root.querySelector('.preset-slider-label').getBoundingClientRect();
+      const scroll = scrollNode.getBoundingClientRect();
+      const exact = root.querySelector('.preset-exact-input')?.getBoundingClientRect() || null;
+      const input = root.querySelector('.preset-exact-input input')?.getBoundingClientRect() || null;
+      const unit = root.querySelector('[data-exact-unit]')?.getBoundingClientRect() || null;
+      const custom = root.querySelector('.preset-slider-custom')?.getBoundingClientRect() || null;
+      return { label, scroll, exact, input, unit, custom, scrollable: scrollNode.scrollWidth > scrollNode.clientWidth };
+    };
+    return {
+      configWidth: document.querySelector('.config-panel').getBoundingClientRect().width,
+      complexity: geometry('complexity'),
+      length: geometry('length'),
+      quantity: geometry('quantity'),
+    };
+  });
+  assert.ok(horizontalSliderGeometry.configWidth >= 900, '1280px 桌面端配置面板必须为老版横向控件保留足够总宽度');
+  const sliderLefts = ['complexity', 'length', 'quantity'].map((kind) => horizontalSliderGeometry[kind].scroll.left);
+  assert.ok(Math.max(...sliderLefts) - Math.min(...sliderLefts) <= 1, '三条进度条必须共用相同起始线');
+  for (const kind of ['length', 'quantity']) {
+    const state = horizontalSliderGeometry[kind];
+    assert.equal(state.scrollable, false, `${kind} 在 1280px 桌面端必须完整展示全部快捷数值与自定义刻度`);
+    assert.ok(state.scroll.right <= state.exact.left, `${kind} 自定义输入必须位于进度条右侧`);
+    assert.ok(state.exact.top < state.scroll.bottom && state.exact.bottom > state.scroll.top, `${kind} 自定义输入必须与进度条同排`);
+    assert.ok(state.custom.right <= state.scroll.right + 1, `${kind} 自定义刻度不得被右侧裁切`);
+    assert.ok(state.custom.right < state.input.left, `${kind} 自定义刻度必须位于输入框之前`);
+    assert.ok(state.unit.left - state.input.right >= 0 && state.unit.left - state.input.right <= 12, `${kind} 单位必须紧邻输入框`);
+    assert.ok(Math.abs((state.unit.top + state.unit.bottom) / 2 - (state.input.top + state.input.bottom) / 2) <= 2, `${kind} 单位与输入框必须垂直居中`);
+  }
+  assert.equal(await page.getByText('精确值', { exact: true }).count(), 0, '老版横向样式不显示额外“精确值”标题');
   const complexityMarksVisible = await page.locator('[data-preset-slider="complexity"]').evaluate((root) => {
     const scrollRect = root.querySelector('.preset-slider-scroll').getBoundingClientRect();
     return [...root.querySelectorAll('.preset-slider-mark')].every((mark) => {
