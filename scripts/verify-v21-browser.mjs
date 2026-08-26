@@ -371,9 +371,13 @@ try {
       quantity: geometry('quantity'),
     };
   });
-  assert.ok(horizontalSliderGeometry.configWidth >= 900, '1280px 桌面端配置面板必须为老版横向控件保留足够总宽度');
+  assert.ok(horizontalSliderGeometry.configWidth >= 860 && horizontalSliderGeometry.configWidth <= 900, '1280px 桌面端配置面板必须使用紧凑宽度');
   const sliderLefts = ['complexity', 'length', 'quantity'].map((kind) => horizontalSliderGeometry[kind].scroll.left);
   assert.ok(Math.max(...sliderLefts) - Math.min(...sliderLefts) <= 1, '三条进度条必须共用相同起始线');
+  for (const kind of ['complexity', 'length', 'quantity']) {
+    const state = horizontalSliderGeometry[kind];
+    assert.ok(state.scroll.left - state.label.right >= 12 && state.scroll.left - state.label.right <= 16, `${kind} 标签与进度条之间不得保留过宽空白`);
+  }
   for (const kind of ['length', 'quantity']) {
     const state = horizontalSliderGeometry[kind];
     assert.equal(state.scrollable, false, `${kind} 在 1280px 桌面端必须完整展示全部快捷数值与自定义刻度`);
@@ -381,6 +385,8 @@ try {
     assert.ok(state.exact.top < state.scroll.bottom && state.exact.bottom > state.scroll.top, `${kind} 自定义输入必须与进度条同排`);
     assert.ok(state.custom.right <= state.scroll.right + 1, `${kind} 自定义刻度不得被右侧裁切`);
     assert.ok(state.custom.right < state.input.left, `${kind} 自定义刻度必须位于输入框之前`);
+    assert.ok(state.exact.width <= 156, `${kind} 精确值区域必须保持紧凑`);
+    assert.ok(state.input.width <= 128, `${kind} 精确值输入框不得占用过宽空间`);
     assert.ok(state.unit.left - state.input.right >= 0 && state.unit.left - state.input.right <= 12, `${kind} 单位必须紧邻输入框`);
     assert.ok(Math.abs((state.unit.top + state.unit.bottom) / 2 - (state.input.top + state.input.bottom) / 2) <= 2, `${kind} 单位与输入框必须垂直居中`);
   }
@@ -389,10 +395,20 @@ try {
     const scrollRect = root.querySelector('.preset-slider-scroll').getBoundingClientRect();
     return [...root.querySelectorAll('.preset-slider-mark')].every((mark) => {
       const markRect = mark.getBoundingClientRect();
-      return markRect.left >= scrollRect.left && markRect.right <= scrollRect.right;
+      return markRect.left >= scrollRect.left - 1 && markRect.right <= scrollRect.right + 1;
     });
   });
   assert.equal(complexityMarksVisible, true, '桌面配置栏必须同时展示完整的 L1～L8');
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.evaluate(() => scrollTo(0, 0));
+  const threeColumnGeometry = await page.evaluate(() => {
+    const config = document.querySelector('.config-panel').getBoundingClientRect();
+    const result = document.querySelector('.result-panel').getBoundingClientRect();
+    return { config, result };
+  });
+  assert.ok(threeColumnGeometry.config.width >= 780 && threeColumnGeometry.config.width <= 820, '1600px 桌面端必须收窄中间策略配置列');
+  assert.ok(threeColumnGeometry.result.width >= 390, '1600px 桌面端必须为生成结果保留独立可读列');
+  assert.ok(Math.abs(threeColumnGeometry.config.top - threeColumnGeometry.result.top) <= 1, '1600px 桌面端配置与结果必须并排顶对齐');
   await page.setViewportSize({ width: 960, height: 900 });
   for (const kind of ['length', 'quantity']) {
     const layoutState = await page.locator(`[data-preset-slider="${kind}"] .preset-slider-layout`).evaluate((layout) => {

@@ -60,8 +60,10 @@ test('密码配置提供复杂度、长度和生成数量三套完整控件', as
   assert.match(css, /\.preset-slider-range/u);
   assert.match(css, /\.preset-slider-mark/u);
   assert.match(css, /\.preset-exact-input/u);
-  assert.match(css, /\.preset-slider-control\s*\{[^}]*grid-template-columns:\s*132px\s+minmax\(0,\s*1fr\)/su);
+  assert.match(css, /\.preset-slider-control\s*\{[^}]*grid-template-columns:\s*108px\s+minmax\(0,\s*1fr\)/su);
   assert.match(css, /\.preset-slider-layout\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto/su);
+  assert.match(css, /\.workspace\s*\{[^}]*grid-template-columns:\s*220px\s+minmax\(720px,\s*820px\)\s+minmax\(390px,\s*1fr\)/su);
+  assert.match(css, /\.preset-exact-value\s*\{[^}]*grid-template-columns:\s*126px\s+auto/su);
   assert.match(app, /class="preset-slider-label field-label"/u);
   assert.match(app, /class="preset-exact-input"[^>]*aria-label="精确密码长度"/u);
   assert.match(app, /class="preset-exact-input"[^>]*aria-label="精确生成数量"/u);
