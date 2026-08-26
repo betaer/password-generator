@@ -82,6 +82,10 @@ try {
   assert.equal(await page.locator('#history-toggle').isChecked(), false);
   assert.equal(await page.locator('#history-panel').getAttribute('open'), null, '生成记录默认折叠');
   assert.equal(await page.locator('.result-scroll').evaluate((node) => node.contains(document.getElementById('history-panel'))), true);
+  assert.equal(await page.locator('.history-top-actions').isVisible(), true, '记录开关位于折叠导航顶层');
+  await page.locator('#history-toggle').check();
+  assert.equal(await page.locator('#history-panel').getAttribute('open'), null, '顶层记录开关不得连带展开详情');
+  await page.locator('#history-toggle').uncheck();
   assert.equal(await page.evaluate(() => globalThis.__v21Clipboard.length), 0);
   assert.equal(await page.locator('iframe[title="隔离页面访问统计"]').getAttribute('sandbox'), 'allow-scripts');
   assert.equal(await page.evaluate(() => Boolean(document.querySelector('iframe[title="隔离页面访问统计"]')?.contentDocument)), false);
@@ -240,16 +244,24 @@ try {
 
   const sentinel = 'V21_SECRET_SENTINEL_9f8a7c6b5d4e';
   await page.locator('.mode-link[data-mode="token"]').click();
+  await page.locator('#history-toggle').check();
+  assert.equal(await page.locator('#history-panel').getAttribute('open'), null, '折叠状态下可以直接启用记录');
   await page.locator('#history-panel > summary').click();
   assert.equal(await page.locator('#history-panel').getAttribute('open'), '');
-  await page.locator('#history-toggle').check();
   await page.locator('input[name="prefix"]').fill(`${sentinel}_`);
   await clickGenerate(page);
   await page.locator('input[name="prefix"]').fill('');
   assert.match(await page.locator('#result-container .secret-value').textContent(), new RegExp(sentinel), '当前结果默认显示明文');
   assert.equal(await page.locator('.history-row').count(), 1);
+  assert.equal(await page.locator('.history-type').count(), 0, '记录列表不再重复显示类型文案');
   const historyPreview = page.locator('.history-preview').first();
   assert.equal(await historyPreview.evaluate((node) => getComputedStyle(node).whiteSpace), 'nowrap');
+  const previewStyle = await historyPreview.evaluate((node) => ({ border: getComputedStyle(node).borderStyle, background: getComputedStyle(node).backgroundColor }));
+  assert.equal(previewStyle.border, 'none', '记录值本身不显示边框');
+  assert.equal(previewStyle.background, 'rgba(0, 0, 0, 0)', '记录值本身不显示底色');
+  assert.equal(await page.locator('.history-icon-button').count(), 2, '复制和删除均使用图标按钮');
+  assert.equal((await page.locator('.history-copy-button').textContent()).trim(), '');
+  assert.equal((await page.locator('.history-delete-button').textContent()).trim(), '');
   await historyPreview.hover();
   assert.match(await page.locator('.history-tooltip').textContent(), new RegExp(sentinel));
   await page.mouse.move(0, 0);
@@ -273,7 +285,7 @@ try {
     assert.equal(url.searchParams.get('dr'), '');
     assert.equal(url.searchParams.get('dp'), '/password-generator/index-2.1.html');
   }
-  await page.locator('.history-row').first().getByRole('button', { name: '删除' }).click();
+  await page.locator('.history-row').first().getByRole('button', { name: '删除第 1 条生成记录' }).click();
   assert.equal(await page.locator('.history-row').count(), 0, '生成记录支持逐条删除');
 
   await page.locator('.mode-link[data-mode="randomBytes"]').click();
@@ -314,6 +326,12 @@ try {
   for (const viewport of [{ width: 320, height: 700 }, { width: 390, height: 844 }, { width: 430, height: 900 }, { width: 1280, height: 900 }]) {
     await page.setViewportSize(viewport);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `no horizontal overflow at ${viewport.width}`);
+    const historyTopOverlap = await page.evaluate(() => {
+      const title = document.getElementById('history-title').getBoundingClientRect();
+      const actions = document.querySelector('.history-top-actions').getBoundingClientRect();
+      return actions.left < title.right && actions.right > title.left;
+    });
+    assert.equal(historyTopOverlap, false, `${viewport.width}px 记录顶栏标题与开关不得重叠`);
     if (viewport.width <= 430) {
       for (const kind of ['complexity', 'length', 'quantity']) {
         const range = page.locator(`[data-preset-slider="${kind}"] .preset-slider-range`);

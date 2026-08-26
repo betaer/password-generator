@@ -439,6 +439,31 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     button.textContent = label; button.addEventListener('click', handler); return button;
   }
 
+  const HISTORY_ICONS = Object.freeze({
+    copy: Object.freeze([
+      Object.freeze({ d: 'M8 8.75A2.75 2.75 0 0 1 10.75 6h7.5A2.75 2.75 0 0 1 21 8.75v7.5A2.75 2.75 0 0 1 18.25 19h-7.5A2.75 2.75 0 0 1 8 16.25v-7.5Z' }),
+      Object.freeze({ d: 'M16 6V5.75A2.75 2.75 0 0 0 13.25 3h-7.5A2.75 2.75 0 0 0 3 5.75v7.5A2.75 2.75 0 0 0 5.75 16H8' }),
+    ]),
+    delete: Object.freeze([
+      Object.freeze({ d: 'M5 7h14M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6', linecap: 'round', linejoin: 'round' }),
+    ]),
+  });
+
+  function historyIconButton(label, iconPaths, handler, extraClass) {
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = `history-icon-button ${extraClass}`; button.setAttribute('aria-label', label); button.title = label;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('focusable', 'false');
+    for (const descriptor of iconPaths) {
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', descriptor.d); path.setAttribute('stroke-width', '1.8');
+      if (descriptor.linecap) path.setAttribute('stroke-linecap', descriptor.linecap);
+      if (descriptor.linejoin) path.setAttribute('stroke-linejoin', descriptor.linejoin);
+      svg.append(path);
+    }
+    button.append(svg); button.addEventListener('click', handler); return button;
+  }
+
   function setResource(name, status, detail) {
     state.resources[name] = { status, detail }; renderResources(); updateAvailability();
   }
@@ -1017,12 +1042,12 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
 
   function buildHistoryRow(result, index) {
     const row = document.createElement('div'); row.className = 'history-row'; row.dataset.historyId = result.id;
-    const type = document.createElement('span'); type.className = 'history-type'; type.textContent = RESULT_TYPE_LABELS[result.type] || result.type;
-    const preview = actionButton(historyDisplayText(result), () => copyResults([result]).catch((error) => showToast(error.message, 'error')));
-    preview.classList.add('history-preview'); preview.setAttribute('aria-label', `复制第 ${index + 1} 条${type.textContent}生成记录`);
-    const copy = actionButton('复制', () => copyResults([result]).catch((error) => showToast(error.message, 'error')), 'history-copy-button');
-    const remove = actionButton('删除', () => deleteHistoryResult(result.id), 'button-danger');
-    row.append(type, preview, copy, remove); installHistoryTooltip(row, preview, result); return row;
+    const preview = document.createElement('button');
+    preview.type = 'button'; preview.className = 'history-preview'; preview.textContent = historyDisplayText(result); preview.setAttribute('aria-label', `复制第 ${index + 1} 条生成记录`);
+    preview.addEventListener('click', () => copyResults([result]).catch((error) => showToast(error.message, 'error')));
+    const copy = historyIconButton(`复制第 ${index + 1} 条生成记录`, HISTORY_ICONS.copy, () => copyResults([result]).catch((error) => showToast(error.message, 'error')), 'history-copy-button');
+    const remove = historyIconButton(`删除第 ${index + 1} 条生成记录`, HISTORY_ICONS.delete, () => deleteHistoryResult(result.id), 'history-delete-button');
+    row.append(preview, copy, remove); installHistoryTooltip(row, preview, result); return row;
   }
 
   function renderHistory() {
