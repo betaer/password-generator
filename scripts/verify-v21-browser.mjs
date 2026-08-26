@@ -79,6 +79,10 @@ try {
   assert.equal(await page.evaluate(() => Boolean(document.querySelector('iframe[title="隔离页面访问统计"]')?.contentDocument)), false);
   assert.equal(await page.evaluate(() => [...document.scripts].some((script) => /google|gtag/iu.test(script.src))), false);
 
+  assert.equal(await page.locator('.preset-slider-range').count(), 3);
+  assert.equal(await page.locator('[data-preset-slider="complexity"] .preset-slider-range').getAttribute('max'), '8');
+  assert.equal(await page.locator('[data-preset-slider="length"] .preset-slider-range').getAttribute('max'), '11');
+  assert.equal(await page.locator('[data-preset-slider="quantity"] .preset-slider-range').getAttribute('max'), '7');
   assert.equal(await page.locator('[data-complexity-level]').count(), 8);
   assert.equal(await page.locator('[data-complexity-level="L8"]').getAttribute('aria-pressed'), 'true');
   await page.locator('input[name="symbolPool"]').fill('');
@@ -100,11 +104,38 @@ try {
   assert.equal(await page.locator('#result-container article').count(), 1, '空符号池后 L8 仍可生成');
   await page.locator('[data-password-length-preset="32"]').click();
   assert.equal(await page.locator('input[name="length"]').inputValue(), '32');
+  assert.equal(await page.locator('[data-preset-slider="length"] .preset-slider-range').inputValue(), '7');
   assert.match(await page.locator('#complexity-description').textContent(), /自定义配置/u);
+  const lengthSlider = page.locator('[data-preset-slider="length"] .preset-slider-range');
+  await lengthSlider.focus();
+  await lengthSlider.press('ArrowRight');
+  assert.equal(await page.locator('input[name="length"]').inputValue(), '64', '长度滑块必须更新精确值');
   await page.locator('input[name="length"]').fill('37');
   assert.equal(await page.locator('input[name="length"]').inputValue(), '37');
+  assert.equal(await page.locator('[data-preset-slider="length"] .preset-slider-range').inputValue(), '11');
+  assert.equal(await page.locator('[data-preset-custom="length"]').getAttribute('aria-pressed'), 'true');
+  await page.locator('[data-preset-custom="length"]').click();
+  assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('name')), 'length');
   await page.locator('[data-password-quantity-preset="25"]').click();
   assert.equal(await page.locator('input[name="quantity"]').inputValue(), '25');
+  assert.equal(await page.locator('[data-preset-slider="quantity"] .preset-slider-range').inputValue(), '4');
+  const quantitySlider = page.locator('[data-preset-slider="quantity"] .preset-slider-range');
+  await quantitySlider.focus();
+  await quantitySlider.press('Home');
+  assert.equal(await page.locator('input[name="quantity"]').inputValue(), '1', '数量滑块必须更新精确值');
+  await quantitySlider.press('End');
+  assert.equal(await page.locator('input[name="quantity"]').inputValue(), '1', '数量自定义刻度不得篡改精确值');
+  assert.equal(await page.locator('[data-preset-custom="quantity"]').getAttribute('aria-pressed'), 'true');
+  await page.locator('[data-preset-custom="quantity"]').click();
+  assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('name')), 'quantity');
+  const complexitySlider = page.locator('[data-preset-slider="complexity"] .preset-slider-range');
+  await complexitySlider.focus();
+  await complexitySlider.press('Home');
+  assert.equal(await page.locator('input[name="length"]').inputValue(), '4');
+  assert.equal(await page.locator('[data-complexity-level="L1"]').getAttribute('aria-pressed'), 'true');
+  await page.locator('[data-preset-custom="complexity"]').click();
+  assert.equal(await page.locator('input[name="complexityPreset"]').inputValue(), 'custom');
+  assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('name')), 'lowercase');
   await page.getByRole('button', { name: '恢复默认' }).click();
   assert.equal(await page.locator('input[name="length"]').inputValue(), '20');
   assert.equal(await page.locator('input[name="quantity"]').inputValue(), '1');
@@ -268,9 +299,31 @@ try {
   await waitReady(page);
   assert.equal(await page.locator('select[name="version"]').inputValue(), '4');
 
+  await page.locator('.mode-link[data-mode="password"]').click();
+
   for (const viewport of [{ width: 320, height: 700 }, { width: 390, height: 844 }, { width: 430, height: 900 }, { width: 1280, height: 900 }]) {
     await page.setViewportSize(viewport);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `no horizontal overflow at ${viewport.width}`);
+    if (viewport.width <= 430) {
+      for (const kind of ['complexity', 'length', 'quantity']) {
+        const range = page.locator(`[data-preset-slider="${kind}"] .preset-slider-range`);
+        await range.focus();
+        await range.press('Home');
+        await range.press('End');
+        const sliderState = await page.locator(`[data-preset-slider="${kind}"]`).evaluate((root) => {
+          const scrollArea = root.querySelector('.preset-slider-scroll');
+          const lastMark = root.querySelector('.preset-slider-mark:last-child');
+          const scrollRect = scrollArea.getBoundingClientRect();
+          const markRect = lastMark.getBoundingClientRect();
+          return {
+            scrollable: scrollArea.scrollWidth > scrollArea.clientWidth,
+            lastMarkVisible: markRect.left >= scrollRect.left && markRect.right <= scrollRect.right,
+          };
+        });
+        assert.equal(sliderState.scrollable, true, `${kind} mobile slider must scroll inside its own control`);
+        assert.equal(sliderState.lastMarkVisible, true, `${kind} custom mark must remain reachable on mobile`);
+      }
+    }
   }
   await page.setViewportSize({ width: 1280, height: 600 });
   await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
@@ -289,7 +342,7 @@ try {
   assert.match(await noCryptoPage.locator('#crypto-status-chip').textContent(), /已停止/u);
   await noCryptoContext.close();
 
-  process.stdout.write('V2.1 browser verification passed: BIP39 readiness, complexity presets, custom length/quantity, embedded History, nine profiles, privacy, GA isolation, and responsive layouts.\n');
+  process.stdout.write('V2.1 browser verification passed: BIP39 readiness, three synchronized preset sliders, embedded History, nine profiles, privacy, GA isolation, and responsive layouts.\n');
 } finally {
   await browser.close();
   await new Promise((resolveClose, rejectClose) => server.close((error) => error ? rejectClose(error) : resolveClose()));

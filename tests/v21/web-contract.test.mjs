@@ -43,14 +43,25 @@ test('密码配置提供复杂度、长度和生成数量三套完整控件', as
   ]);
   for (const required of [
     '按照复杂度生成',
+    "sliderShell\\(\\{ kind: 'complexity'",
+    "sliderShell\\(\\{ kind: 'length'",
+    "sliderShell\\(\\{ kind: 'quantity'",
+    'class="preset-slider-range"',
+    'data-preset-custom="complexity"',
+    'data-preset-custom="\\$\\{kind\\}"',
     'data-complexity-level',
     'data-password-length-preset',
     'data-password-quantity-preset',
     'name="length" type="number"',
     'name="quantity" type="number"',
   ]) assert.match(app, new RegExp(required));
-  assert.match(css, /\.complexity-grid/u);
-  assert.match(css, /\.preset-number-control/u);
+  assert.match(css, /\.preset-slider-control/u);
+  assert.match(css, /\.preset-slider-range/u);
+  assert.match(css, /\.preset-slider-mark/u);
+  assert.match(css, /\.preset-exact-input/u);
+  assert.doesNotMatch(app, /style="--(?:mark|preset|slider)-/u);
+  assert.doesNotMatch(css, /\.complexity-grid/u);
+  assert.doesNotMatch(css, /\.preset-number-control/u);
 });
 
 test('首屏不再渲染低价值的数字统计卡', async () => {
