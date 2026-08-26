@@ -53,6 +53,15 @@ test('密码配置提供复杂度、长度和生成数量三套完整控件', as
   assert.match(css, /\.preset-number-control/u);
 });
 
+test('首屏不再渲染低价值的数字统计卡', async () => {
+  const [page, css] = await Promise.all([
+    read('src/v21/web/page.v21.html'),
+    read('src/v21/web/app.v21.css'),
+  ]);
+  assert.doesNotMatch(page, /intro-proof/u);
+  assert.doesNotMatch(css, /\.intro-proof/u);
+});
+
 test('V2.1 发布入口与 Pages 门禁同时覆盖新版本制品', async () => {
   const [workflow, sitemap, llms, readme, english] = await Promise.all([
     read('.github/workflows/v201-pages.yml'),
