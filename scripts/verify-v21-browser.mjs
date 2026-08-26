@@ -465,7 +465,13 @@ try {
     { width: 390, height: 844 },
     { width: 430, height: 900 },
     { width: 780, height: 900 },
+    { width: 960, height: 900 },
     { width: 1280, height: 900 },
+    { width: 1500, height: 900 },
+    { width: 1560, height: 900 },
+    { width: 1561, height: 900 },
+    { width: 1600, height: 900 },
+    { width: 2138, height: 1000 },
     { width: 2560, height: 1200 },
   ]) {
     await layoutPage.setViewportSize(viewport);
@@ -494,12 +500,15 @@ try {
         return {
           overflow: document.documentElement.scrollWidth > innerWidth,
           actionPosition: getComputedStyle(document.querySelector('.site-floating-actions')).position,
+          configOffsetLeft: document.querySelector('.config-panel').offsetLeft,
+          resultOffsetLeft: document.querySelector('.result-panel').offsetLeft,
           overlaps,
         };
       });
       assert.equal(state.overflow, false, `${viewport.width}px ${position} 不得横向溢出`);
       assert.deepEqual(state.overlaps, [], `${viewport.width}px ${position} 浮动操作不得遮挡交互元素`);
       assert.equal(state.actionPosition, viewport.width <= 780 ? 'static' : 'fixed', `${viewport.width}px 快捷操作定位策略`);
+      assert.equal(state.resultOffsetLeft > state.configOffsetLeft, viewport.width > 1560, `${viewport.width}px ${position} 策略与结果面板响应式排布`);
     }
   }
   await layoutContext.close();

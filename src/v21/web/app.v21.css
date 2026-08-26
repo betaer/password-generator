@@ -481,7 +481,7 @@ input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgb
   .site-floating-button-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .toast { right: 68px; max-width: calc(100% - 84px); }
 }
-@media (max-width: 1500px) {
+@media (max-width: 1560px) {
   .workspace { grid-template-columns: 220px minmax(0, 900px); justify-content: start; }
   .result-panel { position: relative; top: auto; max-height: none; grid-column: 2; }
 }
