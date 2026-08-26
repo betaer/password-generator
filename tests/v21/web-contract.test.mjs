@@ -74,6 +74,11 @@ test('密码配置提供复杂度、长度和生成数量三套完整控件', as
   assert.match(css, /\.preset-exact-input/u);
   assert.match(css, /\.preset-slider-control\s*\{[^}]*grid-template-columns:\s*108px\s+minmax\(0,\s*1fr\)/su);
   assert.match(css, /\.preset-slider-layout\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto/su);
+  assert.match(css, /\.preset-slider-track\s*\{[^}]*--slider-thumb-size:\s*18px;[^}]*--slider-thumb-radius:\s*9px;/su);
+  assert.match(css, /\.preset-slider-range\s*\{[^}]*position:\s*relative;[^}]*z-index:\s*2;[^}]*background-size:\s*calc\(100%\s*-\s*var\(--slider-thumb-size\)\)\s+7px;/su);
+  assert.match(css, /\.preset-slider-mark-row\s*\{[^}]*z-index:\s*1;[^}]*margin:\s*3px\s+var\(--slider-thumb-radius\)\s+0;/su);
+  assert.match(css, /\.preset-slider-mark\.is-active::before\s*\{[^}]*width:\s*1px;[^}]*background:\s*#aebfb8;/su);
+  assert.doesNotMatch(css, /\.preset-slider-mark\.is-active::before\s*\{[^}]*background:\s*var\(--blue\)/su);
   assert.match(css, /\.workspace\s*\{[^}]*grid-template-columns:\s*220px\s+minmax\(720px,\s*820px\)\s+minmax\(390px,\s*1fr\)/su);
   assert.match(css, /\.preset-exact-value\s*\{[^}]*grid-template-columns:\s*126px\s+auto/su);
   assert.match(app, /class="preset-slider-label field-label"/u);
