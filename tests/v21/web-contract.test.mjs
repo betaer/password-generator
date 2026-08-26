@@ -25,15 +25,27 @@ test('V2.1 使用独立入口和独立内容哈希资源，不覆盖 V2.0.1', as
 });
 
 test('生成记录位于生成结果底部并使用默认折叠的原生 details', async () => {
-  const page = await read('src/v21/web/page.v21.html');
+  const [page, app, css] = await Promise.all([
+    read('src/v21/web/page.v21.html'),
+    read('src/v21/web/app.v21.js'),
+    read('src/v21/web/app.v21.css'),
+  ]);
   const resultPanelStart = page.indexOf('<section class="panel result-panel"');
-  const historyStart = page.indexOf('<details class="history-panel"');
+  const historyStart = page.indexOf('<div class="history-panel-shell"');
   const resourceStripStart = page.indexOf('<div class="resource-strip"');
   assert.ok(resultPanelStart >= 0 && historyStart > resultPanelStart);
   assert.ok(resourceStripStart > historyStart);
   assert.match(page, /<details class="history-panel"[^>]*>/u);
   assert.doesNotMatch(page, /<details class="history-panel"[^>]*\sopen(?:\s|>)/u);
   assert.match(page, /<summary[^>]*>[\s\S]*生成记录 History/u);
+  assert.match(page, /<div class="history-top-actions">[\s\S]*id="history-summary-count"[\s\S]*id="history-toggle"[\s\S]*启用记录/u);
+  const historyBody = page.match(/<div class="history-body">([\s\S]*?)<\/details>/u)?.[1] ?? '';
+  assert.doesNotMatch(historyBody, /id="history-toggle"/u);
+  assert.doesNotMatch(app, /className = 'history-type'/u);
+  assert.match(app, /historyIconButton\(`复制第 \$\{index \+ 1\} 条生成记录`/u);
+  assert.match(app, /historyIconButton\(`删除第 \$\{index \+ 1\} 条生成记录`/u);
+  assert.match(css, /\.history-preview\s*\{[^}]*border:\s*0[^}]*background:\s*transparent/su);
+  assert.match(css, /\.history-icon-button\s*\{/u);
 });
 
 test('密码配置提供复杂度、长度和生成数量三套完整控件', async () => {

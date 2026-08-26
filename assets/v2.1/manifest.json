@@ -8,7 +8,7 @@
     "passphrase": "passphrase-packs.fdcfc66d0f6e.js",
     "pinRisk": "pin-risk.a206560ebac9.js",
     "analyticsFrame": "analytics-frame.c31fe24976cf.html",
-    "css": "app.28feaebfba6e.css",
+    "css": "app.2ef91f7dad9c.css",
     "bip39": {
       "czech": "bip39.czech.c47781d55ca2.js",
       "english": "bip39.english.578979e364c7.js",
@@ -21,6 +21,6 @@
       "spanish": "bip39.spanish.17f2be90d72a.js",
       "traditional-chinese": "bip39.traditional-chinese.718f85bb9c0f.js"
     },
-    "app": "app.260b6f420b19.js"
+    "app": "app.25ec076867b6.js"
   }
 }

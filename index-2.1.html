@@ -104,7 +104,7 @@
     ]
   }
   </script>
-  <link rel="stylesheet" href="./assets/v2.1/app.28feaebfba6e.css" />
+  <link rel="stylesheet" href="./assets/v2.1/app.2ef91f7dad9c.css" />
   <link rel="preload" href="./assets/v2.1/passphrase-packs.fdcfc66d0f6e.js" as="script" />
   <link rel="preload" href="./assets/v2.1/pin-risk.a206560ebac9.js" as="script" />
   <link rel="preload" href="./assets/v2.1/bip39.english.578979e364c7.js" as="script" />
@@ -152,13 +152,19 @@
         <div class="result-toolbar" id="result-toolbar" hidden><button class="button button-small" id="copy-current" type="button">复制当前结果</button><button class="button button-small" id="copy-all" type="button">复制全部</button><button class="button button-small button-danger" id="clear-results" type="button">删除结果</button></div>
         <div class="result-scroll">
           <div id="result-container"></div>
-          <details class="history-panel" id="history-panel">
-            <summary class="history-summary"><span><strong id="history-title">生成记录 History</strong><small>默认折叠 · 当前页面内存</small></span><span class="history-summary-count" id="history-summary-count">未启用</span></summary>
-            <div class="history-body">
-              <div class="history-head"><div><p>每次会话默认关闭；不持久化开关或秘密。最多保留 100 条，并受 8 MiB 总预算限制。<span id="history-budget-status">0 / 8,388,608 字节</span></p></div><label class="switch"><input id="history-toggle" type="checkbox" />启用生成记录</label></div>
-              <div class="history-results" id="history-container" hidden></div>
+          <div class="history-panel-shell">
+            <details class="history-panel" id="history-panel">
+              <summary class="history-summary"><span><strong id="history-title">生成记录 History</strong><small>默认折叠 · 当前页面内存</small></span></summary>
+              <div class="history-body">
+                <div class="history-head"><p>每次会话默认关闭；不持久化开关或秘密。最多保留 100 条，并受 8 MiB 总预算限制。<span id="history-budget-status">0 / 8,388,608 字节</span></p></div>
+                <div class="history-results" id="history-container" hidden></div>
+              </div>
+            </details>
+            <div class="history-top-actions">
+              <span class="history-summary-count" id="history-summary-count">未启用</span>
+              <label class="history-top-toggle"><input id="history-toggle" type="checkbox" /><span>启用记录</span></label>
             </div>
-          </details>
+          </div>
         </div>
       </section>
     </div>
@@ -202,7 +208,7 @@
   <iframe src="./assets/v2.1/analytics-frame.c31fe24976cf.html" title="隔离页面访问统计" aria-hidden="true" tabindex="-1" sandbox="allow-scripts" referrerpolicy="no-referrer" hidden></iframe>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
   <script src="./assets/v2.1/runtime.38793d36e4a8.js"></script>
-  <script src="./assets/v2.1/app.260b6f420b19.js"></script>
+  <script src="./assets/v2.1/app.25ec076867b6.js"></script>
   <noscript><div class="noscript">需要启用 JavaScript 与 Web Crypto 才能安全生成随机数据。</div></noscript>
 </body>
 </html>
