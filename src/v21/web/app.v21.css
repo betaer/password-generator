@@ -95,10 +95,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 .page { width: min(1500px, calc(100% - 40px)); margin: 0 auto; padding: 26px 0 64px; }
 .intro {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 30px;
   margin-bottom: 22px;
   animation: rise .42s ease both;
 }
@@ -106,20 +102,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .intro h1 { max-width: 920px; margin: 0; font-size: clamp(29px, 4.3vw, 57px); line-height: .98; letter-spacing: -.055em; }
 .intro h1 span { display: block; margin-top: 4px; color: var(--blue); }
 .intro-copy { max-width: 760px; margin: 15px 0 0; color: var(--muted); font-size: 15px; line-height: 1.75; }
-.intro-proof {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  min-width: 270px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  overflow: hidden;
-  background: var(--white);
-  box-shadow: 0 10px 30px rgba(23, 48, 39, .05);
-}
-.intro-proof > div { padding: 15px 16px; }
-.intro-proof > div + div { border-left: 1px solid var(--line); }
-.intro-proof strong { display: block; font: 750 20px/1 var(--mono); }
-.intro-proof span { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; }
 
 .workspace { display: grid; grid-template-columns: 250px minmax(420px, 1fr) minmax(370px, 500px); gap: 18px; align-items: start; }
 .panel {
@@ -363,8 +345,6 @@ input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgb
 @media (max-width: 780px) {
   .topbar-inner, .page { width: min(100% - 24px, 1500px); }
   .topbar-meta .status-chip { display: none; }
-  .intro { grid-template-columns: 1fr; }
-  .intro-proof { min-width: 0; }
   .workspace { grid-template-columns: 1fr; }
   .mode-panel { position: relative; top: auto; }
   .mode-panel-title { padding: 15px 16px 10px; }
