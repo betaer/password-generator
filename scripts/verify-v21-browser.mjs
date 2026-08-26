@@ -98,6 +98,39 @@ try {
   assert.equal(await page.locator('[data-complexity-level]').count(), 8);
   assert.equal(await page.locator('[data-preset-custom="complexity"]').count(), 0);
   assert.equal(await page.locator('[data-complexity-level="L8"]').getAttribute('aria-pressed'), 'true');
+  await page.locator('[data-complexity-level="L2"]').click();
+  const sliderAlignment = await page.evaluate(() => [...document.querySelectorAll('[data-preset-slider]')].map((root) => {
+    const range = root.querySelector('.preset-slider-range');
+    const track = root.querySelector('.preset-slider-track');
+    const markRow = root.querySelector('.preset-slider-mark-row');
+    const activeMark = root.querySelector('.preset-slider-mark.is-active');
+    const rangeRect = range.getBoundingClientRect();
+    const markRect = activeMark.getBoundingClientRect();
+    const rangeStyle = getComputedStyle(range);
+    const markRowStyle = getComputedStyle(markRow);
+    const activeTickStyle = getComputedStyle(activeMark, '::before');
+    const thumbSize = Number.parseFloat(getComputedStyle(track).getPropertyValue('--slider-thumb-size'));
+    const minimum = Number(range.min || 0);
+    const maximum = Number(range.max || 100);
+    const progress = (Number(range.value) - minimum) / (maximum - minimum);
+    const thumbCenter = rangeRect.left + (thumbSize / 2) + (progress * (rangeRect.width - thumbSize));
+    const markCenter = markRect.left + (markRect.width / 2);
+    return {
+      kind: root.dataset.presetSlider,
+      delta: Math.abs(markCenter - thumbCenter),
+      rangeLayer: Number(rangeStyle.zIndex),
+      markLayer: Number(markRowStyle.zIndex),
+      tickColor: activeTickStyle.backgroundColor,
+      tickWidth: Number.parseFloat(activeTickStyle.width),
+    };
+  }));
+  assert.deepEqual(sliderAlignment.map(({ kind }) => kind), ['complexity', 'length', 'quantity']);
+  for (const state of sliderAlignment) {
+    assert.ok(state.delta <= 0.5, `${state.kind} 滑块圆心与选中刻度中心必须精确对齐，当前偏差 ${state.delta}px`);
+    assert.ok(state.rangeLayer > state.markLayer, `${state.kind} 滑块必须位于刻度线之上`);
+    assert.equal(state.tickColor, 'rgb(174, 191, 184)', `${state.kind} 选中刻度线必须保持灰色`);
+    assert.equal(state.tickWidth, 1, `${state.kind} 选中刻度线不得加粗`);
+  }
   await page.locator('input[name="symbolPool"]').fill('');
   await page.locator('[data-complexity-level="L1"]').click();
   assert.equal(await page.locator('input[name="length"]').inputValue(), '4');
