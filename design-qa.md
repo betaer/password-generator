@@ -1,10 +1,11 @@
 **对照目标**
 
-- 来源截图：`/var/folders/wj/k5k4njyd16zcxv078rqwhbfc0000gn/T/codex-clipboard-ad499e46-a5ed-4ac3-9fa3-a40d85465d5e.png`
-- 实现截图：`output/playwright/v21-history-toolbar.png`
-- 并排证据：`output/playwright/v21-history-comparison.png`
-- 移动端证据：`output/playwright/v21-history-toolbar-mobile.png`
-- 320 像素修复后证据：`output/playwright/v21-history-toolbar-320.png`
+- 来源截图：`docs/qa/v21-history/source-request.png`
+- 实现截图：`docs/qa/v21-history/implementation-desktop.png`
+- 并排证据：`docs/qa/v21-history/comparison-desktop.png`
+- 移动端证据：`docs/qa/v21-history/implementation-mobile-390.png`
+- 320 像素修复后证据：`docs/qa/v21-history/implementation-mobile-320.png`
+- 完整值气泡证据：`docs/qa/v21-history/tooltip-visible-390.png`
 - 来源像素：932 × 1468；实现区域像素：832 × 593；并排画布：1764 × 1468。
 - 桌面 CSS 视口：960 × 1600；移动端 CSS 视口：390 × 844；`deviceScaleFactor = 1`，无需密度缩放。
 - 状态：生成记录已启用、详情已展开、桌面 9 条四位密码；移动端 3 条长密码。
@@ -22,7 +23,7 @@
 - 色彩与令牌：继续使用 V2.1 蓝色主操作、红色危险操作、绿色灰阶边界；没有引入新的视觉体系。
 - 图片与图标：复制、删除图标复用 V1.7.5 的线性图标路径；未使用 emoji 或文字字符替代图标。
 - 文案与内容：删除行内重复“密码”，顶层开关精简为“启用记录”，保留当前页面内存、条数和字节预算说明。
-- 交互与无障碍：密码值仍可点击复制并悬停显示完整内容；两个图标按钮均有逐条中文 `aria-label` 和原生标题提示；折叠状态可直接启用记录且不会展开详情。
+- 交互与无障碍：密码值仍可点击复制并悬停显示完整内容；390 像素下气泡边界完全位于视口内且中心命中真实气泡；两个图标按钮均有逐条中文 `aria-label` 和原生标题提示；折叠状态可直接启用记录且不会展开详情。
 
 **Findings**
 
@@ -33,6 +34,7 @@
 
 - 第 1 次：并排检查确认来源截图中的四个问题——开关层级过深、重复类型标签、密码框过重、文字按钮过宽——均已消除。
 - 第 2 次：320 像素窄屏测量发现标题与顶栏操作区有约 1.5 像素交叠（P2）；在该断点隐藏重复的条数徽标并缩小预留宽度后，标题与开关不再重叠，页面仍无横向溢出。
+- 第 3 次：独立代码复审发现列表的 `overflow: hidden` 会裁掉完整值气泡（P1）；改为可见溢出并为首尾行单独保留圆角，同时加入 `elementFromPoint` 浏览器命中断言。390 像素复测显示气泡位于 `x=45..345`，完整落在 390 像素视口内且实际命中 `.history-tooltip`。
 
 **Implementation Checklist**
 
@@ -41,6 +43,7 @@
 - [x] 密码值无边框
 - [x] 复制与删除图标化
 - [x] 完整值气泡、点击复制、逐条删除保留
+- [x] 完整值气泡通过真实浏览器命中测试
 - [x] 桌面与移动端无横向溢出
 
 final result: passed

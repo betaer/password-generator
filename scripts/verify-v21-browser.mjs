@@ -262,12 +262,25 @@ try {
   assert.equal(await page.locator('.history-icon-button').count(), 2, '复制和删除均使用图标按钮');
   assert.equal((await page.locator('.history-copy-button').textContent()).trim(), '');
   assert.equal((await page.locator('.history-delete-button').textContent()).trim(), '');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await historyPreview.scrollIntoViewIfNeeded();
   await historyPreview.hover();
-  assert.match(await page.locator('.history-tooltip').textContent(), new RegExp(sentinel));
+  const historyTooltip = page.locator('.history-tooltip');
+  assert.match(await historyTooltip.textContent(), new RegExp(sentinel));
+  assert.equal(await historyTooltip.evaluate((node) => {
+    const rect = node.getBoundingClientRect();
+    const x = rect.left + (rect.width / 2);
+    const y = rect.top + (rect.height / 2);
+    const hit = document.elementFromPoint(x, y);
+    return rect.width > 0 && rect.height > 0
+      && rect.top >= 0 && rect.left >= 0 && rect.bottom <= innerHeight && rect.right <= innerWidth
+      && (hit === node || node.contains(hit));
+  }), true, '完整值气泡必须位于视口内且实际可见，不得只存在于 DOM');
   await page.mouse.move(0, 0);
   await page.waitForFunction(() => !document.querySelector('.history-tooltip'));
   await historyPreview.click();
   assert.match(await page.evaluate(() => globalThis.__v21Clipboard.at(-1)), new RegExp(sentinel));
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.locator('#copy-share').click();
   const shareText = await page.evaluate(() => globalThis.__v21Clipboard.at(-1));
   assert.match(shareText, /V2\.1/u);

@@ -434,8 +434,11 @@ input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgb
 .history-head p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
 .history-results { padding: 0 14px 14px; }
 .history-controls { display: flex; justify-content: flex-end; padding: 0 0 9px; }
-.history-list { display: grid; gap: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.history-list { display: grid; gap: 0; overflow: visible; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
 .history-row { position: relative; min-width: 0; min-height: 48px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 2px; padding: 7px 9px 7px 12px; background: #fff; }
+.history-row:first-child { border-radius: 9px 9px 0 0; }
+.history-row:last-child { border-radius: 0 0 9px 9px; }
+.history-row:only-child { border-radius: 9px; }
 .history-row + .history-row { border-top: 1px solid var(--soft-line); }
 .history-preview { min-width: 0; width: 100%; max-width: 100%; min-height: 32px; overflow: hidden; padding: 0 10px 0 0; border: 0; border-radius: 0; color: var(--ink); background: transparent; font: 650 11px/1.5 var(--mono); text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .history-preview:hover { color: var(--blue-deep); }
@@ -444,7 +447,7 @@ input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgb
 .history-icon-button:hover { color: var(--blue-deep); background: #edf3ff; }
 .history-delete-button { color: var(--danger); }
 .history-delete-button:hover { color: var(--danger); background: #fff1f0; }
-.history-tooltip { position: absolute; z-index: 20; right: 0; bottom: calc(100% + 8px); width: max-content; max-width: min(560px, calc(100vw - 32px)); max-height: 220px; overflow: auto; padding: 10px 12px; border: 1px solid #a9b9b2; border-radius: 10px; background: #10211b; color: #effff4; box-shadow: 0 16px 40px rgba(16, 33, 27, .2); font: 600 11px/1.6 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.history-tooltip { position: absolute; z-index: 20; right: 0; bottom: calc(100% + 8px); width: max-content; max-width: min(560px, calc(100vw - 32px), 100%); max-height: 220px; overflow: auto; padding: 10px 12px; border: 1px solid #a9b9b2; border-radius: 10px; background: #10211b; color: #effff4; box-shadow: 0 16px 40px rgba(16, 33, 27, .2); font: 600 11px/1.6 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 .security-note { display: grid; grid-template-columns: 1.1fr .9fr; gap: 1px; margin-top: 18px; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--line); }
 .security-note > div { padding: 20px; background: #fff; }
 .security-note h3 { margin: 0 0 8px; font-size: 14px; }
