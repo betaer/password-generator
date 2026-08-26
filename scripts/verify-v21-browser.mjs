@@ -399,6 +399,30 @@ try {
     });
   });
   assert.equal(complexityMarksVisible, true, '桌面配置栏必须同时展示完整的 L1～L8');
+  for (const viewportWidth of [780, 781, 900, 901, 1160, 1161]) {
+    await page.setViewportSize({ width: viewportWidth, height: 900 });
+    await page.evaluate(() => scrollTo(0, 0));
+    const boundaryState = await page.evaluate(() => {
+      const workspace = document.querySelector('.workspace').getBoundingClientRect();
+      const mode = document.querySelector('.mode-panel').getBoundingClientRect();
+      const config = document.querySelector('.config-panel').getBoundingClientRect();
+      const layout = document.querySelector('[data-preset-slider="length"] .preset-slider-layout');
+      const scroll = layout.querySelector('.preset-slider-scroll').getBoundingClientRect();
+      const exact = layout.querySelector('.preset-exact-input').getBoundingClientRect();
+      return {
+        workspace,
+        mode,
+        config,
+        scroll,
+        exact,
+        singleColumn: Math.abs(config.left - workspace.left) <= 1,
+        exactBelow: exact.top >= scroll.bottom,
+      };
+    });
+    assert.equal(boundaryState.singleColumn, viewportWidth <= 1160, `${viewportWidth}px 导航与配置布局边界`);
+    assert.equal(boundaryState.exactBelow, viewportWidth <= 900, `${viewportWidth}px 精确输入换行边界`);
+    assert.ok(boundaryState.scroll.width >= 460, `${viewportWidth}px 进度条必须保留足够可视宽度`);
+  }
   await page.setViewportSize({ width: 1600, height: 900 });
   await page.evaluate(() => scrollTo(0, 0));
   const threeColumnGeometry = await page.evaluate(() => {
@@ -465,7 +489,12 @@ try {
     { width: 390, height: 844 },
     { width: 430, height: 900 },
     { width: 780, height: 900 },
+    { width: 781, height: 900 },
+    { width: 900, height: 900 },
+    { width: 901, height: 900 },
     { width: 960, height: 900 },
+    { width: 1160, height: 900 },
+    { width: 1161, height: 900 },
     { width: 1280, height: 900 },
     { width: 1500, height: 900 },
     { width: 1560, height: 900 },
