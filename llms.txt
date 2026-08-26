@@ -4,7 +4,8 @@ V2.1：https://betaer.github.io/password-generator/index-2.1.html
 V2.0.1：https://betaer.github.io/password-generator/v2.01.html
 V2.0：https://betaer.github.io/password-generator/index-2.0.html
 V1.7.5：https://betaer.github.io/password-generator/
-规范地址：https://betaer.github.io/password-generator/
+V2.1 规范地址：https://betaer.github.io/password-generator/index-2.1.html
+项目默认入口：https://betaer.github.io/password-generator/
 源代码：https://github.com/betaer/password-generator
 
 ## 核心契约

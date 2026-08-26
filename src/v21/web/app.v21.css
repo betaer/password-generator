@@ -499,6 +499,7 @@ input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgb
   .seo-shell-grid section:nth-child(3n + 2),
   .seo-shell-grid section:nth-child(3n + 3) { padding: 15px 0; border-left: 0; border-top: 1px dashed #d4ded9; }
   .seo-shell-grid section:first-child { border-top: 0; }
+  .site-floating-actions { position: static; width: calc(100% - 24px); flex-direction: row; justify-content: flex-end; margin: 12px auto 20px; }
 }
 @media (max-width: 640px) {
   .preset-slider-control { grid-template-columns: 1fr; gap: 8px; }

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1200, initial-scale=1" />
+  <title>V2.1 社交预览图</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 1200px; height: 630px; margin: 0; overflow: hidden; }
+    body {
+      position: relative;
+      padding: 58px 64px 48px;
+      color: #10211b;
+      background:
+        linear-gradient(rgba(16,33,27,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(16,33,27,.035) 1px, transparent 1px),
+        #f4f7f5;
+      background-size: 32px 32px;
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    }
+    .accent { position: absolute; inset: 0 auto 0 0; width: 14px; background: #0b5cff; }
+    header { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 14px; font-size: 21px; font-weight: 800; }
+    .mark { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; color: #fff; background: #0b5cff; font: 850 20px/1 ui-monospace, monospace; box-shadow: 0 10px 24px rgba(11,92,255,.22); }
+    .version { padding: 10px 16px; border: 1px solid #9ed12e; border-radius: 999px; color: #173400; background: #b7f24a; font: 850 16px/1 ui-monospace, monospace; }
+    main { display: grid; grid-template-columns: 1.08fr .92fr; gap: 52px; align-items: center; margin-top: 54px; }
+    .eyebrow { margin: 0 0 14px; color: #0b5cff; font: 800 15px/1.2 ui-monospace, monospace; letter-spacing: .12em; }
+    h1 { margin: 0; font-size: 58px; line-height: 1.02; letter-spacing: -.055em; }
+    h1 span { display: block; color: #0b5cff; }
+    .summary { max-width: 560px; margin: 22px 0 0; color: #5e6d67; font-size: 19px; font-weight: 600; line-height: 1.7; }
+    .groups { display: grid; gap: 12px; }
+    .group { padding: 17px 20px; border: 1px solid #dbe3df; border-radius: 17px; background: rgba(255,255,255,.92); box-shadow: 0 14px 34px rgba(23,48,39,.07); }
+    .group strong { display: block; margin-bottom: 9px; color: #5e6d67; font-size: 12px; letter-spacing: .12em; }
+    .group p { margin: 0; font: 750 17px/1.55 ui-monospace, "PingFang SC", monospace; }
+    footer { position: absolute; right: 64px; bottom: 42px; left: 64px; display: flex; justify-content: space-between; color: #5e6d67; font-size: 14px; font-weight: 700; }
+    footer b { color: #087e4b; }
+  </style>
+</head>
+<body>
+  <div class="accent"></div>
+  <header><div class="brand"><span class="mark">SR</span>安全随机数据生成器</div><span class="version">V2.1</span></header>
+  <main>
+    <section>
+      <p class="eyebrow">SECURITY RANDOM GENERATOR</p>
+      <h1>不只生成密码。<span>生成可解释的安全随机数据。</span></h1>
+      <p class="summary">浏览器本地生成 · 精确生成空间 · 明确攻击假设</p>
+    </section>
+    <section class="groups" aria-label="九类生成器">
+      <div class="group"><strong>人类凭据</strong><p>Password · Passphrase · PIN · BIP39 Mnemonic</p></div>
+      <div class="group"><strong>机器密钥</strong><p>Token · API Secret · Hex · Random Bytes</p></div>
+      <div class="group"><strong>标准标识符</strong><p>UUID v4 / v7</p></div>
+    </section>
+  </main>
+  <footer><span><b>●</b> Web Crypto · 本地生成</span><span>betaer.github.io/password-generator</span></footer>
+</body>
+</html>

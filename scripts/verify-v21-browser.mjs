@@ -70,6 +70,14 @@ try {
   await waitReady(page);
   await page.waitForFunction(() => [...document.querySelectorAll('.resource-item')]
     .some((item) => item.textContent.includes('BIP39 英语 · 已就绪')));
+  assert.equal(await page.locator('link[rel="canonical"]').count(), 1);
+  assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), 'https://betaer.github.io/password-generator/index-2.1.html');
+  assert.equal(await page.locator('link[hreflang="en"]').count(), 0, '没有独立英文页面时不得声明英文 hreflang');
+  const publishedStructuredData = JSON.parse(await page.locator('#v21-structured-data').textContent());
+  const publishedApplication = publishedStructuredData['@graph'].find((entry) => entry['@type'] === 'SoftwareApplication');
+  assert.equal(publishedApplication.inLanguage, 'zh-CN');
+  assert.equal(publishedApplication.image, 'https://betaer.github.io/password-generator/assets/social-preview-v2.1.png');
+  assert.equal(publishedApplication.screenshot, undefined);
   assert.equal(await page.locator('.mode-link').count(), 9);
   assert.equal(await page.locator('#history-toggle').isChecked(), false);
   assert.equal(await page.locator('#history-panel').getAttribute('open'), null, '生成记录默认折叠');
@@ -410,6 +418,75 @@ try {
   assert.equal(await page.evaluate(() => scrollY), 0, '回到顶部使用即时滚动');
   assert.deepEqual(pageErrors, []);
   await context.close();
+
+  const layoutContext = await browser.newContext();
+  await layoutContext.route(/google-analytics\.com|googletagmanager\.com/u, (route) => route.fulfill({ status: 204, body: '' }));
+  const layoutPage = await layoutContext.newPage();
+  await layoutPage.goto(`${baseUrl}/index-2.1.html#password`, { waitUntil: 'domcontentloaded' });
+  await waitReady(layoutPage);
+  await layoutPage.setViewportSize({ width: 1280, height: 900 });
+  const initialSliderGeometry = await layoutPage.evaluate(() => {
+    const snapshot = (kind) => {
+      const root = document.querySelector(`[data-preset-slider="${kind}"]`);
+      const scrollNode = root.querySelector('.preset-slider-scroll');
+      const scroll = scrollNode.getBoundingClientRect();
+      const custom = root.querySelector('.preset-slider-custom')?.getBoundingClientRect() || null;
+      const input = root.querySelector('.preset-exact-input input')?.getBoundingClientRect() || null;
+      const unit = root.querySelector('[data-exact-unit]')?.getBoundingClientRect() || null;
+      return { scroll, custom, input, unit, scrollable: scrollNode.scrollWidth > scrollNode.clientWidth };
+    };
+    return { length: snapshot('length'), quantity: snapshot('quantity') };
+  });
+  for (const kind of ['length', 'quantity']) {
+    const state = initialSliderGeometry[kind];
+    assert.equal(state.scrollable, false, `${kind} 初始状态必须完整显示全部刻度`);
+    assert.ok(state.custom.right <= state.scroll.right + 1, `${kind} 初始自定义刻度不得裁切`);
+    assert.ok(state.custom.right < state.input.left, `${kind} 初始自定义刻度必须位于输入框之前`);
+    assert.ok(state.unit.left >= state.input.right && state.unit.left - state.input.right <= 12, `${kind} 初始单位必须紧邻输入框`);
+  }
+  for (const viewport of [
+    { width: 320, height: 700 },
+    { width: 390, height: 844 },
+    { width: 430, height: 900 },
+    { width: 780, height: 900 },
+    { width: 1280, height: 900 },
+    { width: 2560, height: 1200 },
+  ]) {
+    await layoutPage.setViewportSize(viewport);
+    for (const position of ['top', 'bottom']) {
+      await layoutPage.evaluate((target) => scrollTo(0, target === 'top' ? 0 : document.documentElement.scrollHeight), position);
+      await layoutPage.waitForTimeout(40);
+      const state = await layoutPage.evaluate(() => {
+        const visible = (node) => {
+          const rect = node.getBoundingClientRect();
+          const style = getComputedStyle(node);
+          return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+        };
+        const floating = [...document.querySelectorAll('.site-floating-actions button, .site-floating-actions a')].filter(visible);
+        const targets = [...document.querySelectorAll('main button, main a, main input, main select, main summary')]
+          .filter((node) => !node.closest('.site-floating-actions') && visible(node));
+        const overlaps = [];
+        for (const action of floating) {
+          const actionRect = action.getBoundingClientRect();
+          for (const target of targets) {
+            const targetRect = target.getBoundingClientRect();
+            const width = Math.min(actionRect.right, targetRect.right) - Math.max(actionRect.left, targetRect.left);
+            const height = Math.min(actionRect.bottom, targetRect.bottom) - Math.max(actionRect.top, targetRect.top);
+            if (width > 1 && height > 1) overlaps.push(`${action.getAttribute('aria-label')} -> ${target.getAttribute('aria-label') || target.textContent.trim().slice(0, 28)}`);
+          }
+        }
+        return {
+          overflow: document.documentElement.scrollWidth > innerWidth,
+          actionPosition: getComputedStyle(document.querySelector('.site-floating-actions')).position,
+          overlaps,
+        };
+      });
+      assert.equal(state.overflow, false, `${viewport.width}px ${position} 不得横向溢出`);
+      assert.deepEqual(state.overlaps, [], `${viewport.width}px ${position} 浮动操作不得遮挡交互元素`);
+      assert.equal(state.actionPosition, viewport.width <= 780 ? 'static' : 'fixed', `${viewport.width}px 快捷操作定位策略`);
+    }
+  }
+  await layoutContext.close();
 
   const noCryptoContext = await browser.newContext();
   await noCryptoContext.addInitScript(() => { Object.defineProperty(globalThis, 'crypto', { configurable: true, value: {} }); });
