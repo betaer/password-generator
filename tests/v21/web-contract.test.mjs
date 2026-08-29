@@ -42,6 +42,17 @@ test('V2.1 构建正式入口、兼容跳转入口和独立内容哈希资源', 
   assert.equal(metadata.scripts['test:v21'], 'node --test tests/v21/*.test.mjs');
 });
 
+test('V2.1 右下角在 GitHub 与复制分享之间提供安全的新窗口 X 入口', async () => {
+  const page = await read('src/v21/web/page.v21.html');
+  const actions = page.match(/<div class="site-floating-actions"[\s\S]*?<\/div>/u)?.[0] ?? '';
+  assert.match(actions, /class="site-floating-button site-floating-x"/u);
+  assert.match(actions, /href="https:\/\/x\.com\/Betaer"/u);
+  assert.match(actions, /target="_blank" rel="noopener noreferrer"/u);
+  assert.match(actions, /aria-label="在 X 关注 Betaer"/u);
+  assert.ok(actions.indexOf('site-floating-github') < actions.indexOf('site-floating-x'));
+  assert.ok(actions.indexOf('site-floating-x') < actions.indexOf('site-floating-copy'));
+});
+
 test('生成记录位于生成结果底部并使用默认折叠的原生 details', async () => {
   const [page, app, css] = await Promise.all([
     read('src/v21/web/page.v21.html'),

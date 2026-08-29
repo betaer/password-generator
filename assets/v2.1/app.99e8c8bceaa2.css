@@ -519,7 +519,8 @@ input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgb
 .site-floating-button { position: relative; width: 124px; min-width: 124px; min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 14px; border: 1px solid rgba(23, 48, 39, .2); border-radius: 999px; color: var(--ink); background: rgba(255, 255, 255, .95); box-shadow: 0 8px 24px rgba(15, 23, 42, .13); font-size: 11px; font-weight: 750; text-decoration: none; cursor: pointer; backdrop-filter: blur(12px); }
 .site-floating-button:hover { border-color: var(--ink); color: var(--ink); background: #f7faf8; }
 .site-floating-button svg { width: 18px; height: 18px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.site-floating-github svg { fill: currentColor; stroke: none; }
+.site-floating-github svg,
+.site-floating-x svg { fill: currentColor; stroke: none; }
 .site-floating-star-badge { position: absolute; top: -10px; right: -11px; z-index: 2; min-width: 36px; height: 22px; display: grid; place-items: center; padding: 0 6px; border: 2px solid #fff; border-radius: 999px; color: #fff; background: var(--ink); box-shadow: 0 4px 12px rgba(15, 23, 42, .2); font-size: 10px; font-weight: 800; pointer-events: none; }
 .footer { display: flex; justify-content: space-between; gap: 18px; padding: 26px 0 0; color: var(--muted); font-size: 10px; }
 .footer a { color: inherit; }

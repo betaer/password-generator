@@ -62,6 +62,7 @@ try {
     gaRequests.push({ url: request.url(), body: request.postData() || '', headers: await request.allHeaders() });
     await route.fulfill({ status: 204, body: '' });
   });
+  await context.route('https://x.com/Betaer', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Betaer on X</title>' }));
 
   const page = await context.newPage();
   const pageErrors = [];
@@ -522,6 +523,29 @@ try {
   assert.match(shareText, /https:\/\/betaer\.github\.io\/password-generator\/index\.html/u);
   assert.equal(shareText.includes(sentinel), false, '网站分享文案不得包含生成结果');
   assert.equal(await page.locator('.site-floating-star-badge').textContent(), '999+');
+  const desktopFloatingSizes = await page.locator('.site-floating-github, .site-floating-x, .site-floating-copy').evaluateAll((nodes) => nodes.map((node) => {
+    const rect = node.getBoundingClientRect();
+    return { width: rect.width, height: rect.height };
+  }));
+  assert.equal(desktopFloatingSizes.length, 3);
+  assert.equal(new Set(desktopFloatingSizes.map(({ width }) => width)).size, 1, '桌面端 GitHub、X 与复制分享必须等宽');
+  assert.equal(new Set(desktopFloatingSizes.map(({ height }) => height)).size, 1, '桌面端 GitHub、X 与复制分享必须等高');
+  const xLink = page.getByRole('link', { name: '在 X 关注 Betaer' });
+  assert.equal(await xLink.getAttribute('href'), 'https://x.com/Betaer');
+  assert.equal(await xLink.getAttribute('target'), '_blank');
+  assert.equal(await xLink.getAttribute('rel'), 'noopener noreferrer');
+  const [xPopup] = await Promise.all([context.waitForEvent('page'), xLink.click()]);
+  await xPopup.waitForLoadState('domcontentloaded');
+  assert.equal(xPopup.url(), 'https://x.com/Betaer');
+  await xPopup.close();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileXState = await xLink.evaluate((node) => {
+    const rect = node.getBoundingClientRect();
+    const label = node.querySelector('.site-floating-button-label');
+    return { width: rect.width, height: rect.height, labelVisible: label.getBoundingClientRect().width > 1 || label.getBoundingClientRect().height > 1 };
+  });
+  assert.deepEqual(mobileXState, { width: 44, height: 44, labelVisible: false });
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.waitForTimeout(1000);
   assert.ok(gaRequests.length >= 1, `GA collect request must be observed; Google requests: ${googleRequestUrls.join(', ')}`);
   for (const request of gaRequests) {
@@ -830,6 +854,31 @@ try {
     }
   }
   await layoutContext.close();
+
+  const archiveContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  await archiveContext.route(/google-analytics\.com|googletagmanager\.com/u, (route) => route.fulfill({ status: 204, body: '' }));
+  await archiveContext.route('https://x.com/Betaer', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Betaer on X</title>' }));
+  const archivePage = await archiveContext.newPage();
+  await archivePage.goto(`${baseUrl}/index-v1.75.html`, { waitUntil: 'domcontentloaded' });
+  const archiveXLink = archivePage.getByRole('link', { name: '在 X 关注 Betaer' });
+  await archiveXLink.waitFor({ state: 'visible' });
+  assert.equal(await archiveXLink.getAttribute('href'), 'https://x.com/Betaer');
+  assert.equal(await archiveXLink.getAttribute('target'), '_blank');
+  assert.equal(await archiveXLink.getAttribute('rel'), 'noopener noreferrer');
+  const archiveDesktopSizes = await archivePage.locator('.site-floating-github, .site-floating-x, .site-floating-copy').evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().width));
+  assert.deepEqual(archiveDesktopSizes, [120, 120, 120]);
+  await archivePage.setViewportSize({ width: 390, height: 844 });
+  await archivePage.waitForFunction(() => {
+    const node = document.querySelector('.site-floating-x');
+    if (!node) return false;
+    const rect = node.getBoundingClientRect();
+    return rect.width === 44 && rect.height === 44;
+  });
+  assert.deepEqual(await archiveXLink.evaluate((node) => {
+    const rect = node.getBoundingClientRect();
+    return { width: rect.width, height: rect.height, labelDisplay: getComputedStyle(node.querySelector('.site-floating-button-label')).display };
+  }), { width: 44, height: 44, labelDisplay: 'none' });
+  await archiveContext.close();
 
   const noCryptoContext = await browser.newContext();
   await noCryptoContext.addInitScript(() => { Object.defineProperty(globalThis, 'crypto', { configurable: true, value: {} }); });
