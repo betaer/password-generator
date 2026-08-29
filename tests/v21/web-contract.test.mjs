@@ -105,6 +105,10 @@ test('密码配置提供复杂度、长度和生成数量三套完整控件', as
   assert.doesNotMatch(app, /<span>精确值<\/span>/u);
   assert.match(app, /data-exact-unit="length">位/u);
   assert.match(app, /data-exact-unit="quantity">个/u);
+  assert.match(app, /checkbox\('allowSpace', '空格'\)/u);
+  assert.doesNotMatch(app, /内部空格/u);
+  assert.match(app, /name="startsWith">[\s\S]*?<option value="letter" selected>字母<\/option>/u);
+  assert.match(app, /name="endsWith">[\s\S]*?<option value="letter" selected>字母<\/option>/u);
   assert.doesNotMatch(app, /style="--(?:mark|preset|slider)-/u);
   assert.doesNotMatch(css, /\.complexity-grid/u);
   assert.doesNotMatch(css, /\.preset-number-control/u);

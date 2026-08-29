@@ -201,8 +201,8 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
       requireEach: Boolean(form.elements.requireEach?.checked),
       allowRepeated: Boolean(form.elements.allowRepeated?.checked),
       symbolRatioRange: [Number(form.elements.symbolMin?.value || 0), Number(form.elements.symbolMax?.value || 0)],
-      startsWith: form.elements.startsWith?.value || 'any',
-      endsWith: form.elements.endsWith?.value || 'any',
+      startsWith: form.elements.startsWith?.value || 'letter',
+      endsWith: form.elements.endsWith?.value || 'letter',
     };
   }
 
@@ -408,12 +408,12 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
   const CONFIG_TEMPLATES = Object.freeze({
     password: () => `<div class="field-grid">
       ${complexityMarkup()}${passwordLengthMarkup()}${passwordQuantityMarkup()}
-      <div class="field full"><span class="field-label">字符类型</span><div class="checks">${checkbox('lowercase', '小写字母', true)}${checkbox('uppercaseLetters', '大写字母', true)}${checkbox('digits', '数字', true)}${checkbox('symbols', '符号', true)}${checkbox('allowSpace', '内部空格')}</div></div>
+      <div class="field full"><span class="field-label">字符类型</span><div class="checks">${checkbox('lowercase', '小写字母', true)}${checkbox('uppercaseLetters', '大写字母', true)}${checkbox('digits', '数字', true)}${checkbox('symbols', '符号', true)}${checkbox('allowSpace', '空格')}</div></div>
       <div class="field full"><label for="symbolPool">符号字符池</label><input id="symbolPool" name="symbolPool" type="text" maxlength="64" value="!@#$%^&amp;*()-_=+[]{};:,.?" autocomplete="off" spellcheck="false"><small>最多 64 个可打印 ASCII 字符；拒绝控制字符、零宽连接符与规范化歧义。</small></div>
       <div class="field"><span class="field-label">符号占比</span><div class="range-pair"><div class="range-unit"><input name="symbolMin" type="number" min="0" max="100" value="10" aria-label="最小符号百分比"></div><div class="range-unit"><input name="symbolMax" type="number" min="0" max="100" value="35" aria-label="最大符号百分比"></div></div></div>
       <div class="field"><span class="field-label">高级约束</span><div class="checks">${checkbox('requireEach', '每类至少一个', true)}${checkbox('allowRepeated', '允许重复', true)}</div></div>
-      <div class="field"><label for="startsWith">首字符</label><select id="startsWith" name="startsWith"><option value="any">任意启用类别</option><option value="letter">字母</option><option value="digit">数字</option><option value="symbol">符号</option></select></div>
-      <div class="field"><label for="endsWith">尾字符</label><select id="endsWith" name="endsWith"><option value="any">任意启用类别</option><option value="letter">字母</option><option value="digit">数字</option><option value="symbol">符号</option></select></div>
+      <div class="field"><label for="startsWith">首字符</label><select id="startsWith" name="startsWith"><option value="any">任意启用类别</option><option value="letter" selected>字母</option><option value="digit">数字</option><option value="symbol">符号</option></select></div>
+      <div class="field"><label for="endsWith">尾字符</label><select id="endsWith" name="endsWith"><option value="any">任意启用类别</option><option value="letter" selected>字母</option><option value="digit">数字</option><option value="symbol">符号</option></select></div>
     </div>`,
     passphrase: () => `<div class="field-grid">
       <div class="field"><label for="wordCount">单词数量</label><input id="wordCount" name="wordCount" type="number" min="1" max="100" value="6"></div>${quantityMarkup()}
@@ -1121,11 +1121,12 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     });
   }
 
-  function installTooltip(container, trigger, text, tooltipId, { toggleOnClick = false } = {}) {
+  function installTooltip(container, trigger, text, tooltipId, { toggleOnClick = false, tooltipClass = '' } = {}) {
     let focusOpened = false;
+    trigger.removeAttribute('title');
     const show = () => {
       if (container.querySelector(`#${CSS.escape(tooltipId)}`)) return;
-      const tooltip = document.createElement(container.tagName === 'SUMMARY' ? 'span' : 'div'); tooltip.className = 'result-tooltip'; tooltip.id = tooltipId;
+      const tooltip = document.createElement(container.tagName === 'SUMMARY' ? 'span' : 'div'); tooltip.className = `result-tooltip ${tooltipClass}`.trim(); tooltip.id = tooltipId;
       tooltip.setAttribute('role', 'tooltip'); tooltip.textContent = typeof text === 'function' ? text() : text;
       trigger.setAttribute('aria-describedby', tooltipId); container.append(tooltip);
     };
@@ -1172,13 +1173,13 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     return `观察模式估算：${observed.guessBits == null ? '未给出启发式猜测强度' : `约 2^${observed.guessBits.toFixed(2)} 次猜测`}；${names.length ? `发现 ${names.join('、')}` : '未发现显著常见模式'}。这不会改变精确生成器指标。`;
   }
 
-  function buildPatternIndicator(result, index) {
+  function buildPatternIndicator(result, index, tooltipContainer) {
     const indicator = document.createElement('span'); indicator.className = 'result-pattern-indicator';
     indicator.dataset.patternIndicator = 'true';
     const button = iconButton('', RESULT_ICONS.info, () => {}, 'result-info-button');
     indicator.append(button);
     updatePatternIndicatorState(indicator, result, index);
-    installTooltip(indicator, button, () => patternTooltipText(result), `result-pattern-tooltip-${result.id}`, { toggleOnClick: true });
+    installTooltip(tooltipContainer, button, () => patternTooltipText(result), `result-pattern-tooltip-${result.id}`, { toggleOnClick: true, tooltipClass: 'result-pattern-tooltip' });
     return indicator;
   }
 
@@ -1192,8 +1193,9 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     if (!button) return;
     const stateLabel = risky ? '发现常见模式' : status === 'ready' ? '未发现显著模式' : PATTERN_MESSAGES[status] || PATTERN_MESSAGES.idle;
     button.setAttribute('aria-label', `第 ${index + 1} 条观察模式：${stateLabel}`);
-    button.title = stateLabel;
-    const openTooltip = indicator.querySelector('.result-tooltip');
+    button.removeAttribute('title');
+    const openTooltipId = button.getAttribute('aria-describedby');
+    const openTooltip = openTooltipId ? document.getElementById(openTooltipId) : null;
     if (openTooltip) openTooltip.textContent = patternTooltipText(result);
   }
 
@@ -1209,7 +1211,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     const meta = document.createElement('div'); meta.className = 'compact-result-meta'; meta.textContent = compactResultMeta(result);
     content.append(value, meta); installTooltip(row, value, () => state.hidden.has(result.id) ? '内容已隐藏；请先使用显示按钮再查看完整结果。' : resultDisplayText(result), `result-value-tooltip-${result.id}`);
     const actions = document.createElement('div'); actions.className = 'compact-result-actions';
-    if (['password', 'passphrase'].includes(result.type)) actions.append(buildPatternIndicator(result, index));
+    if (['password', 'passphrase'].includes(result.type)) actions.append(buildPatternIndicator(result, index, row));
     const hidden = state.hidden.has(result.id);
     const toggle = iconButton(`${hidden ? '显示' : '隐藏'}第 ${index + 1} 条生成结果`, hidden ? RESULT_ICONS.reveal : RESULT_ICONS.hide, () => toggleReveal(result.id));
     toggle.dataset.secretToggle = 'true'; toggle.setAttribute('aria-pressed', String(!hidden));

@@ -40,6 +40,15 @@ test('复杂度控件完整恢复 L1 到 L8 且配方逐级增加精确生成器
   }
 });
 
+test('全部复杂度快捷方案默认使用字母首尾边界', () => {
+  for (const { level } of PASSWORD_COMPLEXITY_PRESETS) {
+    const config = applyPasswordComplexityPreset(BASE_CONFIG, level);
+    assert.equal(config.startsWith, 'letter', `${level} 首字符必须默认为字母`);
+    assert.equal(config.endsWith, 'letter', `${level} 尾字符必须默认为字母`);
+    assert.doesNotThrow(() => createPasswordModel(config), `${level} 的字母首尾边界必须存在合法生成空间`);
+  }
+});
+
 test('长度与数量快捷档位保留精确自定义输入边界', () => {
   assert.deepEqual(PASSWORD_LENGTH_PRESETS, [4, 6, 8, 12, 16, 20, 24, 32, 64, 128, 256]);
   assert.deepEqual(PASSWORD_QUANTITY_PRESETS, [1, 3, 5, 10, 25, 50, 100]);

@@ -102,6 +102,10 @@ try {
   assert.equal(await page.locator('[data-complexity-level]').count(), 8);
   assert.equal(await page.locator('[data-preset-custom="complexity"]').count(), 0);
   assert.equal(await page.locator('[data-complexity-level="L8"]').getAttribute('aria-pressed'), 'true');
+  assert.equal(await page.locator('select[name="startsWith"]').inputValue(), 'letter', '首字符默认使用字母');
+  assert.equal(await page.locator('select[name="endsWith"]').inputValue(), 'letter', '尾字符默认使用字母');
+  assert.equal(await page.getByRole('checkbox', { name: '空格', exact: true }).count(), 1);
+  assert.equal(await page.getByRole('checkbox', { name: '内部空格', exact: true }).count(), 0);
   await page.locator('[data-complexity-level="L2"]').click();
   const sliderAlignment = await page.evaluate(() => [...document.querySelectorAll('[data-preset-slider]')].map((root) => {
     const range = root.querySelector('.preset-slider-range');
@@ -138,8 +142,10 @@ try {
   await page.locator('input[name="symbolPool"]').fill('');
   await page.locator('[data-complexity-level="L1"]').click();
   assert.equal(await page.locator('input[name="length"]').inputValue(), '4');
-  assert.equal(await page.locator('input[name="digits"]').isChecked(), true);
-  assert.equal(await page.locator('input[name="lowercase"]').isChecked(), false);
+  assert.equal(await page.locator('input[name="digits"]').isChecked(), false);
+  assert.equal(await page.locator('input[name="lowercase"]').isChecked(), true);
+  assert.equal(await page.locator('select[name="startsWith"]').inputValue(), 'letter');
+  assert.equal(await page.locator('select[name="endsWith"]').inputValue(), 'letter');
   assert.notEqual(await page.locator('input[name="symbolPool"]').inputValue(), '');
   await clickGenerate(page);
   assert.equal(await page.locator('#result-container article').count(), 1, '空符号池后 L1 仍可生成');
@@ -202,10 +208,29 @@ try {
   assert.equal(await batchAssessment.getByText('攻击场景估算', { exact: true }).count(), 1);
   assert.equal(await batchAssessment.getByText('生成模型详情', { exact: true }).count(), 1);
   const firstInfo = page.getByRole('button', { name: /^第 1 条观察模式：/u });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await firstInfo.hover();
+  assert.equal(await firstInfo.getAttribute('title'), null, '观察模式图标只显示自定义气泡，不得叠加浏览器原生 title');
+  const patternTooltip = page.locator('.compact-result-row').first().locator(':scope > .result-tooltip');
+  assert.equal(await patternTooltip.isVisible(), true, '观察模式气泡必须真正可见');
+  const patternTooltipGeometry = await patternTooltip.evaluate((tooltip) => {
+    const tip = tooltip.getBoundingClientRect();
+    const scroll = tooltip.closest('.result-scroll').getBoundingClientRect();
+    return {
+      tip: { left: tip.left, right: tip.right, top: tip.top, bottom: tip.bottom },
+      scroll: { left: scroll.left, right: scroll.right, top: scroll.top, bottom: scroll.bottom },
+      contentClipped: tooltip.scrollWidth > tooltip.clientWidth || tooltip.scrollHeight > tooltip.clientHeight,
+    };
+  });
+  assert.ok(patternTooltipGeometry.tip.left >= patternTooltipGeometry.scroll.left - 1, '观察模式气泡左侧不得被裁切');
+  assert.ok(patternTooltipGeometry.tip.right <= patternTooltipGeometry.scroll.right + 1, '观察模式气泡右侧不得被裁切');
+  assert.equal(patternTooltipGeometry.contentClipped, false, '观察模式气泡文案必须完整显示');
+  await page.mouse.move(0, 0);
+  await page.setViewportSize({ width: 1280, height: 900 });
   await firstInfo.click();
-  assert.equal(await page.locator('.result-pattern-indicator .result-tooltip').count(), 1);
+  assert.equal(await page.locator('.compact-result-row').first().locator(':scope > .result-pattern-tooltip').count(), 1);
   await firstInfo.click();
-  assert.equal(await page.locator('.result-pattern-indicator .result-tooltip').count(), 0);
+  assert.equal(await page.locator('.compact-result-row').first().locator(':scope > .result-pattern-tooltip').count(), 0);
   const batchInfo = page.getByRole('button', { name: '批次级安全分析说明' });
   await batchInfo.hover();
   const batchTooltip = batchAssessment.locator('[role="tooltip"]');
@@ -229,7 +254,7 @@ try {
   assert.equal(await batchAssessment.getAttribute('open'), '', '异步模式分析更新不得折叠批次安全说明');
   assert.equal(await modelDetails.getAttribute('open'), '', '异步模式分析更新不得折叠生成模型详情');
   assert.equal(await page.locator('.result-pattern-indicator .result-pattern-indicator').count(), 0, '模式分析不得嵌套重复提示节点');
-  assert.doesNotMatch(await page.locator('.result-pattern-indicator .result-tooltip').textContent(), /正在|分析中/u, '已打开的观察模式气泡必须随异步结果原位更新');
+  assert.doesNotMatch(await page.locator('.compact-result-row').first().locator(':scope > .result-pattern-tooltip').textContent(), /正在|分析中/u, '已打开的观察模式气泡必须随异步结果原位更新');
   await modelDetails.locator('summary').click();
   await batchAssessment.locator(':scope > summary').click();
   const compactViewport = await page.evaluate(() => {

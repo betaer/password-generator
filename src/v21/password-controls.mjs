@@ -8,7 +8,7 @@ function freezeRecipe(recipe) {
 export const DEFAULT_PASSWORD_SYMBOL_POOL = '!@#$%^&*()-_=+[]{};:,.?';
 
 export const PASSWORD_COMPLEXITY_PRESETS = Object.freeze([
-  Object.freeze({ level: 'L1', label: '瞬间破解', tone: '#c62828', recipe: freezeRecipe({ length: 4, lowercase: false, uppercase: false, digits: true, symbols: false, symbolRatioRange: [0, 0] }) }),
+  Object.freeze({ level: 'L1', label: '瞬间破解', tone: '#c62828', recipe: freezeRecipe({ length: 4, lowercase: true, uppercase: false, digits: false, symbols: false, symbolRatioRange: [0, 0] }) }),
   Object.freeze({ level: 'L2', label: '极易破解', tone: '#c2410c', recipe: freezeRecipe({ length: 6, lowercase: true, uppercase: false, digits: false, symbols: false, symbolRatioRange: [0, 0] }) }),
   Object.freeze({ level: 'L3', label: '容易破解', tone: '#b35c00', recipe: freezeRecipe({ length: 8, lowercase: true, uppercase: false, digits: false, symbols: false, symbolRatioRange: [0, 0] }) }),
   Object.freeze({ level: 'L4', label: '有一定风险', tone: '#876400', recipe: freezeRecipe({ length: 8, lowercase: true, uppercase: true, digits: true, symbols: false, symbolRatioRange: [0, 0] }) }),
@@ -34,8 +34,8 @@ export function applyPasswordComplexityPreset(currentConfig, level) {
     allowSpace: false,
     requireEach: true,
     allowRepeated: true,
-    startsWith: 'any',
-    endsWith: 'any',
+    startsWith: 'letter',
+    endsWith: 'letter',
     symbolRatioRange: Object.freeze([...preset.recipe.symbolRatioRange]),
   };
   return Object.freeze(next);
