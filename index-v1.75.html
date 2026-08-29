@@ -2536,6 +2536,7 @@ button, input, textarea { font: inherit; }
 }
 .site-floating-button .anticon { font-size: 18px; }
 .site-floating-github.ant-btn,
+.site-floating-x.ant-btn,
 .site-floating-copy.ant-btn { border-color: rgba(23, 32, 51, .2); color: #172033; }
 .site-floating-star-badge {
   position: absolute;
@@ -2560,7 +2561,7 @@ button, input, textarea { font: inherit; }
 }
 
 @media (max-width: 640px) {
-  .site-floating-actions { right: 12px; bottom: 12px; gap: 8px; }
+  .site-floating-actions { gap: 8px; }
   .site-floating-button.ant-btn {
     min-width: 44px;
     width: 44px;
@@ -2760,6 +2761,16 @@ button, input, textarea { font: inherit; }
 .archive-release-banner span { min-width: 0; flex: 1; }
 .archive-release-banner a { flex: 0 0 auto; color: #0b5cff; font-weight: 700; text-decoration: none; }
 .archive-release-banner a:hover, .archive-release-banner a:focus-visible { text-decoration: underline; }
+@media (min-width: 761px) and (max-width: 1619px) {
+  .page-main,
+  .archive-release-banner,
+  .seo-shell,
+  .site-global-footer {
+    width: min(calc(100% - 156px), var(--page-max));
+    margin-right: 156px;
+    margin-left: auto;
+  }
+}
 @media (max-width: 760px) {
   .archive-release-banner { width: calc(100% - 24px); align-items: flex-start; flex-direction: column; gap: 5px; }
   .seo-shell { width: calc(100% - 24px); margin-block: 10px 24px; border-radius: 16px; }
@@ -2770,6 +2781,13 @@ button, input, textarea { font: inherit; }
   .seo-shell-security-grid { grid-template-columns: 1fr; }
   .site-global-footer { width: calc(100% - 24px); margin-bottom: 24px; }
   .site-global-footer-inner { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .site-floating-actions {
+    position: static;
+    width: calc(100% - 24px);
+    flex-direction: row;
+    justify-content: flex-end;
+    margin: 12px auto 20px;
+  }
 }
 
 
@@ -3267,6 +3285,9 @@ const ResultCubeOutlined = createInlineIcon([
 const GitHubOutlined = createInlineIcon([
   { d: 'M12 .8a11.2 11.2 0 0 0-3.54 21.82c.56.1.77-.24.77-.54v-2.14c-3.14.68-3.8-1.34-3.8-1.34-.51-1.31-1.25-1.66-1.25-1.66-1.03-.7.08-.69.08-.69 1.13.08 1.73 1.16 1.73 1.16 1.01 1.72 2.64 1.23 3.28.94.1-.73.4-1.23.72-1.51-2.5-.29-5.14-1.26-5.14-5.54 0-1.22.44-2.22 1.16-3-.12-.29-.5-1.44.11-2.96 0 0 .95-.3 3.08 1.15a10.7 10.7 0 0 1 5.6 0c2.14-1.45 3.08-1.15 3.08-1.15.61 1.52.23 2.67.11 2.96.72.78 1.16 1.78 1.16 3 0 4.29-2.64 5.25-5.16 5.53.4.35.77 1.04.77 2.1v3.11c0 .3.2.65.78.54A11.2 11.2 0 0 0 12 .8Z', fill: 'currentColor' }
 ]);
+const XOutlined = createInlineIcon([
+  { d: 'M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z', fill: 'currentColor' }
+]);
 const WarningTriangleFilled = createInlineIcon([
   { d: 'M10.3 3.2a2 2 0 0 1 3.4 0l8 13.9A2 2 0 0 1 20 20H4a2 2 0 0 1-1.7-2.9l8-13.9Z', stroke: 'currentColor', strokeWidth: 1.8, strokeLinejoin: 'round' },
   { d: 'M12 8.5v5M12 17h.01', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' }
@@ -3337,6 +3358,7 @@ const SECTION_HEADING_ICONS = Object.freeze({
 const GITHUB_REPOSITORY_URL = 'https://github.com/betaer/password-generator';
 const GITHUB_PAGES_URL = 'https://betaer.github.io/password-generator/index-v1.75.html';
 const GITHUB_STAR_DISPLAY = '999+';
+const X_PROFILE_URL = 'https://x.com/Betaer';
 const MODE_HASH_BY_MODE = Object.freeze({
     random: '#password',
     pin: '#pin',
@@ -5568,6 +5590,8 @@ function PasswordGenerator() {
             React.createElement(Button, { className: "site-floating-button site-floating-github", href: GITHUB_REPOSITORY_URL, target: "_blank", rel: "noreferrer", icon: React.createElement(GitHubOutlined, null), "aria-label": `在 GitHub 查看源代码，${GITHUB_STAR_DISPLAY} Stars` },
                 React.createElement("span", { className: "site-floating-button-label" }, "GitHub"),
                 React.createElement("span", { className: "site-floating-star-badge", "aria-hidden": "true" }, GITHUB_STAR_DISPLAY)),
+            React.createElement(Button, { className: "site-floating-button site-floating-x", href: X_PROFILE_URL, target: "_blank", rel: "noopener noreferrer", icon: React.createElement(XOutlined, null), "aria-label": "在 X 关注 Betaer" },
+                React.createElement("span", { className: "site-floating-button-label" }, "X")),
             React.createElement(Button, { className: "site-floating-button site-floating-copy", icon: React.createElement(CopyOutlined, null), onClick: copySharePromotion, "aria-label": "复制本站分享文案" },
                 React.createElement("span", { className: "site-floating-button-label" }, "分享本站")))));
 }

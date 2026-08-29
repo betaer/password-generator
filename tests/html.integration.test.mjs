@@ -107,9 +107,11 @@ test('直接打开记忆短语锚点时等待词库就绪后自动生成', () =>
   assert.match(app, /useEffect\(\(\) => \{[\s\S]*?if \(stateRef\.current\.mode !== 'memorable'\)[\s\S]*?generateAll\(stateRef\.current\);[\s\S]*?\}, \[\]\);/);
 });
 
-test('右下角提供 GitHub 与按语言选择文案的分享本站按钮', () => {
+test('右下角依次提供 GitHub、X 与按语言选择文案的分享本站按钮', () => {
   assert.match(app, /const GitHubOutlined = createInlineIcon/);
+  assert.match(app, /const XOutlined = createInlineIcon/);
   assert.match(app, /const GITHUB_REPOSITORY_URL = 'https:\/\/github\.com\/betaer\/password-generator'/);
+  assert.match(app, /const X_PROFILE_URL = 'https:\/\/x\.com\/Betaer'/);
   assert.match(app, /const GITHUB_PAGES_URL = 'https:\/\/betaer\.github\.io\/password-generator\/index-v1\.75\.html'/);
   assert.match(app, /const GITHUB_STAR_DISPLAY = '999\+'/);
   assert.match(app, /const SHARE_PROMOTION_TEXTS = Object\.freeze/);
@@ -117,6 +119,7 @@ test('右下角提供 GitHub 与按语言选择文案的分享本站按钮', () 
   assert.match(app, /A privacy-first Password Generator for passwords, passphrases, and PINs\./);
   assert.match(app, /function preferredShareLanguage/);
   assert.match(app, /className: "site-floating-button site-floating-github"/);
+  assert.match(app, /className: "site-floating-button site-floating-x"/);
   assert.match(app, /className: "site-floating-button site-floating-copy"/);
   assert.match(app, /className: "site-floating-star-badge"[\s\S]*?GITHUB_STAR_DISPLAY/);
   assert.match(app, /copyText\(getSharePromotionText\(\), '本站分享文案已复制'\)/);
@@ -124,10 +127,14 @@ test('右下角提供 GitHub 与按语言选择文案的分享本站按钮', () 
   assert.match(html, /\.site-floating-actions \{[\s\S]*?position: fixed/);
   assert.match(html, /\.site-floating-button\.ant-btn \{[\s\S]*?width: 120px;[\s\S]*?min-width: 120px;/);
   assert.match(html, /@media \(max-width: 640px\)[\s\S]*?\.site-floating-button\.ant-btn \{[\s\S]*?min-width: 44px;[\s\S]*?width: 44px;/);
-  assert.match(html, /\.site-floating-github\.ant-btn,[\s\S]*?\.site-floating-copy\.ant-btn \{[\s\S]*?color: #172033/);
+  assert.match(html, /\.site-floating-github\.ant-btn,[\s\S]*?\.site-floating-x\.ant-btn,[\s\S]*?\.site-floating-copy\.ant-btn \{[\s\S]*?color: #172033/);
   assert.match(html, /\.site-floating-star-badge \{[\s\S]*?background: #172033/);
   const floatingActions = app.slice(app.indexOf('className: "site-floating-actions"'), app.indexOf('function RootApp'));
-  assert.doesNotMatch(floatingActions, /React\.createElement\(Tooltip/, '右下角两个按钮不应显示黑色气泡提示');
+  assert.match(floatingActions, /"aria-label": "在 X 关注 Betaer"/);
+  assert.match(floatingActions, /target: "_blank", rel: "noopener noreferrer"/);
+  assert.ok(floatingActions.indexOf('site-floating-github') < floatingActions.indexOf('site-floating-x'), 'X 应位于 GitHub 下方');
+  assert.ok(floatingActions.indexOf('site-floating-x') < floatingActions.indexOf('site-floating-copy'), 'X 应位于复制分享上方');
+  assert.doesNotMatch(floatingActions, /React\.createElement\(Tooltip/, '右下角三个外部操作不应显示黑色气泡提示');
 });
 
 test('页面超过一屏且已向下滚动时在快捷按钮上方显示回到顶部', () => {

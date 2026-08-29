@@ -62,6 +62,7 @@ try {
     gaRequests.push({ url: request.url(), body: request.postData() || '', headers: await request.allHeaders() });
     await route.fulfill({ status: 204, body: '' });
   });
+  await context.route('https://x.com/Betaer', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Betaer on X</title>' }));
 
   const page = await context.newPage();
   const pageErrors = [];
@@ -522,6 +523,33 @@ try {
   assert.match(shareText, /https:\/\/betaer\.github\.io\/password-generator\/index\.html/u);
   assert.equal(shareText.includes(sentinel), false, '网站分享文案不得包含生成结果');
   assert.equal(await page.locator('.site-floating-star-badge').textContent(), '999+');
+  const desktopFloatingSizes = await page.locator('.site-floating-github, .site-floating-x, .site-floating-copy').evaluateAll((nodes) => nodes.map((node) => {
+    const rect = node.getBoundingClientRect();
+    return { width: rect.width, height: rect.height };
+  }));
+  assert.equal(desktopFloatingSizes.length, 3);
+  assert.deepEqual(desktopFloatingSizes, [
+    { width: 124, height: 42 },
+    { width: 124, height: 42 },
+    { width: 124, height: 42 },
+  ], '桌面端 GitHub、X 与复制分享必须保持等宽完整文字按钮');
+  const xLink = page.getByRole('link', { name: '在 X 关注 Betaer' });
+  assert.equal(await xLink.getAttribute('href'), 'https://x.com/Betaer');
+  assert.equal(await xLink.getAttribute('target'), '_blank');
+  assert.equal(await xLink.getAttribute('rel'), 'noopener noreferrer');
+  assert.equal(await xLink.locator('.site-floating-button-label').isVisible(), true, '桌面端 X 文字必须可见');
+  const [xPopup] = await Promise.all([context.waitForEvent('page'), xLink.click()]);
+  await xPopup.waitForLoadState('domcontentloaded');
+  assert.equal(xPopup.url(), 'https://x.com/Betaer');
+  await xPopup.close();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileXState = await xLink.evaluate((node) => {
+    const rect = node.getBoundingClientRect();
+    const label = node.querySelector('.site-floating-button-label');
+    return { width: rect.width, height: rect.height, labelVisible: label.getBoundingClientRect().width > 1 || label.getBoundingClientRect().height > 1 };
+  });
+  assert.deepEqual(mobileXState, { width: 44, height: 44, labelVisible: false });
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.waitForTimeout(1000);
   assert.ok(gaRequests.length >= 1, `GA collect request must be observed; Google requests: ${googleRequestUrls.join(', ')}`);
   for (const request of gaRequests) {
@@ -825,11 +853,84 @@ try {
       });
       assert.equal(state.overflow, false, `${viewport.width}px ${position} 不得横向溢出`);
       assert.deepEqual(state.overlaps, [], `${viewport.width}px ${position} 浮动操作不得遮挡交互元素`);
-      assert.equal(state.actionPosition, viewport.width <= 780 ? 'static' : 'fixed', `${viewport.width}px 快捷操作定位策略`);
+      assert.equal(state.actionPosition, viewport.width <= 1279 ? 'static' : 'fixed', `${viewport.width}px 快捷操作定位策略`);
       assert.equal(state.resultOffsetLeft > state.configOffsetLeft, viewport.width > 1560, `${viewport.width}px ${position} 策略与结果面板响应式排布`);
     }
   }
   await layoutContext.close();
+
+  const archiveContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  await archiveContext.route(/google-analytics\.com|googletagmanager\.com/u, (route) => route.fulfill({ status: 204, body: '' }));
+  await archiveContext.route('https://x.com/Betaer', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Betaer on X</title>' }));
+  const archivePage = await archiveContext.newPage();
+  await archivePage.goto(`${baseUrl}/index-v1.75.html`, { waitUntil: 'domcontentloaded' });
+  const archiveXLink = archivePage.getByRole('link', { name: '在 X 关注 Betaer' });
+  await archiveXLink.waitFor({ state: 'visible' });
+  assert.equal(await archiveXLink.getAttribute('href'), 'https://x.com/Betaer');
+  assert.equal(await archiveXLink.getAttribute('target'), '_blank');
+  assert.equal(await archiveXLink.getAttribute('rel'), 'noopener noreferrer');
+  const archiveDesktopSizes = await archivePage.locator('.site-floating-github, .site-floating-x, .site-floating-copy').evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().width));
+  assert.deepEqual(archiveDesktopSizes, [120, 120, 120]);
+  assert.equal(await archiveXLink.locator('.site-floating-button-label').isVisible(), true, 'V1.7.5 桌面端 X 文字必须可见');
+  assert.equal(await archivePage.locator('.site-floating-actions').evaluate((node) => getComputedStyle(node).position), 'fixed');
+  const [archiveXPopup] = await Promise.all([archiveContext.waitForEvent('page'), archiveXLink.click()]);
+  await archiveXPopup.waitForLoadState('domcontentloaded');
+  assert.equal(archiveXPopup.url(), 'https://x.com/Betaer');
+  await archiveXPopup.close();
+  for (const viewport of [
+    { width: 1280, height: 900 },
+    { width: 390, height: 844 },
+  ]) {
+    await archivePage.setViewportSize(viewport);
+    for (const position of ['top', 'middle', 'bottom']) {
+      await archivePage.evaluate((target) => {
+        const maxScroll = Math.max(0, document.documentElement.scrollHeight - innerHeight);
+        scrollTo(0, target === 'top' ? 0 : target === 'middle' ? maxScroll / 2 : maxScroll);
+      }, position);
+      await archivePage.waitForTimeout(80);
+      const overlaps = await archivePage.evaluate(() => {
+        const visible = (node) => {
+          const rect = node.getBoundingClientRect();
+          const style = getComputedStyle(node);
+          return rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.right > 0
+            && rect.top < innerHeight && rect.left < innerWidth
+            && style.display !== 'none' && style.visibility !== 'hidden';
+        };
+        const actions = [...document.querySelectorAll('.site-floating-actions button, .site-floating-actions a')].filter(visible);
+        const targets = [...document.querySelectorAll('.page-main button, .page-main a, .page-main input, .page-main select, .seo-shell a, .seo-shell summary, .archive-release-banner a, .site-global-footer a')]
+          .filter((node) => !node.closest('.site-floating-actions') && visible(node));
+        return actions.flatMap((action) => {
+          const actionRect = action.getBoundingClientRect();
+          return targets.flatMap((target) => {
+            const targetRect = target.getBoundingClientRect();
+            const overlapWidth = Math.min(actionRect.right, targetRect.right) - Math.max(actionRect.left, targetRect.left);
+            const overlapHeight = Math.min(actionRect.bottom, targetRect.bottom) - Math.max(actionRect.top, targetRect.top);
+            return overlapWidth > 1 && overlapHeight > 1
+              ? [`${action.getAttribute('aria-label')} -> ${target.getAttribute('aria-label') || target.textContent.trim().slice(0, 28)}`]
+              : [];
+          });
+        });
+      });
+      assert.deepEqual(overlaps, [], `V1.7.5 ${viewport.width}px ${position} 快捷操作不得遮挡页面交互`);
+    }
+  }
+  await archivePage.setViewportSize({ width: 390, height: 844 });
+  await archivePage.waitForFunction(() => {
+    const node = document.querySelector('.site-floating-x');
+    if (!node) return false;
+    const rect = node.getBoundingClientRect();
+    return rect.width === 44 && rect.height === 44;
+  });
+  assert.deepEqual(await archiveXLink.evaluate((node) => {
+    const rect = node.getBoundingClientRect();
+    return {
+      width: rect.width,
+      height: rect.height,
+      labelDisplay: getComputedStyle(node.querySelector('.site-floating-button-label')).display,
+      actionPosition: getComputedStyle(node.closest('.site-floating-actions')).position,
+    };
+  }), { width: 44, height: 44, labelDisplay: 'none', actionPosition: 'static' });
+  await archiveContext.close();
 
   const noCryptoContext = await browser.newContext();
   await noCryptoContext.addInitScript(() => { Object.defineProperty(globalThis, 'crypto', { configurable: true, value: {} }); });
