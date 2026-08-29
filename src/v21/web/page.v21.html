@@ -18,9 +18,9 @@
   <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
   <meta name="bingbot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
   <meta name="theme-color" content="#0b5cff" />
-  <link rel="canonical" href="https://betaer.github.io/password-generator/index-2.1.html" />
-  <link rel="alternate" hreflang="zh-CN" href="https://betaer.github.io/password-generator/index-2.1.html" />
-  <link rel="alternate" hreflang="x-default" href="https://betaer.github.io/password-generator/index-2.1.html" />
+  <link rel="canonical" href="https://betaer.github.io/password-generator/index.html" />
+  <link rel="alternate" hreflang="zh-CN" href="https://betaer.github.io/password-generator/index.html" />
+  <link rel="alternate" hreflang="x-default" href="https://betaer.github.io/password-generator/index.html" />
   <link rel="icon" type="image/png" sizes="512x512" href="./password-generator-icon.png" />
   <link rel="sitemap" type="application/xml" href="https://betaer.github.io/sitemap.xml" />
   <link rel="alternate" type="text/plain" href="https://betaer.github.io/password-generator/llms.txt" title="生成式搜索与 AI 助手说明" />
@@ -30,7 +30,7 @@
   <meta property="og:locale" content="zh_CN" />
   <meta property="og:title" content="安全随机数据生成器 V2.1｜九类浏览器本地生成器" />
   <meta property="og:description" content="浏览器本地生成 Password、Passphrase、PIN、Token、API Secret、UUID、Hex、Random Bytes 与 BIP39 Mnemonic；精确生成器指标与攻击场景估算分层展示。" />
-  <meta property="og:url" content="https://betaer.github.io/password-generator/index-2.1.html" />
+  <meta property="og:url" content="https://betaer.github.io/password-generator/index.html" />
   <meta property="og:image" content="https://betaer.github.io/password-generator/assets/social-preview-v2.1.png" />
   <meta property="og:image:secure_url" content="https://betaer.github.io/password-generator/assets/social-preview-v2.1.png" />
   <meta property="og:image:type" content="image/png" />
@@ -66,10 +66,10 @@
       },
       {
         "@type": "SoftwareApplication",
-        "@id": "https://betaer.github.io/password-generator/index-2.1.html#application",
+        "@id": "https://betaer.github.io/password-generator/index.html#application",
         "name": "安全随机数据生成器 V2.1",
         "alternateName": ["Password Generator", "Passphrase Generator", "PIN Generator", "Token Generator", "API Secret Generator", "UUID Generator", "Hex Generator", "Random Bytes Generator", "BIP39 Mnemonic Generator"],
-        "url": "https://betaer.github.io/password-generator/index-2.1.html",
+        "url": "https://betaer.github.io/password-generator/index.html",
         "description": "浏览器本地运行的九类安全随机数据生成器。精确计算生成空间，并将观察模式和攻击场景作为独立估算展示。生成内容不会作为生成数据上传。",
         "keywords": ["密码生成器", "Passphrase", "PIN", "Token", "API Secret", "UUID", "Hex", "Random Bytes", "BIP39 Mnemonic", "Web Crypto"],
         "inLanguage": "zh-CN",
@@ -95,10 +95,10 @@
       },
       {
         "@type": "BreadcrumbList",
-        "@id": "https://betaer.github.io/password-generator/index-2.1.html#breadcrumb",
+        "@id": "https://betaer.github.io/password-generator/index.html#breadcrumb",
         "itemListElement": [
           { "@type": "ListItem", "position": 1, "name": "项目主页", "item": "https://betaer.github.io/" },
-          { "@type": "ListItem", "position": 2, "name": "安全随机数据生成器 V2.1", "item": "https://betaer.github.io/password-generator/index-2.1.html" }
+          { "@type": "ListItem", "position": 2, "name": "安全随机数据生成器 V2.1", "item": "https://betaer.github.io/password-generator/index.html" }
         ]
       }
     ]
@@ -149,7 +149,7 @@
 
       <section class="panel result-panel" aria-labelledby="result-title">
         <div class="panel-heading"><div><span class="panel-index">3、生成结果</span><h2 id="result-title">密码生成结果</h2><p>当前结果默认显示明文；生成不会自动复制，隐藏与显示只在原位置切换。</p></div></div>
-        <div class="result-toolbar" id="result-toolbar" hidden><button class="button button-small" id="copy-current" type="button">复制当前结果</button><button class="button button-small" id="copy-all" type="button">复制全部</button><button class="button button-small button-danger" id="clear-results" type="button">删除结果</button></div>
+        <div class="result-toolbar" id="result-toolbar" hidden><button class="button button-small button-primary" id="regenerate-all" type="button">重新生成全部</button><button class="button button-small" id="copy-current" type="button">复制第一条</button><button class="button button-small" id="copy-all" type="button">复制全部</button><button class="button button-small button-danger" id="clear-results" type="button">清空结果</button></div>
         <div class="result-scroll">
           <div id="result-container"></div>
           <div class="history-panel-shell">
@@ -190,13 +190,13 @@
             <section><h3>攻击场景估算</h3><p>破解时间只基于页面明确列出的在线限速、慢速 KDF 与快速离线速率假设。真实成本取决于锁定策略、MFA、哈希算法、参数和攻击硬件。</p></section>
             <section><h3>浏览器本地数据边界</h3><p>随机核心使用 Web Crypto API；不可用时停止生成，不回退到 Math.random()。生成结果会进入当前页面 DOM 与 JavaScript 运行时，只有显式复制才写入系统剪贴板。</p></section>
             <section><h3>无 Cookie GA 页面访问统计</h3><p>Google Analytics 仅在无 allow-same-origin 的 sandbox iframe 中执行，并只发送固定页面字段。父页面不发送生成器类型、配置、输入或结果；Google 仍可能接收无 Cookie 请求及标准网络元数据。</p></section>
-            <section><h3>公开验证与版本</h3><p>源代码、概率模型、Worker、资源哈希与浏览器验收均可在 GitHub 审计。历史版本仍可访问：<a href="./index.html">V1.7.5</a>、<a href="./index-2.0.html">V2.0</a>、<a href="./v2.01.html">V2.0.1</a>。</p></section>
+            <section><h3>公开验证与版本</h3><p>源代码、概率模型、Worker、资源哈希与浏览器验收均可在 GitHub 审计。正式版为当前 V2.1；V1.7.5 以只读归档入口继续保留。</p></section>
           </div>
         </div>
       </details>
     </section>
 
-    <footer class="footer"><span>安全随机数据生成器 V2.1 · Web Crypto · 统一概率契约</span><span><a href="./index.html">V1.7.5</a> · <a href="./index-2.0.html">V2.0</a> · <a href="./v2.01.html">V2.0.1</a> · <a href="https://github.com/betaer/password-generator" rel="noopener noreferrer" target="_blank">GitHub</a></span></footer>
+    <footer class="footer"><span>安全随机数据生成器 V2.1 · Web Crypto · 统一概率契约</span><span><a href="./index-v1.75.html">V1.7.5 归档版</a> · <a href="https://github.com/betaer/password-generator" rel="noopener noreferrer" target="_blank">GitHub</a></span></footer>
   </main>
 
   <div class="site-floating-actions" role="group" aria-label="网站快捷操作">

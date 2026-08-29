@@ -132,7 +132,28 @@ async function buildPage(assets) {
   html = html.replace('__V21_SEO_HASH__', `sha256-${sha256(structuredData[1], 'base64')}`);
   for (const [placeholder, value] of Object.entries(replacements)) html = html.replaceAll(placeholder, value);
   if (/__V21_[A-Z_]+__/u.test(html)) throw new Error('Unresolved V2.1 page placeholder');
-  await writeFile(path.join(projectRoot, 'index-2.1.html'), html);
+  await writeFile(path.join(projectRoot, 'index.html'), html);
+
+  const redirectScript = "location.replace(new URL('./index.html'+location.search+location.hash,location.href).href);";
+  const redirectHash = `sha256-${sha256(redirectScript, 'base64')}`;
+  const compatibilityAlias = `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, follow" />
+  <meta http-equiv="refresh" content="0; url=./index.html" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src '${redirectHash}'; base-uri 'none'; form-action 'none'" />
+  <link rel="canonical" href="https://betaer.github.io/password-generator/index.html" />
+  <title>正在进入安全随机数据生成器 V2.1</title>
+</head>
+<body>
+  <p>V2.1 已成为正式版。正在跳转；如未自动跳转，请访问 <a href="./index.html">安全随机数据生成器</a>。</p>
+  <script>${redirectScript}</script>
+</body>
+</html>
+`;
+  await writeFile(path.join(projectRoot, 'index-2.1.html'), compatibilityAlias);
 }
 
 export async function buildV21() {

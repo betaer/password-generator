@@ -2,10 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const html = await readFile(new URL('../../index-2.0.html', import.meta.url), 'utf8');
 const app = await readFile(new URL('../../assets/v2/app.v2.js', import.meta.url), 'utf8');
 const pinModel = await readFile(new URL('../../src/v2/pin-model.mjs', import.meta.url), 'utf8');
-const source = `${html}\n${app}`;
+const source = app;
 
 test('Generate and Copy are separate actions', () => {
   assert.match(source, /function generateResults\s*\(/);

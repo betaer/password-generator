@@ -10,6 +10,13 @@ import {
   discreteSliderIndex,
   discreteSliderValue,
 } from '../preset-slider.mjs';
+import {
+  aggregatePatternStates,
+  createBatchPresentationSnapshot,
+  createBatchRequestSnapshot,
+  replaceResultById,
+  shouldRejectUniqueReplacement,
+} from '../result-batch.mjs';
 
 (() => {
   const ASSETS = __V21_ASSET_MANIFEST__;
@@ -21,7 +28,7 @@ import {
   const SHARE_PROMOTION_TEXT = `分享一个专业、安全、完全在浏览器本地运行的随机数据生成器 🔐
 支持密码、口令、PIN 码、令牌、API 密钥、UUID 标识符、十六进制、随机字节与 BIP39 助记词。
 V2.1：精确生成空间、独立模式分析与明确攻击假设。
-立即体验：https://betaer.github.io/password-generator/index-2.1.html`;
+立即体验：https://betaer.github.io/password-generator/index.html`;
   const runtime = globalThis.PasswordGeneratorV201;
   const root = document.documentElement;
 
@@ -116,6 +123,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     mode: HASH_MODE[location.hash.toLowerCase()] || 'password',
     results: [], hidden: new Set(), patterns: new Map(), historyEnabled: false,
     busy: false, activePasswordWorker: null, pinRiskIndex: null, analysisEpoch: 0,
+    resultBatchRequest: null, resultBatchSource: null,
     settings: loadSettings(),
     resources: {
       crypto: globalThis.crypto?.getRandomValues && globalThis.crypto?.subtle
@@ -439,7 +447,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     button.textContent = label; button.addEventListener('click', handler); return button;
   }
 
-  const HISTORY_ICONS = Object.freeze({
+  const RESULT_ICONS = Object.freeze({
     copy: Object.freeze([
       Object.freeze({ d: 'M8 8.75A2.75 2.75 0 0 1 10.75 6h7.5A2.75 2.75 0 0 1 21 8.75v7.5A2.75 2.75 0 0 1 18.25 19h-7.5A2.75 2.75 0 0 1 8 16.25v-7.5Z' }),
       Object.freeze({ d: 'M16 6V5.75A2.75 2.75 0 0 0 13.25 3h-7.5A2.75 2.75 0 0 0 3 5.75v7.5A2.75 2.75 0 0 0 5.75 16H8' }),
@@ -447,21 +455,40 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     delete: Object.freeze([
       Object.freeze({ d: 'M5 7h14M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6', linecap: 'round', linejoin: 'round' }),
     ]),
+    reveal: Object.freeze([
+      Object.freeze({ d: 'M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z', linecap: 'round', linejoin: 'round' }),
+      Object.freeze({ d: 'M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z', linecap: 'round', linejoin: 'round' }),
+    ]),
+    hide: Object.freeze([
+      Object.freeze({ d: 'm3 3 18 18M10.1 6.2A9.8 9.8 0 0 1 12 6c6 0 9.5 6 9.5 6a15.8 15.8 0 0 1-3 3.7M6.1 7.2C3.7 9 2.5 12 2.5 12s3.5 6 9.5 6c1 0 2-.2 2.9-.5M9.7 9.7a3.2 3.2 0 0 0 4.6 4.6', linecap: 'round', linejoin: 'round' }),
+    ]),
+    regenerate: Object.freeze([
+      Object.freeze({ d: 'M20 6v5h-5M4 18v-5h5M18.5 9A7.5 7.5 0 0 0 6 6.5L4 9M5.5 15A7.5 7.5 0 0 0 18 17.5l2-2.5', linecap: 'round', linejoin: 'round' }),
+    ]),
+    info: Object.freeze([
+      Object.freeze({ d: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 15h-2v-6h2v6Zm0-8h-2V7h2v2Z', fill: 'currentColor', stroke: 'none' }),
+    ]),
   });
 
-  function historyIconButton(label, iconPaths, handler, extraClass) {
+  function iconButton(label, iconPaths, handler, extraClass = '', baseClass = 'result-icon-button') {
     const button = document.createElement('button');
-    button.type = 'button'; button.className = `history-icon-button ${extraClass}`; button.setAttribute('aria-label', label); button.title = label;
+    button.type = 'button'; button.className = `${baseClass} ${extraClass}`.trim(); button.setAttribute('aria-label', label); button.title = label;
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('focusable', 'false');
     for (const descriptor of iconPaths) {
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('d', descriptor.d); path.setAttribute('stroke-width', '1.8');
+      if (descriptor.fill) path.setAttribute('fill', descriptor.fill);
+      if (descriptor.stroke) path.setAttribute('stroke', descriptor.stroke);
       if (descriptor.linecap) path.setAttribute('stroke-linecap', descriptor.linecap);
       if (descriptor.linejoin) path.setAttribute('stroke-linejoin', descriptor.linejoin);
       svg.append(path);
     }
     button.append(svg); button.addEventListener('click', handler); return button;
+  }
+
+  function historyIconButton(label, iconPaths, handler, extraClass) {
+    return iconButton(label, iconPaths, handler, extraClass, 'history-icon-button');
   }
 
   function setResource(name, status, detail) {
@@ -492,6 +519,10 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
       || blockWeakNeedsAsset || mnemonicNeedsAcknowledgement;
     generateButton.disabled = unavailable;
     generateButton.textContent = state.busy ? '生成中（切换类型可取消）…' : '生成';
+    document.getElementById('regenerate-all')?.toggleAttribute('disabled', state.busy || !state.results.length);
+    document.querySelectorAll('[data-regenerate-result]').forEach((button) => {
+      button.disabled = state.busy || !state.resultBatchRequest;
+    });
   }
 
   function loadLocalScriptOnce(src, check) {
@@ -570,7 +601,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
   function releaseCurrentResults() {
     const retained = new Set(historyBudget.entries.map((result) => result.id));
     for (const result of state.results) if (!retained.has(result.id)) runtime.results.clearGenerationResult(result);
-    state.results = []; state.hidden.clear(); state.analysisEpoch += 1; renderResults();
+    state.results = []; state.hidden.clear(); state.resultBatchRequest = null; state.resultBatchSource = null; state.analysisEpoch += 1; renderResults();
   }
 
   function setMode(mode, replace = false) {
@@ -779,6 +810,8 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
       }
       const previous = state.results;
       state.results = [...next]; state.hidden.clear(); state.analysisEpoch += 1;
+      state.resultBatchRequest = createBatchRequestSnapshot(job.mode, job.config);
+      state.resultBatchSource = createBatchPresentationSnapshot(next[0], job.quantity);
       accepted = true;
       for (const result of next) {
         if (['password', 'passphrase'].includes(result.type)) {
@@ -803,6 +836,92 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
       if (error?.name !== 'GenerationCancelledError') showToast(error instanceof Error ? error.message : String(error), 'error');
     } finally {
       if (job && coordinator.isCurrent(job)) coordinator.cancel('completed');
+      state.busy = false; updateAvailability();
+    }
+  }
+
+  async function regenerateResult(id) {
+    if (state.busy || !state.resultBatchRequest) return;
+    const request = state.resultBatchRequest;
+    const original = state.results.find((result) => result.id === id);
+    if (!original || request.mode !== state.mode) return;
+    state.busy = true; updateAvailability();
+    let replacement = null; let commitStarted = false; let committed = false;
+    let previousResults = null; let previousHidden = null; let previousPatterns = null; let previousEpoch = null;
+    try {
+      for (let attempt = 0; attempt < 16 && !replacement; attempt += 1) {
+        let job = null; let next = null;
+        try {
+          job = coordinator.begin(request.mode, request.config, 1);
+          next = await runtime.batch.generateAtomicBatch({ job, compile: compileForJob, isCurrent: coordinator.isCurrent, clearResult: runtime.results.clearGenerationResult });
+          if (!coordinator.isCurrent(job) || state.mode !== request.mode || !state.results.some((result) => result.id === id)) {
+            for (const result of next) runtime.results.clearGenerationResult(result);
+            throw Object.assign(new Error('单条重生成已取消。'), { name: 'GenerationCancelledError' });
+          }
+          const candidate = next[0];
+          if (shouldRejectUniqueReplacement(state.results, id, candidate, request)) {
+            runtime.results.clearGenerationResult(candidate); next = null;
+          } else {
+            replacement = candidate; next = null;
+          }
+        } finally {
+          if (next) for (const result of next) runtime.results.clearGenerationResult(result);
+          if (job && coordinator.isCurrent(job)) coordinator.cancel(replacement ? 'completed' : 'retry');
+        }
+      }
+      if (!replacement) throw new Error('连续生成到批内重复结果，请再试一次。');
+      const previous = state.results.find((result) => result.id === id);
+      if (previous !== original || state.mode !== request.mode || state.resultBatchRequest !== request) {
+        runtime.results.clearGenerationResult(replacement); replacement = null; return;
+      }
+      previousResults = state.results;
+      previousHidden = new Set(state.hidden);
+      previousPatterns = new Map(state.patterns);
+      previousEpoch = state.analysisEpoch;
+      commitStarted = true;
+      const nextResults = replaceResultById(state.results, id, replacement);
+      state.results = nextResults;
+      state.hidden.delete(id); state.hidden.delete(replacement.id); state.analysisEpoch += 1;
+      if (['password', 'passphrase'].includes(replacement.type)) {
+        state.patterns.set(replacement.id, {
+          status: state.resources.zxcvbn.status === 'ready' ? 'loading' : state.resources.zxcvbn.status,
+          guessBits: null,
+          sequences: [],
+        });
+      }
+      renderResults();
+      committed = true;
+      let historyWarning = '';
+      try {
+        if (state.historyEnabled) historyBudget.add([replacement]);
+        renderHistory();
+      } catch (historyError) {
+        historyWarning = `结果已更新，但生成记录刷新失败：${historyError instanceof Error ? historyError.message : String(historyError)}`;
+      }
+      const retained = historyBudget.entries.some((result) => result.id === previous.id);
+      if (!retained) {
+        state.patterns.delete(previous.id);
+        runtime.results.clearGenerationResult(previous);
+      }
+      replacement = null; analyzeLiveResults(false);
+      showToast(historyWarning || '已原位重新生成这一条；未写入剪贴板。', historyWarning ? 'error' : 'info');
+    } catch (error) {
+      if (commitStarted && !committed) {
+        state.results = previousResults;
+        state.hidden = previousHidden;
+        state.patterns = previousPatterns;
+        state.analysisEpoch = previousEpoch;
+        if (replacement) {
+          runtime.results.clearGenerationResult(replacement);
+          replacement = null;
+        }
+        try { renderResults(); renderHistory(); } catch { /* 保留旧状态；错误气泡仍可报告根因。 */ }
+      } else if (!commitStarted && replacement) {
+        runtime.results.clearGenerationResult(replacement);
+        replacement = null;
+      }
+      if (error?.name !== 'GenerationCancelledError') showToast(error instanceof Error ? error.message : String(error), 'error');
+    } finally {
       state.busy = false; updateAvailability();
     }
   }
@@ -886,7 +1005,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     container.append(metric('生成器最小熵', formatBits(exact.generatorMinEntropyBits)), metric('生成器香农熵', formatBits(exact.generatorShannonEntropyBits)), metric('生成空间', exact.searchSpaceLabel), metric('期望猜测次数', exact.expectedRankLabel));
   }
 
-  function profileContent(result, assessment) {
+  function profileContent(result, assessment, { includeObserved = true, shared = false } = {}) {
     const fragment = document.createDocumentFragment(); const metrics = document.createElement('div'); metrics.className = 'metric-grid';
     const metricsHeading = document.createElement('h4'); metricsHeading.className = 'metric-grid-title'; metricsHeading.textContent = '精确生成器指标'; metrics.append(metricsHeading);
     appendExactMetrics(metrics, assessment);
@@ -898,9 +1017,12 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
         metric('编码 / 固定前缀', `${ENCODING_LABELS[result.generationModel.encoding] || '未标明'} / ${prefixLength ? `有（${prefixLength} 个字符）` : '无'}`),
       );
     } else if (profile === 'random-bytes') {
-      metrics.append(metric('原始字节数', result.bytes.byteLength.toLocaleString('zh-CN')), metric('CSPRNG 名义输出位数', formatBits(assessment.randomBytes.nominalCsprngOutputBits)), metric('文件 SHA-256', result.sha256));
+      const byteLength = shared ? result.randomByteLength : result.bytes.byteLength;
+      metrics.append(metric('原始字节数', byteLength.toLocaleString('zh-CN')), metric('CSPRNG 名义输出位数', formatBits(assessment.randomBytes.nominalCsprngOutputBits)));
+      if (!shared) metrics.append(metric('文件 SHA-256', result.sha256));
     } else if (profile === 'uuid') {
-      metrics.append(metric('用途', '标准标识符（不是秘密）'), metric('版本 / 变体', `${result.generationModel.version} / ${result.generationModel.variant}`), metric('随机位数', formatBits(result.generationModel.nominalCsprngOutputBits)), metric('v7 时间戳', result.generationModel.timestampUnixMs == null ? '不适用' : new Date(result.generationModel.timestampUnixMs).toISOString()));
+      metrics.append(metric('用途', '标准标识符（不是秘密）'), metric('版本 / 变体', `${result.generationModel.version} / ${result.generationModel.variant}`), metric('随机位数', formatBits(result.generationModel.nominalCsprngOutputBits)));
+      if (!shared) metrics.append(metric('v7 时间戳', result.generationModel.timestampUnixMs == null ? '不适用' : new Date(result.generationModel.timestampUnixMs).toISOString()));
     } else if (profile === 'bip39') {
       metrics.append(metric('熵位数 / 校验位数', `${result.generationModel.entropyBits} / ${result.generationModel.checksumBits} 比特`), metric('单词数 / 词表语言', `${result.generationModel.wordCount} / ${LANGUAGE_LABELS[result.generationModel.language] || result.generationModel.language}`), metric('校验和', result.checksumValid ? '有效' : '无效'), metric('词表 SHA-256', result.generationModel.wordlistSha256));
     } else if (profile === 'pin') {
@@ -908,7 +1030,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
       metrics.append(metric('批内唯一', result.configSnapshot.uniqueWithinBatch ? '是（无放回）' : '否（独立有放回）'), metric('独立批次碰撞概率', `${((result.generationModel.independentBatchCollisionProbability || 0) * 100).toPrecision(4)}%`), metric('常见 PIN 码排除策略', policy ? '启发式常见 PIN 码排除策略 v1' : '未启用'), metric('过滤数量', policy ? `${policy.blockedCount.toLocaleString('zh-CN')} / ${policy.baseSearchSpace.toLocaleString('zh-CN')}` : '0'));
     }
     fragment.append(metrics);
-    if (['password', 'passphrase'].includes(profile)) {
+    if (includeObserved && ['password', 'passphrase'].includes(profile)) {
       const observed = assessment.observedPattern; const observedBox = document.createElement('section'); observedBox.className = 'assessment-layer';
       const heading = document.createElement('h4'); heading.textContent = '观察模式估算';
       const detail = document.createElement('p');
@@ -942,13 +1064,18 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     });
   }
 
+  function assessmentForBatchSource(source) {
+    return runtime.assessment.createSecurityAssessment({ generationModel: source.generationModel });
+  }
+
   function updateResultAssessment(id) {
     const result = state.results.find((item) => item.id === id);
-    const card = [...document.querySelectorAll('[data-result-id]')]
-      .find((item) => item.dataset.resultId === id && item.classList.contains('result-card'));
-    const container = card?.querySelector('[data-result-assessment]');
+    const row = [...document.querySelectorAll('.compact-result-row[data-result-id]')]
+      .find((item) => item.dataset.resultId === id);
+    const container = row?.querySelector('[data-pattern-indicator]');
     if (!result || !container) return;
-    container.replaceChildren(profileContent(result, assessmentFor(result)));
+    updatePatternIndicatorState(container, result, Number(row.dataset.resultNumber) - 1);
+    refreshBatchAssessment();
   }
 
   function safeJson(value) { return JSON.stringify(value, (_key, item) => typeof item === 'bigint' ? item.toString() : item, 2); }
@@ -974,44 +1101,174 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
 
   function updateSecretPresentation(id) {
     const hidden = state.hidden.has(id);
-    document.querySelectorAll(`[data-result-id="${CSS.escape(id)}"]`).forEach((card) => {
-      const value = card.querySelector('.secret-value');
+    document.querySelectorAll(`.compact-result-row[data-result-id="${CSS.escape(id)}"]`).forEach((card) => {
+      const value = card.querySelector('.compact-result-value');
       const toggle = card.querySelector('[data-secret-toggle]');
-      if (value) value.dataset.secretState = hidden ? 'masked' : 'revealed';
+      if (value) {
+        value.dataset.secretState = hidden ? 'masked' : 'revealed';
+        value.removeAttribute('aria-describedby');
+        card.querySelector(':scope > .result-tooltip')?.remove();
+      }
       if (toggle) {
-        toggle.textContent = hidden ? '显示内容' : '隐藏内容';
+        card.querySelector(`#${CSS.escape(`result-action-tooltip-toggle-${id}`)}`)?.remove();
+        toggle.removeAttribute('aria-describedby');
+        const replacement = iconButton('', hidden ? RESULT_ICONS.reveal : RESULT_ICONS.hide, () => {});
+        toggle.replaceChildren(...replacement.childNodes);
+        toggle.removeAttribute('title');
         toggle.setAttribute('aria-pressed', String(!hidden));
         toggle.setAttribute('aria-label', `${hidden ? '显示' : '隐藏'}第 ${card.dataset.resultNumber} 条生成结果`);
       }
     });
   }
 
-  function buildResultCard(result, index) {
-    const card = document.createElement('article'); card.className = 'result-card'; card.dataset.resultId = result.id;
-    card.dataset.resultNumber = String(index + 1);
-    const head = document.createElement('div'); head.className = 'result-card-head';
-    const type = document.createElement('span'); type.className = 'result-type'; type.textContent = RESULT_TYPE_LABELS[result.type] || result.type;
-    const number = document.createElement('span'); number.className = 'result-number'; number.textContent = `第 ${index + 1} 条`; head.append(type, number);
-    const box = document.createElement('div'); box.className = 'secret-box'; const value = document.createElement('div'); value.className = 'secret-value';
-    value.dataset.secretState = state.hidden.has(result.id) ? 'masked' : 'revealed';
-    value.textContent = resultDisplayText(result);
-    if (result.type === 'random-bytes' || result.value?.length > runtime.budgets.MAX_RENDER_CHARACTERS) value.classList.add('secret-summary');
-    box.append(value);
-    const actions = document.createElement('div'); actions.className = 'result-actions';
-    const toggle = actionButton(state.hidden.has(result.id) ? '显示内容' : '隐藏内容', () => toggleReveal(result.id), 'secret-toggle');
-    toggle.dataset.secretToggle = 'true'; toggle.setAttribute('aria-pressed', String(!state.hidden.has(result.id)));
-    toggle.setAttribute('aria-label', `${state.hidden.has(result.id) ? '显示' : '隐藏'}第 ${index + 1} 条生成结果`);
-    actions.append(toggle, actionButton('复制', () => copyResults([result]).catch((error) => showToast(error.message, 'error'))));
-    if (result.type === 'random-bytes') actions.append(actionButton('下载原始字节', () => downloadResult(result), 'button-signal'));
-    actions.append(actionButton('删除', () => deleteResult(result.id), 'button-danger'));
-    const assessment = assessmentFor(result);
-    const assessmentBody = document.createElement('div'); assessmentBody.className = 'result-assessment'; assessmentBody.dataset.resultAssessment = 'true';
-    assessmentBody.append(profileContent(result, assessment));
-    const details = document.createElement('details'); details.className = 'model-details';
-    const summary = document.createElement('summary'); summary.textContent = '生成模型详情';
-    const pre = document.createElement('pre');
-    pre.textContent = safeJson(localizedModelDetails(result, assessment));
-    details.append(summary, pre); card.append(head, box, actions, assessmentBody, details); return card;
+  function installTooltip(container, trigger, text, tooltipId, { toggleOnClick = false } = {}) {
+    let focusOpened = false;
+    const show = () => {
+      if (container.querySelector(`#${CSS.escape(tooltipId)}`)) return;
+      const tooltip = document.createElement('div'); tooltip.className = 'result-tooltip'; tooltip.id = tooltipId;
+      tooltip.setAttribute('role', 'tooltip'); tooltip.textContent = typeof text === 'function' ? text() : text;
+      trigger.setAttribute('aria-describedby', tooltipId); container.append(tooltip);
+    };
+    const hide = () => { container.querySelector(`#${CSS.escape(tooltipId)}`)?.remove(); trigger.removeAttribute('aria-describedby'); };
+    trigger.addEventListener('mouseenter', show); trigger.addEventListener('mouseleave', hide);
+    trigger.addEventListener('focus', () => { show(); focusOpened = true; });
+    trigger.addEventListener('blur', () => { focusOpened = false; hide(); });
+    if (toggleOnClick) trigger.addEventListener('click', (event) => {
+      event.preventDefault(); event.stopPropagation();
+      if (focusOpened) { focusOpened = false; return; }
+      if (container.querySelector(`#${CSS.escape(tooltipId)}`)) hide(); else show();
+    });
+  }
+
+  function passwordComposition(value) {
+    const characters = [...value];
+    const count = (expression) => characters.filter((character) => expression.test(character)).length;
+    return { length: characters.length, lower: count(/[a-z]/u), upper: count(/[A-Z]/u), digit: count(/[0-9]/u), symbol: count(/[^A-Za-z0-9]/u) };
+  }
+
+  function compactResultMeta(result) {
+    const model = result.generationModel;
+    if (result.type === 'password') {
+      const composition = passwordComposition(result.value);
+      return `${composition.length} 位 · 小写 ${composition.lower} / 大写 ${composition.upper} / 数字 ${composition.digit} / 符号 ${composition.symbol}`;
+    }
+    if (result.type === 'passphrase') return `${model.wordCount} 个词 · ${model.separatorChoices?.length > 1 ? '随机分隔符' : '固定分隔符'} · ${model.capitalization || '固定大小写'}`;
+    if (result.type === 'pin') return `${result.value.length} 位 · ${result.configSnapshot.uniqueWithinBatch ? '批内唯一' : '独立抽样'}`;
+    if (['token', 'api-secret', 'hex'].includes(result.type)) return `${model.nominalCsprngOutputBits} 个随机位 · ${ENCODING_LABELS[model.encoding] || '编码输出'}`;
+    if (result.type === 'random-bytes') return `${result.bytes.byteLength.toLocaleString('zh-CN')} 字节 · ${ENCODING_LABELS[result.configSnapshot.encoding] || '编码输出'} · SHA-256 ${result.sha256.slice(0, 12)}…`;
+    if (result.type === 'uuid') {
+      const timestamp = model.timestampUnixMs == null ? '' : ` · ${new Date(model.timestampUnixMs).toISOString()}`;
+      return `UUID ${model.version} · 标识符，不是秘密${timestamp}`;
+    }
+    if (result.type === 'mnemonic') return `ENT ${model.entropyBits} / CS ${model.checksumBits} 比特 · ${model.wordCount} 个词 · ${LANGUAGE_LABELS[model.language] || model.language}`;
+    return RESULT_TYPE_LABELS[result.type] || result.type;
+  }
+
+  function patternTooltipText(result) {
+    if (!['password', 'passphrase'].includes(result.type)) return '此生成器不使用通用密码模式分析；安全语义请查看批次级安全分析。';
+    const observed = assessmentFor(result).observedPattern;
+    if (observed.status !== 'ready') return PATTERN_MESSAGES[observed.status] || PATTERN_MESSAGES.idle;
+    const names = observed.sequences.map((item) => PATTERN_LABELS[item] || '其他模式');
+    return `观察模式估算：${observed.guessBits == null ? '未给出启发式猜测强度' : `约 2^${observed.guessBits.toFixed(2)} 次猜测`}；${names.length ? `发现 ${names.join('、')}` : '未发现显著常见模式'}。这不会改变精确生成器指标。`;
+  }
+
+  function buildPatternIndicator(result, index) {
+    const indicator = document.createElement('span'); indicator.className = 'result-pattern-indicator';
+    indicator.dataset.patternIndicator = 'true';
+    const button = iconButton('', RESULT_ICONS.info, () => {}, 'result-info-button');
+    indicator.append(button);
+    updatePatternIndicatorState(indicator, result, index);
+    installTooltip(indicator, button, () => patternTooltipText(result), `result-pattern-tooltip-${result.id}`, { toggleOnClick: true });
+    return indicator;
+  }
+
+  function updatePatternIndicatorState(indicator, result, index) {
+    const pattern = state.patterns.get(result.id);
+    const status = pattern?.status || 'idle';
+    const risky = status === 'ready' && Boolean(pattern.sequences?.length);
+    indicator.dataset.state = status;
+    if (risky) indicator.dataset.risk = 'true'; else delete indicator.dataset.risk;
+    const button = indicator.querySelector('.result-info-button');
+    if (!button) return;
+    const stateLabel = risky ? '发现常见模式' : status === 'ready' ? '未发现显著模式' : PATTERN_MESSAGES[status] || PATTERN_MESSAGES.idle;
+    button.setAttribute('aria-label', `第 ${index + 1} 条观察模式：${stateLabel}`);
+    button.title = stateLabel;
+    const openTooltip = indicator.querySelector('.result-tooltip');
+    if (openTooltip) openTooltip.textContent = patternTooltipText(result);
+  }
+
+  function buildCompactResultRow(result, index) {
+    const row = document.createElement('article'); row.className = 'compact-result-row'; row.dataset.resultId = result.id;
+    row.dataset.resultNumber = String(index + 1); row.dataset.resultType = result.type;
+    const number = document.createElement('span'); number.className = 'compact-result-number'; number.textContent = String(index + 1);
+    const content = document.createElement('div'); content.className = 'compact-result-content';
+    const value = document.createElement('button'); value.type = 'button'; value.className = 'compact-result-value';
+    value.dataset.secretState = state.hidden.has(result.id) ? 'masked' : 'revealed'; value.textContent = resultDisplayText(result);
+    value.setAttribute('aria-label', `复制第 ${index + 1} 条生成结果`);
+    value.addEventListener('click', () => copyResults([result]).catch((error) => showToast(error.message, 'error')));
+    const meta = document.createElement('div'); meta.className = 'compact-result-meta'; meta.textContent = compactResultMeta(result);
+    content.append(value, meta); installTooltip(row, value, () => state.hidden.has(result.id) ? '内容已隐藏；请先使用显示按钮再查看完整结果。' : resultDisplayText(result), `result-value-tooltip-${result.id}`);
+    const actions = document.createElement('div'); actions.className = 'compact-result-actions';
+    if (['password', 'passphrase'].includes(result.type)) actions.append(buildPatternIndicator(result, index));
+    const hidden = state.hidden.has(result.id);
+    const toggle = iconButton(`${hidden ? '显示' : '隐藏'}第 ${index + 1} 条生成结果`, hidden ? RESULT_ICONS.reveal : RESULT_ICONS.hide, () => toggleReveal(result.id));
+    toggle.dataset.secretToggle = 'true'; toggle.setAttribute('aria-pressed', String(!hidden));
+    const copy = iconButton(`复制第 ${index + 1} 条生成结果`, RESULT_ICONS.copy, () => copyResults([result]).catch((error) => showToast(error.message, 'error')));
+    const regenerate = iconButton(`重新生成第 ${index + 1} 条结果`, RESULT_ICONS.regenerate, () => regenerateResult(result.id), 'result-regenerate-button');
+    regenerate.dataset.regenerateResult = 'true';
+    const remove = iconButton(`删除第 ${index + 1} 条生成结果`, RESULT_ICONS.delete, () => deleteResult(result.id), 'result-delete-button');
+    actions.append(toggle, copy, regenerate);
+    if (result.type === 'random-bytes') actions.append(actionButton('下载', () => downloadResult(result), 'button-signal compact-download-button'));
+    actions.append(remove);
+    for (const [name, button] of [['toggle', toggle], ['copy', copy], ['regenerate', regenerate], ['delete', remove]]) {
+      button.removeAttribute('title');
+      installTooltip(actions, button, () => button.getAttribute('aria-label') || '', `result-action-tooltip-${name}-${result.id}`);
+    }
+    row.append(number, content, actions); return row;
+  }
+
+  function batchPatternContent(results) {
+    if (!results.some((result) => ['password', 'passphrase'].includes(result.type))) return null;
+    const aggregate = aggregatePatternStates(results, state.patterns, { analyzableTypes: ['password', 'passphrase'] });
+    const layer = document.createElement('section'); layer.className = 'assessment-layer batch-pattern-summary';
+    const heading = document.createElement('h4'); heading.textContent = '观察模式估算';
+    const detail = document.createElement('p'); detail.dataset.batchPatternText = 'true';
+    detail.textContent = `共 ${aggregate.total} 条：已完成 ${aggregate.completed} 条，发现常见模式 ${aggregate.risky} 条，分析中 ${aggregate.loading} 条，失败或降级 ${aggregate.failed} 条。每条结果右侧的提示图标可查看具体模式；经验分析不会覆盖精确生成器指标。`;
+    layer.append(heading, detail); return layer;
+  }
+
+  function buildBatchAssessment(results) {
+    const first = state.resultBatchSource || createBatchPresentationSnapshot(results[0], results.length);
+    const assessment = assessmentForBatchSource(first);
+    const details = document.createElement('details'); details.className = 'batch-assessment'; details.dataset.batchAssessment = 'true';
+    const summary = document.createElement('summary'); summary.className = 'batch-assessment-summary';
+    const heading = document.createElement('span'); heading.className = 'batch-assessment-title'; heading.textContent = '批次级安全分析';
+    const count = document.createElement('span'); count.className = 'batch-assessment-count'; count.textContent = `${results.length} 条共用 1 份模型`;
+    const profile = first.generationModel.presentationProfile;
+    const primary = document.createElement('strong'); primary.className = 'batch-assessment-primary';
+    primary.textContent = profile === 'uuid'
+      ? `${first.generationModel.nominalCsprngOutputBits} 个随机位 · 标识符`
+      : profile === 'random-bytes'
+        ? `${assessment.randomBytes.nominalCsprngOutputBits.toLocaleString('zh-CN')} 个名义随机位`
+        : `${formatBits(assessment.exactGenerator.generatorMinEntropyBits)} 最小熵`;
+    const info = iconButton('批次级安全分析说明', RESULT_ICONS.info, () => {}, 'batch-info-button');
+    summary.append(heading, count, primary, info); details.append(summary);
+    installTooltip(details, info, '同一批次使用同一份冻结配置与生成模型，因此精确指标和攻击场景只展示一次；只有具体字符串的观察模式可能逐条不同。', `batch-assessment-tooltip-${first.id}`, { toggleOnClick: true });
+    const body = document.createElement('div'); body.className = 'batch-assessment-body'; body.dataset.batchAssessmentContent = 'true';
+    body.append(profileContent(first, assessment, { includeObserved: false, shared: true }));
+    const pattern = batchPatternContent(results); if (pattern) body.append(pattern);
+    const model = document.createElement('details'); model.className = 'model-details';
+    const modelSummary = document.createElement('summary'); modelSummary.textContent = '生成模型详情';
+    const pre = document.createElement('pre'); pre.textContent = safeJson({ 当前结果数量: results.length, 生成时批次数量: first.quantity, ...localizedModelDetails(first, assessment) });
+    model.append(modelSummary, pre); body.append(model); details.append(body); return details;
+  }
+
+  function refreshBatchAssessment() {
+    if (!state.results.length) return;
+    const detail = resultContainer.querySelector('[data-batch-pattern-text]');
+    if (!detail) return;
+    const aggregate = aggregatePatternStates(state.results, state.patterns, { analyzableTypes: ['password', 'passphrase'] });
+    detail.textContent = `共 ${aggregate.total} 条：已完成 ${aggregate.completed} 条，发现常见模式 ${aggregate.risky} 条，分析中 ${aggregate.loading} 条，失败或降级 ${aggregate.failed} 条。每条结果右侧的提示图标可查看具体模式；经验分析不会覆盖精确生成器指标。`;
   }
 
   function renderResults() {
@@ -1023,7 +1280,10 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
       const text = document.createElement('p'); text.textContent = '生成不会自动复制；新结果默认显示明文，可以在原位置隐藏。';
       inner.append(mark, heading, text); empty.append(inner); resultContainer.replaceChildren(empty); return;
     }
-    resultContainer.replaceChildren(...state.results.map((result, index) => buildResultCard(result, index)));
+    const list = document.createElement('div'); list.className = 'compact-result-list';
+    list.append(...state.results.map((result, index) => buildCompactResultRow(result, index)));
+    resultContainer.replaceChildren(list, buildBatchAssessment(state.results));
+    updateAvailability();
   }
 
   function historyDisplayText(result) { return result.type === 'random-bytes' ? result.preview : result.value; }
@@ -1045,8 +1305,8 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     const preview = document.createElement('button');
     preview.type = 'button'; preview.className = 'history-preview'; preview.textContent = historyDisplayText(result); preview.setAttribute('aria-label', `复制第 ${index + 1} 条生成记录`);
     preview.addEventListener('click', () => copyResults([result]).catch((error) => showToast(error.message, 'error')));
-    const copy = historyIconButton(`复制第 ${index + 1} 条生成记录`, HISTORY_ICONS.copy, () => copyResults([result]).catch((error) => showToast(error.message, 'error')), 'history-copy-button');
-    const remove = historyIconButton(`删除第 ${index + 1} 条生成记录`, HISTORY_ICONS.delete, () => deleteHistoryResult(result.id), 'history-delete-button');
+    const copy = historyIconButton(`复制第 ${index + 1} 条生成记录`, RESULT_ICONS.copy, () => copyResults([result]).catch((error) => showToast(error.message, 'error')), 'history-copy-button');
+    const remove = historyIconButton(`删除第 ${index + 1} 条生成记录`, RESULT_ICONS.delete, () => deleteHistoryResult(result.id), 'history-delete-button');
     row.append(preview, copy, remove); installHistoryTooltip(row, preview, result); return row;
   }
 
@@ -1073,7 +1333,9 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     state.results = state.results.filter((result) => result.id !== id);
     const removedHistory = historyBudget.removeById(id);
     if (current && !removedHistory) runtime.results.clearGenerationResult(current);
-    state.hidden.delete(id); state.patterns.delete(id); renderResults(); renderHistory();
+    state.hidden.delete(id); state.patterns.delete(id);
+    if (!state.results.length) { state.resultBatchRequest = null; state.resultBatchSource = null; }
+    renderResults(); renderHistory();
   }
   function clearCurrentResults() { for (const id of state.results.map((result) => result.id)) deleteResult(id); }
   function clearHistory() { historyBudget.clear(); renderResults(); renderHistory(); }
@@ -1136,6 +1398,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     if (event.target.name === 'apiTemplate') syncApiTemplate(); updateAvailability();
   });
   document.getElementById('copy-current').addEventListener('click', () => state.results[0] && copyResults([state.results[0]]).catch((error) => showToast(error.message, 'error')));
+  document.getElementById('regenerate-all').addEventListener('click', () => generateResults());
   document.getElementById('copy-all').addEventListener('click', () => copyResults(state.results).catch((error) => showToast(error.message, 'error')));
   document.getElementById('clear-results').addEventListener('click', clearCurrentResults);
   document.getElementById('history-toggle').addEventListener('change', (event) => setHistoryEnabled(event.target.checked));

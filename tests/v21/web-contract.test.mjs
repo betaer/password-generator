@@ -1,11 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 
 const root = new URL('../../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
-test('V2.1 使用独立入口和独立内容哈希资源，不覆盖 V2.0.1', async () => {
+test('发布路由只保留正式 V2.1、V1.7.5 归档与 V2.1 兼容跳转', async () => {
+  const [formal, archive, alias] = await Promise.all([
+    read('index.html'),
+    read('index-v1.75.html'),
+    read('index-2.1.html'),
+  ]);
+  assert.match(formal, /data-product-version="2\.1\.0"/u);
+  assert.match(archive, /V1\.7\.5/u);
+  assert.match(alias, /noindex, follow/u);
+  assert.match(alias, /location\.replace/u);
+  assert.match(alias, /href="\.\/index\.html"/u);
+  await assert.rejects(access(new URL('index-2.0.html', root)), /ENOENT/u);
+  await assert.rejects(access(new URL('v2.01.html', root)), /ENOENT/u);
+  await assert.rejects(access(new URL('scripts/build-v201.mjs', root)), /ENOENT/u);
+});
+
+test('V2.1 构建正式入口、兼容跳转入口和独立内容哈希资源', async () => {
   const [page, buildScript, packageJson] = await Promise.all([
     read('src/v21/web/page.v21.html'),
     read('scripts/build-v21.mjs'),
@@ -14,7 +30,9 @@ test('V2.1 使用独立入口和独立内容哈希资源，不覆盖 V2.0.1', as
   assert.match(page, /安全随机数据生成器 V2\.1/u);
   assert.match(page, /__V21_APP__/u);
   assert.match(page, /assets\/v2\.1/u);
+  assert.match(buildScript, /index\.html/u);
   assert.match(buildScript, /index-2\.1\.html/u);
+  assert.match(buildScript, /noindex, follow/u);
   assert.match(buildScript, /assets\/v2\.1/u);
   assert.doesNotMatch(buildScript, /writeFile\([^\n]*v2\.01\.html/u);
   assert.doesNotMatch(buildScript, /(?:app|page|password-worker|analytics-frame)\.v201/u);
@@ -101,7 +119,28 @@ test('首屏不再渲染低价值的数字统计卡', async () => {
   assert.doesNotMatch(css, /\.intro-proof/u);
 });
 
-test('V2.1 发布入口与 Pages 门禁同时覆盖新版本制品', async () => {
+test('批量结果只渲染一份公共安全说明并提供单条重新生成', async () => {
+  const [app, css, page] = await Promise.all([
+    read('src/v21/web/app.v21.js'),
+    read('src/v21/web/app.v21.css'),
+    read('src/v21/web/page.v21.html'),
+  ]);
+  assert.match(app, /buildCompactResultRow/u);
+  assert.match(app, /buildBatchAssessment/u);
+  assert.match(app, /regenerateResult/u);
+  assert.match(app, /createBatchRequestSnapshot/u);
+  assert.doesNotMatch(app, /buildResultCard/u);
+  assert.match(css, /\.compact-result-list/u);
+  assert.match(css, /\.compact-result-row/u);
+  assert.match(css, /\.batch-assessment/u);
+  assert.match(css, /\.result-icon-button/u);
+  assert.match(app, /result-action-tooltip-\$\{name\}-\$\{result\.id\}/u);
+  assert.match(app, /内容已隐藏；请先使用显示按钮/u);
+  assert.match(page, /id="regenerate-all"/u);
+  assert.match(page, />重新生成全部</u);
+});
+
+test('V2.1 正式入口、V1.7.5 归档与 Pages 门禁使用单一发布版本', async () => {
   const [workflow, sitemap, llms, readme, english] = await Promise.all([
     read('.github/workflows/v201-pages.yml'),
     read('sitemap.xml'),
@@ -111,14 +150,18 @@ test('V2.1 发布入口与 Pages 门禁同时覆盖新版本制品', async () =>
   ]);
   assert.match(workflow, /name:\s*V2\.1 security gate/u);
   assert.match(workflow, /npm run verify:v21/u);
-  assert.match(workflow, /git diff --exit-code -- v2\.01\.html assets\/v2\.01 index-2\.1\.html assets\/v2\.1/u);
-  assert.match(workflow, /cp index\.html index-2\.0\.html v2\.01\.html index-2\.1\.html _site\//u);
-  assert.match(sitemap, /https:\/\/betaer\.github\.io\/password-generator\/index-2\.1\.html/u);
-  assert.match(llms, /V2\.1：https:\/\/betaer\.github\.io\/password-generator\/index-2\.1\.html/u);
+  assert.match(workflow, /git diff --exit-code -- index\.html index-2\.1\.html assets\/v2\.1/u);
+  assert.match(workflow, /cp index\.html index-v1\.75\.html index-2\.1\.html _site\//u);
+  assert.doesNotMatch(workflow, /cp [^\n]*(?:index-2\.0\.html|v2\.01\.html)/u);
+  assert.doesNotMatch(workflow, /cp -R assets(?:\s|$)/u);
+  assert.match(workflow, /assets\/data assets\/js assets\/modules assets\/vendor assets\/wordpacks assets\/v2\.1/u);
+  assert.match(workflow, /Reject retired pages and analytics/u);
+  assert.match(sitemap, /https:\/\/betaer\.github\.io\/password-generator\/index\.html/u);
+  assert.match(llms, /V2\.1 正式版：https:\/\/betaer\.github\.io\/password-generator\/index\.html/u);
   assert.match(readme, /^# Security Random Generator V2\.1/mu);
-  assert.match(readme, /在线使用 V2\.1[^\n]*index-2\.1\.html/u);
+  assert.match(readme, /在线使用 V2\.1[^\n]*index\.html/u);
   assert.match(readme, /npm run verify:v21/u);
   assert.match(english, /^# Security Random Generator V2\.1/mu);
-  assert.match(english, /Use V2\.1[^\n]*index-2\.1\.html/u);
+  assert.match(english, /Use V2\.1[^\n]*index\.html/u);
   assert.match(english, /npm run verify:v21/u);
 });

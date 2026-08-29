@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const root = new URL('../', import.meta.url);
-const html = await readFile(new URL('index.html', root), 'utf8');
+const html = await readFile(new URL('index-v1.75.html', root), 'utf8');
 const robots = await readFile(new URL('robots.txt', root), 'utf8');
 const sitemap = await readFile(new URL('sitemap.xml', root), 'utf8');
 const llms = await readFile(new URL('llms.txt', root), 'utf8');
@@ -15,7 +15,9 @@ test('页面提供一致的 SEO、Open Graph 与 Twitter Card 标题', () => {
   assert.match(html, new RegExp(`<meta property="og:title" content="${title.replace('|', '\\|')}"`));
   assert.match(html, new RegExp(`<meta name="twitter:title" content="${title.replace('|', '\\|')}"`));
   assert.match(html, /<meta name="twitter:card" content="summary_large_image"/);
-  assert.match(html, /<link rel="canonical" href="https:\/\/betaer\.github\.io\/password-generator\/"/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/betaer\.github\.io\/password-generator\/index-v1\.75\.html"/);
+  assert.doesNotMatch(html, /hreflang="en"/u);
+  assert.doesNotMatch(html, /og:locale:alternate/u);
   assert.match(html, /<meta name="googlebot" content="index, follow, max-image-preview:large/);
   assert.doesNotMatch(html, /noindex|nofollow|noimageindex/i);
   assert.match(html, /allow_google_signals: false/);
@@ -43,11 +45,16 @@ test('WebSite、SoftwareApplication 与 BreadcrumbList JSON-LD 可解析', () =>
   assert.equal(application.name, '密码生成器 Password Generator');
   assert.ok(application.alternateName.includes('Password Generator'));
   assert.equal(application.applicationCategory, 'SecurityApplication');
-  assert.equal(application.url, 'https://betaer.github.io/password-generator/');
+  assert.equal(application.inLanguage, 'zh-CN');
+  assert.equal(application.url, 'https://betaer.github.io/password-generator/index-v1.75.html');
   assert.equal(application.isAccessibleForFree, true);
   assert.equal(breadcrumb.itemListElement.length, 2);
   assert.equal(breadcrumb.itemListElement[0].item, 'https://betaer.github.io/');
   assert.equal(data['@graph'].some((entry) => entry['@type'] === 'FAQPage'), false);
+});
+
+test('V1.7.5 归档页可见标明版本并提供正式版入口', () => {
+  assert.match(html, /<aside class="archive-release-banner"[^>]*>[\s\S]*V1\.7\.5 归档版[\s\S]*href="\.\/index\.html"[\s\S]*进入 V2\.1 正式版/u);
 });
 
 test('静态 SEO Shell 整体默认折叠并在全站底部提供相关工具互链', () => {
@@ -68,13 +75,13 @@ test('静态 SEO Shell 整体默认折叠并在全站底部提供相关工具互
   assert.match(html, /href="https:\/\/betaer\.github\.io\/AiSignalGuard\/" title="AI Signal Guard"/);
 });
 
-test('项目页引用 Host 根级 robots Sitemap，项目 sitemap 与 llms 保持规范地址', () => {
-  const canonical = 'https://betaer.github.io/password-generator/';
+test('V1.7.5 归档页引用 Host 根级 robots、Sitemap 与归档发现地址', () => {
+  const canonical = 'https://betaer.github.io/password-generator/index-v1.75.html';
   assert.match(robots, /User-agent: \*/);
   assert.match(robots, /Allow: \//);
   assert.match(robots, /Sitemap: https:\/\/betaer\.github\.io\/sitemap\.xml/);
   assert.match(html, /<link rel="sitemap" type="application\/xml" href="https:\/\/betaer\.github\.io\/sitemap\.xml"/);
   assert.ok(sitemap.includes(`<loc>${canonical}</loc>`));
-  assert.ok(llms.includes(`规范地址：${canonical}`));
+  assert.ok(llms.includes(`V1.7.5 归档版：${canonical}`));
   assert.match(llms, /浏览器 Web Crypto API/);
 });

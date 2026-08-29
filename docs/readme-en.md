@@ -4,7 +4,7 @@
 
 A browser-local utility for Password, Passphrase, PIN, Token, API Secret, UUID, Hex, Random Bytes, and BIP39 Mnemonic generation.
 
-[Use V2.1](https://betaer.github.io/password-generator/index-2.1.html) · [V2.0.1](https://betaer.github.io/password-generator/v2.01.html) · [V2.0](https://betaer.github.io/password-generator/index-2.0.html) · [V1.7.5](https://betaer.github.io/password-generator/) · [Source](https://github.com/betaer/password-generator) · [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.password-generator)](https://github.com/betaer/password-generator)
+[Use V2.1](https://betaer.github.io/password-generator/index.html) · [V1.7.5 archive](https://betaer.github.io/password-generator/index-v1.75.html) · [Source](https://github.com/betaer/password-generator) · [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.password-generator)](https://github.com/betaer/password-generator)
 
 V2.1 uses one probability contract with nine specialized models. It separates exact generator metrics from empirical pattern analysis and attack-scenario estimates:
 
@@ -18,6 +18,7 @@ V2.1 uses one probability contract with nine specialized models. It separates ex
 - BIP39 generation requires a non-persistent acknowledgement of browser, extension, clipboard, and wallet-compatibility boundaries.
 - The workspace follows three Chinese steps, with Chinese labels on the left and English navigation aids on the right. All nine configuration and result views use Chinese product copy.
 - Results are visible by default. Hide/show updates only the existing presentation layer, preserving card geometry, scroll position, and keyboard focus.
+- Batch results use compact rows with per-result copy, hide, delete, and in-place regenerate actions. Shared exact metrics, observed-pattern summary, attack scenarios, and generation-model details are shown once per batch.
 - “生成记录 History” is a compact single-line list with click-to-copy, per-entry deletion, and temporary hover/focus tooltips. Back-to-top, GitHub 999+, and fixed public share-copy actions are restored at the lower right.
 - Password restores L1–L8 complexity recipes, common length/quantity shortcuts, and exact custom inputs. Applying a recipe also restores a valid default symbol pool.
 - Background BIP39 English preloading now commits the ready state even while Password remains the active mode.
@@ -53,7 +54,7 @@ npm run build:v21
 npm run serve
 ```
 
-Open `http://127.0.0.1:8765/index-2.1.html`.
+Open `http://127.0.0.1:8765/index.html`.
 
 ```bash
 npm run test:v21
@@ -62,7 +63,7 @@ npm run test:e2e:v21
 npm run verify:v21
 ```
 
-The Pages workflow deploys only after V1, V2, V2.0.1, and V2.1 tests, coverage, browser/GA network checks, `npm audit`, reproducible artifact comparison, and build-provenance attestation pass.
+The Pages workflow deploys only after the V1.7.5 archive, V2/V2.0.1 probability-core, and V2.1 tests; all three coverage gates; browser/GA network checks; `npm audit`; reproducible artifact comparison; and build-provenance attestation pass. `index.html` is the formal V2.1 entry, `index-v1.75.html` is the V1.7.5 archive, and `index-2.1.html` is a noindex compatibility redirect.
 
 ## Boundaries
 

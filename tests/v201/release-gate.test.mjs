@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 
 const root = new URL('../../', import.meta.url);
 
-test('V2.1 Pages 发布必须经过完整安全门禁与 V2.0.1/V2.1 可复现制品比对', async () => {
+test('V2.1 正式版 Pages 发布必须经过完整安全门禁与可复现制品比对', async () => {
   const workflow = await readFile(new URL('.github/workflows/v201-pages.yml', root), 'utf8');
   for (const required of [
     'npm ci',
@@ -16,8 +16,11 @@ test('V2.1 Pages 发布必须经过完整安全门禁与 V2.0.1/V2.1 可复现�
     'actions/attest-build-provenance',
   ]) assert.match(workflow, new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.match(workflow, /name:\s*V2\.1 security gate/u);
+  assert.match(workflow, /index\.html/u);
   assert.match(workflow, /index-2\.1\.html/u);
+  assert.match(workflow, /index-v1\.75\.html/u);
   assert.match(workflow, /assets\/v2\.1/u);
+  assert.doesNotMatch(workflow, /cp [^\n]*(?:index-2\.0\.html|v2\.01\.html)/u);
   assert.match(workflow, /pull_request:[\s\S]*branches:\s*\[main\]/u);
   assert.match(workflow, /package:[\s\S]*needs:\s*verify/u);
   assert.match(workflow, /deploy:[\s\S]*needs:\s*package/u);

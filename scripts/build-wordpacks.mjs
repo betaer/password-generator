@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outputRoot = path.join(root, 'assets/wordpacks');
 const outputEnglish = path.join(outputRoot, 'en');
-const sourceHtml = path.join(root, 'index.html');
+const sourceHtml = path.join(root, 'index-v1.75.html');
 const EFF_LARGE_URL = 'https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt';
 const DATAMUSE_URL = 'https://api.datamuse.com/words';
 
