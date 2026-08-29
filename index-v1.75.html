@@ -2561,7 +2561,7 @@ button, input, textarea { font: inherit; }
 }
 
 @media (max-width: 640px) {
-  .site-floating-actions { right: 12px; bottom: 12px; gap: 8px; }
+  .site-floating-actions { gap: 8px; }
   .site-floating-button.ant-btn {
     min-width: 44px;
     width: 44px;
@@ -2761,6 +2761,16 @@ button, input, textarea { font: inherit; }
 .archive-release-banner span { min-width: 0; flex: 1; }
 .archive-release-banner a { flex: 0 0 auto; color: #0b5cff; font-weight: 700; text-decoration: none; }
 .archive-release-banner a:hover, .archive-release-banner a:focus-visible { text-decoration: underline; }
+@media (min-width: 761px) and (max-width: 1619px) {
+  .page-main,
+  .archive-release-banner,
+  .seo-shell,
+  .site-global-footer {
+    width: min(calc(100% - 156px), var(--page-max));
+    margin-right: 156px;
+    margin-left: auto;
+  }
+}
 @media (max-width: 760px) {
   .archive-release-banner { width: calc(100% - 24px); align-items: flex-start; flex-direction: column; gap: 5px; }
   .seo-shell { width: calc(100% - 24px); margin-block: 10px 24px; border-radius: 16px; }
@@ -2771,6 +2781,13 @@ button, input, textarea { font: inherit; }
   .seo-shell-security-grid { grid-template-columns: 1fr; }
   .site-global-footer { width: calc(100% - 24px); margin-bottom: 24px; }
   .site-global-footer-inner { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .site-floating-actions {
+    position: static;
+    width: calc(100% - 24px);
+    flex-direction: row;
+    justify-content: flex-end;
+    margin: 12px auto 20px;
+  }
 }
 
 

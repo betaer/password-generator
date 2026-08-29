@@ -530,12 +530,6 @@ input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgb
 @keyframes reveal { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @keyframes pulse { 50% { opacity: .3; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
-@media (max-width: 2100px) {
-  .page { margin-right: 74px; margin-left: 20px; }
-  .site-floating-button { width: 44px; min-width: 44px; height: 44px; min-height: 44px; padding: 0; }
-  .site-floating-button-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .toast { right: 68px; max-width: calc(100% - 84px); }
-}
 @media (max-width: 1560px) {
   .workspace { grid-template-columns: 220px minmax(0, 900px); justify-content: start; }
   .result-panel { position: relative; top: auto; max-height: none; grid-column: 2; }
@@ -551,6 +545,10 @@ input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgb
   .mode-link { width: 142px; }
   .result-panel { grid-column: 1; }
 }
+@media (max-width: 1279px) {
+  .page { width: min(100% - 24px, 1800px); margin-right: auto; margin-left: auto; }
+  .site-floating-actions { position: static; width: 100%; flex-direction: row; justify-content: flex-end; margin: 12px auto 20px; }
+}
 @media (max-width: 900px) {
   .preset-slider-layout { grid-template-columns: minmax(0, 1fr); }
   .password-slider-field > small { padding-right: 0; }
@@ -565,7 +563,6 @@ input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgb
   .seo-shell-grid section:nth-child(3n + 2),
   .seo-shell-grid section:nth-child(3n + 3) { padding: 15px 0; border-left: 0; border-top: 1px dashed #d4ded9; }
   .seo-shell-grid section:first-child { border-top: 0; }
-  .site-floating-actions { position: static; width: calc(100% - 24px); flex-direction: row; justify-content: flex-end; margin: 12px auto 20px; }
 }
 @media (max-width: 640px) {
   .preset-slider-control { grid-template-columns: 1fr; gap: 8px; }
