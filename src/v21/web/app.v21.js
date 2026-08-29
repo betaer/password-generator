@@ -1125,7 +1125,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     let focusOpened = false;
     const show = () => {
       if (container.querySelector(`#${CSS.escape(tooltipId)}`)) return;
-      const tooltip = document.createElement('div'); tooltip.className = 'result-tooltip'; tooltip.id = tooltipId;
+      const tooltip = document.createElement(container.tagName === 'SUMMARY' ? 'span' : 'div'); tooltip.className = 'result-tooltip'; tooltip.id = tooltipId;
       tooltip.setAttribute('role', 'tooltip'); tooltip.textContent = typeof text === 'function' ? text() : text;
       trigger.setAttribute('aria-describedby', tooltipId); container.append(tooltip);
     };
@@ -1253,7 +1253,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
         : `${formatBits(assessment.exactGenerator.generatorMinEntropyBits)} 最小熵`;
     const info = iconButton('批次级安全分析说明', RESULT_ICONS.info, () => {}, 'batch-info-button');
     summary.append(heading, count, primary, info); details.append(summary);
-    installTooltip(details, info, '同一批次使用同一份冻结配置与生成模型，因此精确指标和攻击场景只展示一次；只有具体字符串的观察模式可能逐条不同。', `batch-assessment-tooltip-${first.id}`, { toggleOnClick: true });
+    installTooltip(summary, info, '同一批次使用同一份冻结配置与生成模型，因此精确指标和攻击场景只展示一次；只有具体字符串的观察模式可能逐条不同。', `batch-assessment-tooltip-${first.id}`, { toggleOnClick: true });
     const body = document.createElement('div'); body.className = 'batch-assessment-body'; body.dataset.batchAssessmentContent = 'true';
     body.append(profileContent(first, assessment, { includeObserved: false, shared: true }));
     const pattern = batchPatternContent(results); if (pattern) body.append(pattern);

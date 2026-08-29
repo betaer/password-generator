@@ -207,9 +207,17 @@ try {
   await firstInfo.click();
   assert.equal(await page.locator('.result-pattern-indicator .result-tooltip').count(), 0);
   const batchInfo = page.getByRole('button', { name: '批次级安全分析说明' });
+  await batchInfo.hover();
+  const batchTooltip = batchAssessment.locator('[role="tooltip"]');
+  assert.equal(await batchTooltip.count(), 1, '悬停批次说明图标必须创建一份气泡');
+  assert.equal(await batchTooltip.isVisible(), true, '批次说明气泡必须在折叠状态下真正可见');
+  assert.match(await batchTooltip.textContent(), /同一批次使用同一份冻结配置与生成模型/u);
+  await page.mouse.move(0, 0);
+  assert.equal(await batchTooltip.count(), 0, '移开鼠标后批次说明气泡必须关闭');
   await batchInfo.click();
   assert.equal(await batchAssessment.getAttribute('open'), null, '点击说明气泡不得误展开批次详情');
-  assert.equal(await batchAssessment.locator('.result-tooltip').count(), 1);
+  assert.equal(await batchTooltip.count(), 1);
+  assert.equal(await batchTooltip.isVisible(), true, '点击或键盘聚焦后的批次说明气泡也必须可见');
   await batchInfo.click();
   await batchAssessment.locator(':scope > summary').click();
   const modelDetails = batchAssessment.locator('.model-details');
