@@ -7,7 +7,6 @@ const frame = await readFile(
   new URL('../../assets/v2/analytics-frame.html', import.meta.url),
   'utf8',
 );
-const parent = await readFile(new URL('../../index-2.0.html', import.meta.url), 'utf8');
 
 function contentSecurityPolicy(source) {
   const tag = source.match(/<meta\b[^>]*http-equiv=["']Content-Security-Policy["'][^>]*>/i);
@@ -15,12 +14,6 @@ function contentSecurityPolicy(source) {
   const content = tag[0].match(/\bcontent=(?:"([^"]*)"|'([^']*)')/i);
   assert.ok(content, 'Content-Security-Policy meta 必须包含 content');
   return content[1] ?? content[2];
-}
-
-function iframeTag(source) {
-  const matches = [...source.matchAll(/<iframe\b[^>]*>/gi)].map((match) => match[0]);
-  assert.equal(matches.length, 1, 'V2 主页面必须且只能包含一个统计 iframe');
-  return matches[0];
 }
 
 test('frame: 只配置固定公开 V2 page_location 与 GA Measurement ID', () => {
@@ -64,27 +57,4 @@ test('frame: 不读取父页面、来源、查询、hash，也不建立消息桥
   assert.doesNotMatch(frame, /document\.referrer|location\.(?:search|hash)|URLSearchParams/);
   assert.doesNotMatch(frame, /postMessage|onmessage|addEventListener\s*\(\s*['"]message['"]/);
   assert.doesNotMatch(frame, /generatedValue|currentResult|passphrase|mnemonic|apiSecret|randomBytes|secretValue/i);
-});
-
-test('parent: 不执行任何 Google 远程脚本且 CSP 不再信任 Google 域', () => {
-  assert.doesNotMatch(parent, /<script\b[^>]*\bsrc=["']https:\/\/(?:www\.)?googletagmanager\.com/i);
-  assert.doesNotMatch(parent, /\bgtag\s*\(|\bdataLayer\b/);
-  const csp = contentSecurityPolicy(parent);
-  assert.doesNotMatch(csp, /google|doubleclick/i);
-  assert.match(csp, /frame-src 'self'/);
-});
-
-test('parent: 唯一统计 iframe 只有 allow-scripts 沙箱且不发送 referrer', () => {
-  const tag = iframeTag(parent);
-  assert.match(tag, /\bsrc=["']\.\/assets\/v2\/analytics-frame\.html["']/i);
-  assert.match(tag, /\bsandbox=["']allow-scripts["']/i);
-  assert.doesNotMatch(tag, /allow-same-origin|allow-forms|allow-popups|allow-top-navigation/i);
-  assert.match(tag, /\breferrerpolicy=["']no-referrer["']/i);
-  assert.match(tag, /\btitle=["'][^"']+["']/i);
-});
-
-test('parent: 与统计 frame 之间不存在任何 message bridge', () => {
-  assert.doesNotMatch(parent, /\.contentWindow\s*\.\s*postMessage\s*\(/);
-  assert.doesNotMatch(parent, /analytics-frame\.html[\s\S]{0,500}(?:postMessage|onmessage|['"]message['"])/i);
-  assert.doesNotMatch(parent, /(?:postMessage|onmessage|['"]message['"])[\s\S]{0,500}analytics-frame\.html/i);
 });

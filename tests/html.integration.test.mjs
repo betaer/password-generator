@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 
-const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const html = await readFile(new URL('../index-v1.75.html', import.meta.url), 'utf8');
 const memorableEngineSource = await readFile(new URL('../assets/js/memorable-engine.js', import.meta.url), 'utf8');
 const wordPackManagerSource = await readFile(new URL('../assets/js/word-pack-manager.js', import.meta.url), 'utf8');
 const securityAnalysisSource = await readFile(new URL('../assets/js/security-analysis.js', import.meta.url), 'utf8');
@@ -110,7 +110,7 @@ test('直接打开记忆短语锚点时等待词库就绪后自动生成', () =>
 test('右下角提供 GitHub 与按语言选择文案的分享本站按钮', () => {
   assert.match(app, /const GitHubOutlined = createInlineIcon/);
   assert.match(app, /const GITHUB_REPOSITORY_URL = 'https:\/\/github\.com\/betaer\/password-generator'/);
-  assert.match(app, /const GITHUB_PAGES_URL = 'https:\/\/betaer\.github\.io\/password-generator\/'/);
+  assert.match(app, /const GITHUB_PAGES_URL = 'https:\/\/betaer\.github\.io\/password-generator\/index-v1\.75\.html'/);
   assert.match(app, /const GITHUB_STAR_DISPLAY = '999\+'/);
   assert.match(app, /const SHARE_PROMOTION_TEXTS = Object\.freeze/);
   assert.match(app, /分享一个专业又好用的密码生成器/);

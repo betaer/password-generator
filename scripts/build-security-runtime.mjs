@@ -2,7 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { transform } from 'esbuild';
 
 const sourceURL = new URL('../assets/js/security-analysis.js', import.meta.url);
-const htmlURL = new URL('../index.html', import.meta.url);
+const htmlURL = new URL('../index-v1.75.html', import.meta.url);
 const marker = 'security-analysis';
 
 const [source, html] = await Promise.all([
@@ -34,4 +34,4 @@ if (expression.test(html)) {
 }
 
 await writeFile(htmlURL, nextHTML);
-console.log(`已将 ${minified.length.toLocaleString('en-US')} 字节安全分析运行时内置到 index.html。`);
+console.log(`已将 ${minified.length.toLocaleString('en-US')} 字节安全分析运行时内置到 index-v1.75.html。`);

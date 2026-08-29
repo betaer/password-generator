@@ -66,12 +66,16 @@ try {
   const page = await context.newPage();
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
-  await page.goto(`${baseUrl}/index-2.1.html#password`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${baseUrl}/index-2.1.html?from=compat#pin`, { waitUntil: 'domcontentloaded' });
+  await page.waitForURL(`${baseUrl}/index.html?from=compat#pin`);
+  assert.equal((await context.request.get(`${baseUrl}/index-2.0.html`)).status(), 404, 'V2.0 旧入口必须下线');
+  assert.equal((await context.request.get(`${baseUrl}/v2.01.html`)).status(), 404, 'V2.0.1 旧入口必须下线');
+  await page.goto(`${baseUrl}/index.html#password`, { waitUntil: 'domcontentloaded' });
   await waitReady(page);
   await page.waitForFunction(() => [...document.querySelectorAll('.resource-item')]
     .some((item) => item.textContent.includes('BIP39 英语 · 已就绪')));
   assert.equal(await page.locator('link[rel="canonical"]').count(), 1);
-  assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), 'https://betaer.github.io/password-generator/index-2.1.html');
+  assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), 'https://betaer.github.io/password-generator/index.html');
   assert.equal(await page.locator('link[hreflang="en"]').count(), 0, '没有独立英文页面时不得声明英文 hreflang');
   const publishedStructuredData = JSON.parse(await page.locator('#v21-structured-data').textContent());
   const publishedApplication = publishedStructuredData['@graph'].find((entry) => entry['@type'] === 'SoftwareApplication');
@@ -197,7 +201,7 @@ try {
   assert.equal(await batchAssessment.getByText('精确生成器指标', { exact: true }).count(), 1);
   assert.equal(await batchAssessment.getByText('攻击场景估算', { exact: true }).count(), 1);
   assert.equal(await batchAssessment.getByText('生成模型详情', { exact: true }).count(), 1);
-  const firstInfo = page.getByRole('button', { name: '第 1 条结果说明' });
+  const firstInfo = page.getByRole('button', { name: /^第 1 条观察模式：/u });
   await firstInfo.click();
   assert.equal(await page.locator('.result-pattern-indicator .result-tooltip').count(), 1);
   await firstInfo.click();
@@ -207,12 +211,29 @@ try {
   assert.equal(await batchAssessment.getAttribute('open'), null, '点击说明气泡不得误展开批次详情');
   assert.equal(await batchAssessment.locator('.result-tooltip').count(), 1);
   await batchInfo.click();
+  await batchAssessment.locator(':scope > summary').click();
+  const modelDetails = batchAssessment.locator('.model-details');
+  await modelDetails.locator('summary').click();
+  await firstInfo.focus();
+  await page.waitForFunction(() => [...document.querySelectorAll('[data-pattern-indicator]')]
+    .every((node) => ['ready', 'error', 'degraded', 'unavailable'].includes(node.dataset.state)));
+  assert.equal(await firstInfo.evaluate((node) => document.activeElement === node), true, '异步模式分析更新不得夺走当前焦点');
+  assert.equal(await batchAssessment.getAttribute('open'), '', '异步模式分析更新不得折叠批次安全说明');
+  assert.equal(await modelDetails.getAttribute('open'), '', '异步模式分析更新不得折叠生成模型详情');
+  assert.equal(await page.locator('.result-pattern-indicator .result-pattern-indicator').count(), 0, '模式分析不得嵌套重复提示节点');
+  assert.doesNotMatch(await page.locator('.result-pattern-indicator .result-tooltip').textContent(), /正在|分析中/u, '已打开的观察模式气泡必须随异步结果原位更新');
+  await modelDetails.locator('summary').click();
+  await batchAssessment.locator(':scope > summary').click();
   const compactViewport = await page.evaluate(() => {
     const scroll = document.querySelector('.result-scroll').getBoundingClientRect();
     const third = document.querySelectorAll('.compact-result-row')[2].getBoundingClientRect();
     return { visibleRows: [...document.querySelectorAll('.compact-result-row')].filter((row) => row.getBoundingClientRect().bottom <= scroll.bottom + 1).length, thirdBottom: third.bottom, scrollBottom: scroll.bottom };
   });
   assert.ok(compactViewport.visibleRows >= 3, `结果首屏必须看见至少三条，当前 ${compactViewport.visibleRows} 条`);
+  const firstCopyAction = page.locator('.compact-result-row').first().getByRole('button', { name: '复制第 1 条生成结果' }).last();
+  await firstCopyAction.hover();
+  assert.equal(await page.locator('.compact-result-actions > .result-tooltip').textContent(), '复制第 1 条生成结果');
+  await page.mouse.move(0, 0);
 
   const beforeRegenerate = await page.locator('.compact-result-row').evaluateAll((rows) => rows.map((row) => ({
     id: row.dataset.resultId,
@@ -252,6 +273,17 @@ try {
     ['randomBytes', ['随机字节', 'Random Bytes', '随机字节策略配置', '随机字节生成结果']],
     ['uuid', ['UUID 标识符', 'UUID', 'UUID 标识符策略配置', 'UUID 标识符生成结果']],
   ]);
+  const modeMetaPatterns = new Map([
+    ['password', /位 · 小写/u],
+    ['passphrase', /个词/u],
+    ['pin', /位 · 批内唯一/u],
+    ['mnemonic', /ENT \d+ \/ CS \d+ 比特/u],
+    ['token', /个随机位/u],
+    ['apiSecret', /个随机位/u],
+    ['hex', /个随机位/u],
+    ['randomBytes', /字节 · .*SHA-256/u],
+    ['uuid', /标识符，不是秘密/u],
+  ]);
   assert.equal(await page.locator('#mode-panel-title').textContent(), '1、选择生成类型');
   for (const [mode, [zh, en, configTitle, resultTitle]] of modeLabels) {
     const modeButton = page.locator(`.mode-link[data-mode="${mode}"]`);
@@ -260,13 +292,30 @@ try {
     await modeButton.click();
     if (mode === 'mnemonic') await page.locator('input[name="mnemonicAck"]').check();
     await waitReady(page);
+    await page.locator('input[name="quantity"]').fill('3');
     await clickGenerate(page);
-    assert.equal(await page.locator('#result-container article').count(), 1, `${mode} result`);
+    assert.equal(await page.locator('#result-container article').count(), 3, `${mode} 必须以三条紧凑行展示批量结果`);
+    assert.equal(await page.locator('[data-batch-assessment]').count(), 1, `${mode} 批次只显示一份公共安全说明`);
     assert.equal(await page.locator('#config-title').textContent(), configTitle);
     assert.equal(await page.locator('#result-title').textContent(), resultTitle);
-    assert.equal(await page.locator('#result-container .compact-result-row').getAttribute('data-result-type'), mode === 'apiSecret' ? 'api-secret' : mode === 'randomBytes' ? 'random-bytes' : mode);
-    assert.doesNotMatch(await page.locator('#result-container .compact-result-value').textContent(), /^•+$/u);
+    const expectedType = mode === 'apiSecret' ? 'api-secret' : mode === 'randomBytes' ? 'random-bytes' : mode;
+    assert.equal(await page.locator('#result-container .compact-result-row').first().getAttribute('data-result-type'), expectedType);
+    assert.doesNotMatch(await page.locator('#result-container .compact-result-value').first().textContent(), /^•+$/u);
+    assert.match(await page.locator('#result-container .compact-result-meta').first().textContent(), modeMetaPatterns.get(mode));
     assert.match(await page.locator('#result-container').textContent(), /精确生成器指标/u);
+    assert.equal(await page.locator('[data-regenerate-result]').count(), 3, `${mode} 每条都可独立重新生成`);
+    assert.equal(await page.locator('[data-secret-toggle]').count(), 3, `${mode} 每条都可原位隐藏`);
+    assert.equal(await page.locator('.result-delete-button').count(), 3, `${mode} 每条都可独立删除`);
+    assert.equal(await page.getByRole('button', { name: /^复制第 \d+ 条生成结果$/u }).count(), 6, `${mode} 值与图标均可显式复制`);
+    assert.equal(await page.locator('[data-pattern-indicator]').count(), ['password', 'passphrase'].includes(mode) ? 3 : 0, `${mode} 只显示适用的逐条模式提示`);
+    if (mode === 'randomBytes') {
+      assert.equal(await page.locator('.compact-download-button').count(), 3, '每条随机字节都可下载');
+      const beforeId = await page.locator('.compact-result-row').first().getAttribute('data-result-id');
+      const beforeMeta = await page.locator('.compact-result-meta').first().textContent();
+      await page.locator('.compact-result-row').first().locator('[data-regenerate-result]').click();
+      await page.waitForFunction((id) => document.querySelector('.compact-result-row')?.dataset.resultId !== id, beforeId);
+      assert.notEqual(await page.locator('.compact-result-meta').first().textContent(), beforeMeta, '随机字节重生成必须更新 SHA-256 摘要');
+    }
   }
   assert.equal(await page.evaluate(() => globalThis.__v21Clipboard.length), 0, '生成不得自动复制');
 
@@ -287,12 +336,65 @@ try {
   assert.match(await resultCard.locator('.compact-result-value').evaluate((node) => getComputedStyle(node, '::before').content), /•+/u);
   assert.equal(await toggleButton.evaluate((node) => document.activeElement === node), true, '切换后保持键盘焦点');
   assert.equal(await resultCard.evaluate((node) => getComputedStyle(node).animationName), 'none');
+  const hiddenSecret = await resultCard.locator('.compact-result-value').textContent();
+  await resultCard.locator('.compact-result-value').hover();
+  const hiddenTooltipText = await resultCard.locator(':scope > .result-tooltip').textContent();
+  assert.match(hiddenTooltipText, /内容已隐藏/u);
+  assert.equal(hiddenTooltipText.includes(hiddenSecret), false, '隐藏状态的 hover/focus 气泡不得泄露完整结果');
+  await page.mouse.move(0, 0);
   await toggleButton.click();
   assert.deepEqual(await resultCard.boundingBox(), beforeToggle, '显示内容不得改变结果卡几何位置');
   assert.equal(await page.evaluate(() => scrollY), beforePageScroll, '显示内容不得晃动页面滚动位置');
   assert.equal(await resultCard.locator('.compact-result-value').getAttribute('data-secret-state'), 'revealed');
 
+  const stableBeforeFailure = {
+    id: await resultCard.getAttribute('data-result-id'),
+    value: await resultCard.locator('.compact-result-value').textContent(),
+  };
+  await page.evaluate(() => {
+    globalThis.__v21RealWorker = globalThis.Worker;
+    globalThis.Worker = class ForcedWorkerFailure {
+      constructor() { throw new Error('V21_FORCED_REGENERATION_FAILURE'); }
+    };
+  });
+  await resultCard.locator('[data-regenerate-result]').click();
+  await page.waitForFunction(() => !document.querySelector('[data-regenerate-result]')?.disabled);
+  assert.match(await page.locator('#toast').textContent(), /V21_FORCED_REGENERATION_FAILURE/u);
+  assert.deepEqual({
+    id: await page.locator('.compact-result-row').first().getAttribute('data-result-id'),
+    value: await page.locator('.compact-result-value').first().textContent(),
+  }, stableBeforeFailure, '单条重生成失败必须原子保留旧结果');
+  await page.evaluate(() => { globalThis.Worker = globalThis.__v21RealWorker; delete globalThis.__v21RealWorker; });
+
+  await page.locator('input[name="length"]').fill('4096');
+  await clickGenerate(page);
+  const cancelledRegenerationSecret = await page.locator('.compact-result-value').first().textContent();
+  await page.evaluate(() => {
+    globalThis.__v21RealWorker = globalThis.Worker;
+    globalThis.Worker = class DelayedWorker {
+      constructor(...args) {
+        this.inner = new globalThis.__v21RealWorker(...args);
+        this.messageHandler = null;
+        this.errorHandler = null;
+        this.inner.onmessage = (event) => setTimeout(() => this.messageHandler?.(event), 150);
+        this.inner.onerror = (event) => this.errorHandler?.(event);
+      }
+      set onmessage(handler) { this.messageHandler = handler; }
+      get onmessage() { return this.messageHandler; }
+      set onerror(handler) { this.errorHandler = handler; }
+      get onerror() { return this.errorHandler; }
+      postMessage(...args) { this.inner.postMessage(...args); }
+      terminate() { this.inner.terminate(); }
+    };
+  });
+  await page.locator('.compact-result-row').first().locator('[data-regenerate-result]').click();
   await page.locator('.mode-link[data-mode="uuid"]').click();
+  await page.waitForFunction(() => document.getElementById('config-title').textContent === 'UUID 标识符策略配置');
+  await page.waitForTimeout(250);
+  assert.equal(await page.locator('#result-container article').count(), 0, '切换模式取消单条重生成后不得复活旧结果');
+  assert.equal((await page.locator('#result-container').textContent()).includes(cancelledRegenerationSecret), false, '已取消的 Password 秘密不得出现在 UUID 页面');
+  await page.evaluate(() => { globalThis.Worker = globalThis.__v21RealWorker; delete globalThis.__v21RealWorker; });
+
   await clickGenerate(page);
   assert.match(await page.locator('#result-container').textContent(), /这是标识符，不是秘密/u);
   assert.doesNotMatch(await page.locator('#result-container').textContent(), /攻击场景估算|强度等级|快速离线/u);
@@ -312,6 +414,14 @@ try {
   await page.locator('input[name="quantity"]').fill('100');
   await clickGenerate(page);
   assert.equal(await page.locator('#result-container article').count(), 100);
+  const pinCollisionMetric = page.locator('.metric').filter({ hasText: '独立批次碰撞概率' }).locator('.metric-value');
+  const pinCollisionBefore = await pinCollisionMetric.textContent();
+  const pinFirstId = await page.locator('.compact-result-row').first().getAttribute('data-result-id');
+  await page.locator('.compact-result-row').first().locator('[data-regenerate-result]').click();
+  await page.waitForFunction((id) => document.querySelector('.compact-result-row')?.dataset.resultId !== id, pinFirstId);
+  const pinValuesAfterRegenerate = await page.locator('.compact-result-value').allTextContents();
+  assert.equal(new Set(pinValuesAfterRegenerate).size, 100, '100 条 PIN 在单条重生成后仍须批内唯一');
+  assert.equal(await pinCollisionMetric.textContent(), pinCollisionBefore, '单条重生成不得把原批次碰撞概率改写为数量 1 的模型');
   await page.getByRole('button', { name: '复制全部' }).click();
   const pinBatch = await page.evaluate(() => globalThis.__v21Clipboard.at(-1).split('\n'));
   assert.equal(pinBatch.length, 100);
@@ -335,6 +445,7 @@ try {
   await page.locator('#history-panel > summary').click();
   assert.equal(await page.locator('#history-panel').getAttribute('open'), '');
   await page.locator('input[name="prefix"]').fill(`${sentinel}_`);
+  await page.locator('input[name="quantity"]').fill('1');
   await clickGenerate(page);
   await page.locator('input[name="prefix"]').fill('');
   assert.match(await page.locator('#result-container .compact-result-value').textContent(), new RegExp(sentinel), '当前结果默认显示明文');
@@ -348,6 +459,11 @@ try {
   assert.equal(await page.locator('.history-icon-button').count(), 2, '复制和删除均使用图标按钮');
   assert.equal((await page.locator('.history-copy-button').textContent()).trim(), '');
   assert.equal((await page.locator('.history-delete-button').textContent()).trim(), '');
+  const tokenResultId = await page.locator('.compact-result-row').first().getAttribute('data-result-id');
+  await page.locator('.compact-result-row').first().locator('[data-regenerate-result]').click();
+  await page.waitForFunction((id) => document.querySelector('.compact-result-row')?.dataset.resultId !== id, tokenResultId);
+  assert.equal(await page.locator('.history-row').count(), 2, '启用生成记录后，单条重生成保留旧值并写入新值');
+  assert.equal((await page.locator('.history-preview').allTextContents()).every((value) => value.includes(sentinel)), true, '记录生命周期必须保留同一冻结配置的旧值与新值');
   await page.setViewportSize({ width: 390, height: 844 });
   await historyPreview.scrollIntoViewIfNeeded();
   await historyPreview.hover();
@@ -370,7 +486,7 @@ try {
   await page.locator('#copy-share').click();
   const shareText = await page.evaluate(() => globalThis.__v21Clipboard.at(-1));
   assert.match(shareText, /V2\.1/u);
-  assert.match(shareText, /https:\/\/betaer\.github\.io\/password-generator\/index-2\.1\.html/u);
+  assert.match(shareText, /https:\/\/betaer\.github\.io\/password-generator\/index\.html/u);
   assert.equal(shareText.includes(sentinel), false, '网站分享文案不得包含生成结果');
   assert.equal(await page.locator('.site-floating-star-badge').textContent(), '999+');
   await page.waitForTimeout(1000);
@@ -380,12 +496,14 @@ try {
     assert.equal(combined.includes(sentinel), false);
     assert.equal(request.headers.cookie, undefined);
     const url = new URL(request.url);
-    assert.equal(url.searchParams.get('dl'), 'https://betaer.github.io/password-generator/index-2.1.html');
+    assert.equal(url.searchParams.get('dl'), 'https://betaer.github.io/password-generator/index.html');
     assert.equal(url.searchParams.get('dr'), '');
-    assert.equal(url.searchParams.get('dp'), '/password-generator/index-2.1.html');
+    assert.equal(url.searchParams.get('dp'), '/password-generator/index.html');
   }
   await page.locator('.history-row').first().getByRole('button', { name: '删除第 1 条生成记录' }).click();
-  assert.equal(await page.locator('.history-row').count(), 0, '生成记录支持逐条删除');
+  assert.equal(await page.locator('.history-row').count(), 1, '生成记录支持逐条删除且不影响另一条');
+  await page.locator('#history-toggle').uncheck();
+  assert.equal(await page.locator('.history-row').count(), 0, '关闭记录立即清除当前页面内存记录');
 
   await page.locator('.mode-link[data-mode="randomBytes"]').click();
   await page.locator('input[name="byteLength"]').fill('1048576');
@@ -421,10 +539,31 @@ try {
   assert.equal(await page.locator('select[name="version"]').inputValue(), '4');
 
   await page.locator('.mode-link[data-mode="password"]').click();
+  await page.locator('input[name="length"]').fill('4096');
+  await page.locator('input[name="quantity"]').fill('1');
+  await clickGenerate(page);
 
   for (const viewport of [{ width: 320, height: 700 }, { width: 390, height: 844 }, { width: 430, height: 900 }, { width: 1280, height: 900 }]) {
     await page.setViewportSize(viewport);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `no horizontal overflow at ${viewport.width}`);
+    const longValue = page.locator('.compact-result-value').first();
+    await longValue.hover();
+    const longTooltipGeometry = await page.locator('.compact-result-row > .result-tooltip').evaluate((tooltip) => {
+      const tip = tooltip.getBoundingClientRect();
+      const scrollNode = tooltip.closest('.result-scroll');
+      const scroll = scrollNode.getBoundingClientRect();
+      return {
+        tip: { top: tip.top, right: tip.right, bottom: tip.bottom, left: tip.left },
+        scroll: { top: scroll.top, right: scroll.right, bottom: scroll.bottom, left: scroll.left },
+        horizontalOverflow: scrollNode.scrollWidth > scrollNode.clientWidth,
+      };
+    });
+    assert.ok(longTooltipGeometry.tip.left >= longTooltipGeometry.scroll.left - 1, `${viewport.width}px 长结果气泡左侧不得被裁切`);
+    assert.ok(longTooltipGeometry.tip.right <= longTooltipGeometry.scroll.right + 1, `${viewport.width}px 长结果气泡右侧不得被裁切`);
+    assert.ok(longTooltipGeometry.tip.top >= longTooltipGeometry.scroll.top - 1, `${viewport.width}px 长结果气泡顶部不得被裁切`);
+    assert.ok(longTooltipGeometry.tip.bottom <= longTooltipGeometry.scroll.bottom + 1, `${viewport.width}px 长结果气泡底部不得被裁切`);
+    assert.equal(longTooltipGeometry.horizontalOverflow, false, `${viewport.width}px 长结果气泡不得制造结果区横向滚动`);
+    await page.mouse.move(0, 0);
     const historyTopOverlap = await page.evaluate(() => {
       const title = document.getElementById('history-title').getBoundingClientRect();
       const actions = document.querySelector('.history-top-actions').getBoundingClientRect();
@@ -579,7 +718,7 @@ try {
   const layoutContext = await browser.newContext();
   await layoutContext.route(/google-analytics\.com|googletagmanager\.com/u, (route) => route.fulfill({ status: 204, body: '' }));
   const layoutPage = await layoutContext.newPage();
-  await layoutPage.goto(`${baseUrl}/index-2.1.html#password`, { waitUntil: 'domcontentloaded' });
+  await layoutPage.goto(`${baseUrl}/index.html#password`, { waitUntil: 'domcontentloaded' });
   await waitReady(layoutPage);
   await layoutPage.setViewportSize({ width: 1280, height: 900 });
   const initialSliderGeometry = await layoutPage.evaluate(() => {
@@ -662,7 +801,7 @@ try {
   const noCryptoContext = await browser.newContext();
   await noCryptoContext.addInitScript(() => { Object.defineProperty(globalThis, 'crypto', { configurable: true, value: {} }); });
   const noCryptoPage = await noCryptoContext.newPage();
-  await noCryptoPage.goto(`${baseUrl}/index-2.1.html`, { waitUntil: 'domcontentloaded' });
+  await noCryptoPage.goto(`${baseUrl}/index.html`, { waitUntil: 'domcontentloaded' });
   await noCryptoPage.waitForFunction(() => document.documentElement.dataset.passwordGeneratorReady === 'true');
   assert.equal(await noCryptoPage.locator('#generate-button').isDisabled(), true);
   assert.match(await noCryptoPage.locator('#crypto-status-chip').textContent(), /已停止/u);

@@ -15,6 +15,26 @@ export function createBatchRequestSnapshot(mode, config) {
   return deepFreeze({ mode, config: structuredClone(config) });
 }
 
+export function createBatchPresentationSnapshot(result, quantity) {
+  if (!isPlainObject(result) || typeof result.id !== 'string' || !result.id) {
+    throw new TypeError('批次展示源必须是有效结果');
+  }
+  if (!Number.isSafeInteger(quantity) || quantity < 1) throw new RangeError('批次数量必须是正整数');
+  if (typeof result.type !== 'string' || !result.type || !isPlainObject(result.configSnapshot) || !isPlainObject(result.generationModel)) {
+    throw new TypeError('批次展示源缺少概率模型');
+  }
+  return deepFreeze({
+    id: `batch:${result.id}`,
+    type: result.type,
+    schemaVersion: result.schemaVersion,
+    configSnapshot: structuredClone(result.configSnapshot),
+    generationModel: structuredClone(result.generationModel),
+    quantity,
+    randomByteLength: result.bytes instanceof Uint8Array ? result.bytes.byteLength : null,
+    checksumValid: result.type === 'mnemonic' ? result.checksumValid === true : null,
+  });
+}
+
 export function replaceResultById(results, id, replacement) {
   if (!Array.isArray(results)) throw new TypeError('results 必须是数组');
   if (typeof id !== 'string' || !id) throw new TypeError('id 必须是非空字符串');
@@ -35,6 +55,15 @@ export function hasDuplicateResultValue(results, excludedId, replacement) {
   if (!Array.isArray(results)) throw new TypeError('results 必须是数组');
   if (!replacement || typeof replacement.value !== 'string') throw new TypeError('replacement value 必须是字符串');
   return results.some((result) => result?.id !== excludedId && result?.value === replacement.value);
+}
+
+export function shouldRejectUniqueReplacement(results, excludedId, replacement, request) {
+  if (!isPlainObject(request) || typeof request.mode !== 'string' || !isPlainObject(request.config)) {
+    throw new TypeError('request 必须包含 mode 与 config');
+  }
+  return request.mode === 'pin'
+    && request.config.uniqueWithinBatch !== false
+    && hasDuplicateResultValue(results, excludedId, replacement);
 }
 
 export function aggregatePatternStates(results, patterns, options = {}) {

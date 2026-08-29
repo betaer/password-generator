@@ -5,12 +5,12 @@ import { readFile } from 'node:fs/promises';
 
 const root = new URL('../../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
-const canonical = 'https://betaer.github.io/password-generator/index-2.1.html';
+const canonical = 'https://betaer.github.io/password-generator/index.html';
 
 test('V2.1 SEO 元信息完整度与 V1.7.5 对齐且规范地址唯一', async () => {
   const [page, builtPage] = await Promise.all([
     read('src/v21/web/page.v21.html'),
-    read('index-2.1.html'),
+    read('index.html'),
   ]);
   for (const pattern of [
     /<title>安全随机数据生成器 V2\.1｜密码、口令、PIN、Token、UUID 与 BIP39<\/title>/u,
@@ -94,16 +94,15 @@ test('V2.1 GEO 静态正文、llms.txt 与 Sitemap 使用一致事实和版本�
     assert.ok(llms.includes(name), `llms.txt 缺少 ${name}`);
   }
   assert.ok(sitemap.includes(`<loc>${canonical}</loc>`));
-  assert.match(page, /href="\.\/index\.html">V1\.7\.5/u);
-  assert.match(page, /href="\.\/index-2\.0\.html">V2\.0/u);
-  assert.match(page, /href="\.\/v2\.01\.html">V2\.0\.1/u);
+  assert.match(page, /href="\.\/index-v1\.75\.html">V1\.7\.5 归档版/u);
+  assert.doesNotMatch(page, /href="\.\/(?:index-2\.0|v2\.01)\.html"/u);
 });
 
 test('V2.1 构建为结构化数据内联脚本生成 CSP 哈希', async () => {
   const [page, build, builtPage] = await Promise.all([
     read('src/v21/web/page.v21.html'),
     read('scripts/build-v21.mjs'),
-    read('index-2.1.html'),
+    read('index.html'),
   ]);
   assert.match(page, /__V21_SEO_HASH__/u);
   assert.match(build, /v21-structured-data/u);

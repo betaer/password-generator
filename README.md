@@ -4,9 +4,9 @@
 
 浏览器本地运行的安全随机数据工作台，覆盖 Password、Passphrase、PIN、Token、API Secret、UUID、Hex、Random Bytes 与 BIP39 Mnemonic。V2.1 采用“统一概率契约 + 各类型专用模型”，不会把九类数据都套进同一套密码强度结论。
 
-[在线使用 V2.1](https://betaer.github.io/password-generator/index-2.1.html) · [V2.0.1](https://betaer.github.io/password-generator/v2.01.html) · [V2.0](https://betaer.github.io/password-generator/index-2.0.html) · [稳定版 V1.7.5](https://betaer.github.io/password-generator/) · [源代码](https://github.com/betaer/password-generator) · [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.password-generator)](https://github.com/betaer/password-generator)
+[在线使用 V2.1 正式版](https://betaer.github.io/password-generator/index.html) · [V1.7.5 归档版](https://betaer.github.io/password-generator/index-v1.75.html) · [源代码](https://github.com/betaer/password-generator) · [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.password-generator)](https://github.com/betaer/password-generator)
 
-> 根入口 `index.html` 继续保留 V1.7.5；`index-2.0.html` 与 `v2.01.html` 分别保留 V2.0、V2.0.1；V2.1 独立发布为 `index-2.1.html`，资源目录与旧版完全隔离。
+> `index.html` 是 V2.1 正式入口；V1.7.5 已按原版能力归档为 `index-v1.75.html`。`index-2.1.html` 只保留 noindex 兼容跳转，旧的 V2.0 与 V2.0.1 页面入口已下线。
 
 ## V2.1 的核心能力
 
@@ -20,6 +20,7 @@
 - “生成”与“复制”完全分离；History 每次会话默认关闭，只在内存中按条数与总字节预算保留。
 - 工作区按“1、选择生成类型 → 2、策略配置 → 3、生成结果”组织；左侧中文居左、英文居右，九类配置与结果卡使用完整中文显示。
 - 当前结果默认显示明文；隐藏/显示只原地改变视觉呈现，不重建结果卡、不改变滚动位置或键盘焦点。
+- 批量结果使用紧凑单行列表；每条支持复制、隐藏、删除与原位重新生成，公共精确指标、观察模式汇总、攻击场景和生成模型只在批次底部展示一次。
 - “生成记录 History”采用紧凑单行列表，支持点击复制、逐条删除以及 hover/focus 临时完整内容气泡；右下角恢复回顶、GitHub 999+ 与固定分享文案操作。
 - Password 恢复 L1～L8 复杂度方案、常用长度/数量快捷档位和精确自定义输入；快捷方案会恢复有效默认符号池。
 - BIP39 英语资源在后台预加载完成后会正确提交“已就绪”，不再因当前仍处 Password 模式而卡在“加载中”。
@@ -107,7 +108,7 @@ GA 保留，但只作为“隔离、无本站 Analytics Cookie 的页面访问�
 
 - Google JS 不在生成器父页面执行；父页面 CSP 不信任 Google 域；
 - iframe 只有 `sandbox="allow-scripts"`，没有 `allow-same-origin`、消息桥、referrer 或父页面 URL 数据；
-- 只配置固定的 `https://betaer.github.io/password-generator/index-2.1.html`、固定 path/title 和空 referrer；
+- 只配置固定的 `https://betaer.github.io/password-generator/index.html`、固定 path/title 和空 referrer；
 - 不向 iframe 发送生成器类型、配置、输入、prefix、结果或 BIP39；
 - `analytics_storage='denied'` 下仍会发送 cookieless measurement ping，Google 仍可能收到 User-Agent、IP、时间等标准浏览器/网络层元数据，因此不使用“完全匿名”表述。
 
@@ -123,16 +124,16 @@ npm run build:v21
 npm run serve
 ```
 
-访问 `http://127.0.0.1:8765/index-2.1.html`。
+访问 `http://127.0.0.1:8765/index.html`。
 
 ```bash
 npm run test:v21             # V2.1 单元、集成与发布契约测试
 npm run test:coverage:v21    # V2.1 辅助模型 80% branches/functions/lines/statements 门槛
 npm run test:e2e:v21         # BIP39 就绪、复杂度/长度/数量、九类结果、History、隐私、GA 与响应式验收
-npm run verify:v21           # V1 + V2 + V2.0.1 + V2.1 + coverage + E2E + audit + artifact diff
+npm run verify:v21           # V1.7.5 归档 + 概率内核 + V2.1 + 三套 coverage + E2E + audit + artifact diff
 ```
 
-`build:v21` 会重建 `index-2.1.html` 与 `assets/v2.1/`，所有浏览器资源使用 SHA-256 前 12 位内容哈希命名。完整门禁也会重建并核对冻结的 V2.0.1 制品；`git diff --exit-code` 通过后才允许部署。
+`build:v21` 会重建正式 `index.html`、兼容跳转 `index-2.1.html` 与 `assets/v2.1/`，所有浏览器资源使用 SHA-256 前 12 位内容哈希命名；`git diff --exit-code` 通过后才允许部署。V2/V2.0.1 的历史概率内核仍保留单元与覆盖率审计，但不再发布旧页面入口。
 
 GitHub Pages 自定义 workflow 强制执行完整门禁，上传独立 `_site` 制品，并创建 Sigstore/GitHub build provenance attestation 后才部署。主页面 meta CSP 无法实现 `frame-ancestors`；需要反向代理响应头时请参考 [`docs/security-headers.v201.example`](docs/security-headers.v201.example)，该文件不会被 GitHub Pages 自动应用。
 
@@ -140,10 +141,9 @@ GitHub Pages 自定义 workflow 强制执行完整门禁，上传独立 `_site` 
 
 ```text
 .
-├── index.html                    # V1.7.5 稳定入口
-├── index-2.0.html                # V2.0 保留入口
-├── v2.01.html                    # V2.0.1 发布入口
-├── index-2.1.html                # V2.1 当前发布入口
+├── index.html                    # V2.1 正式入口
+├── index-v1.75.html              # V1.7.5 归档入口
+├── index-2.1.html                # 指向正式版的 noindex 兼容跳转
 ├── src/v201/                     # 共享的概率契约、任务、预算与专用结果语义
 ├── src/v21/                      # V2.1 控件模型、资源状态与页面源码
 ├── assets/v2.1/                  # V2.1 内容哈希 runtime/UI/Workers/GA/词表/风险资源

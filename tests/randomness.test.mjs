@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const html = await readFile(new URL('../index-v1.75.html', import.meta.url), 'utf8');
 const appStart = html.indexOf('const React =');
 assert.ok(appStart > -1, '缺少应用业务脚本');
 const app = html.slice(appStart);

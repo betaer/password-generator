@@ -1,11 +1,9 @@
 # Security Random Generator V2.1｜安全随机数据生成器
 
-V2.1：https://betaer.github.io/password-generator/index-2.1.html
-V2.0.1：https://betaer.github.io/password-generator/v2.01.html
-V2.0：https://betaer.github.io/password-generator/index-2.0.html
-V1.7.5：https://betaer.github.io/password-generator/
-V2.1 规范地址：https://betaer.github.io/password-generator/index-2.1.html
-项目默认入口：https://betaer.github.io/password-generator/
+V2.1 正式版：https://betaer.github.io/password-generator/index.html
+V1.7.5 归档版：https://betaer.github.io/password-generator/index-v1.75.html
+V2.1 规范地址：https://betaer.github.io/password-generator/index.html
+项目默认入口：https://betaer.github.io/password-generator/index.html
 源代码：https://github.com/betaer/password-generator
 
 ## 核心契约
@@ -53,6 +51,6 @@ V2.1 规范地址：https://betaer.github.io/password-generator/index-2.1.html
 
 ## 发布
 
-- `index-2.1.html` 与 `assets/v2.1/` 使用内容哈希资源和 runtime/product 双版本握手；V2.0.1 制品保持不变。
-- CI 强制执行 V1/V2/V2.0.1/V2.1 单测、80% 覆盖率、浏览器 E2E、GA 网络验收、npm audit 与 git diff --exit-code。
+- `index.html` 与 `assets/v2.1/` 使用内容哈希资源和 runtime/product 双版本握手；`index-2.1.html` 仅作为 noindex 兼容跳转，V1.7.5 保存在 `index-v1.75.html`。
+- CI 强制执行 V1.7.5 归档、V2/V2.0.1 概率内核与 V2.1 单测、三套 80% 覆盖率、V2.1 浏览器 E2E、GA 网络验收、npm audit 与 git diff --exit-code。
 - 通过后才上传 Pages 制品并创建 build provenance attestation。

@@ -3,7 +3,7 @@
 - 源视觉真值：`/var/folders/wj/k5k4njyd16zcxv078rqwhbfc0000gn/T/codex-clipboard-b7d9b587-8b57-49d4-b5de-f447d261e35b.png`
 - 实现截图：`/Users/aa/Documents/my/codex/Password-Generator/artifacts/v21-compact-results-413-final.png`
 - 并排对照：`/Users/aa/Documents/my/codex/Password-Generator/artifacts/v21-qa-comparison-final.png`
-- 页面：`index-2.1.html#password`
+- 页面：`index.html#password`（正式版；`index-2.1.html` 仅为兼容跳转）
 - 状态：5 条密码结果；第 2 条已执行原位重新生成；批次级安全分析与生成记录默认折叠；结果默认明文。
 
 ## 视口与密度归一化

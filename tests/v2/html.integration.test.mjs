@@ -2,9 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const html = await readFile(new URL('../../index-2.0.html', import.meta.url), 'utf8');
 const app = await readFile(new URL('../../assets/v2/app.v2.js', import.meta.url), 'utf8');
-const source = `${html}\n${app}`;
+const source = app;
 
 const MODE_HASHES = [
   '#password',
@@ -18,17 +17,13 @@ const MODE_HASHES = [
   '#mnemonic',
 ];
 
-test('V2 exposes all nine independent generator hashes and three semantic groups', () => {
+test('V2 历史运行时仍保留九类独立生成器 hash', () => {
   for (const hash of MODE_HASHES) assert.match(source, new RegExp(hash.replace('-', '\\-')));
-  assert.match(html, /人类凭据/);
-  assert.match(html, /机器密钥/);
-  assert.match(html, /标准标识符/);
 });
 
-test('V2 loads its same-origin runtime and local security resources', () => {
-  assert.match(html, /\.\/assets\/v2\/runtime\.v2\.min\.js/);
-  assert.match(html, /\.\/assets\/js\/embedded-word-packs\.js/);
-  assert.doesNotMatch(html, /(?:unpkg|jsdelivr|cdnjs)\.com/);
+test('V2 历史运行时只引用同源安全资源', () => {
+  assert.match(app, /\.\/assets\/js\/embedded-word-packs\.js/);
+  assert.doesNotMatch(app, /(?:unpkg|jsdelivr|cdnjs)\.com/);
 });
 
 test('generated results read immutable generationModel metadata rather than string appearance', () => {

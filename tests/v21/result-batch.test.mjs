@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 
 import {
   aggregatePatternStates,
+  createBatchPresentationSnapshot,
   createBatchRequestSnapshot,
   hasDuplicateResultValue,
   replaceResultById,
+  shouldRejectUniqueReplacement,
 } from '../../src/v21/result-batch.mjs';
 
 test('批次请求深拷贝并冻结非秘密配置', () => {
@@ -29,6 +31,35 @@ test('批次请求拒绝未知模式和非 plain config', () => {
   assert.throws(() => createBatchRequestSnapshot('', {}), /mode/u);
   assert.throws(() => createBatchRequestSnapshot('password', []), /config/u);
   assert.throws(() => createBatchRequestSnapshot('password', null), /config/u);
+});
+
+test('批次展示源只冻结公共非秘密模型且不保留值或原始字节', () => {
+  const source = createBatchPresentationSnapshot({
+    id: 'result-a',
+    type: 'random-bytes',
+    schemaVersion: '2.0.1',
+    value: 'SECRET',
+    preview: 'abcd…',
+    sha256: 'secret-hash',
+    bytes: new Uint8Array([1, 2, 3]),
+    configSnapshot: { byteLength: 3, encoding: 'hex' },
+    generationModel: { presentationProfile: 'random-bytes', generatorMinEntropyBits: 24 },
+  }, 4);
+
+  assert.deepEqual(source, {
+    id: 'batch:result-a',
+    type: 'random-bytes',
+    schemaVersion: '2.0.1',
+    configSnapshot: { byteLength: 3, encoding: 'hex' },
+    generationModel: { presentationProfile: 'random-bytes', generatorMinEntropyBits: 24 },
+    quantity: 4,
+    randomByteLength: 3,
+    checksumValid: null,
+  });
+  assert.equal('value' in source, false);
+  assert.equal('bytes' in source, false);
+  assert.equal('sha256' in source, false);
+  assert.equal(Object.isFrozen(source.generationModel), true);
 });
 
 test('单条替换保持顺序且不修改原数组', () => {
@@ -57,6 +88,15 @@ test('唯一结果检测排除被替换行并拒绝缺失值', () => {
   assert.equal(hasDuplicateResultValue(results, 'a', { value: '1234' }), false);
   assert.equal(hasDuplicateResultValue(results, 'a', { value: '9012' }), false);
   assert.throws(() => hasDuplicateResultValue(results, 'a', {}), /value/u);
+});
+
+test('只有启用批内唯一的 PIN 才拒绝与其余行重复', () => {
+  const results = [{ id: 'a', value: '1234' }, { id: 'b', value: '5678' }];
+  const replacement = { value: '5678' };
+  assert.equal(shouldRejectUniqueReplacement(results, 'a', replacement, { mode: 'pin', config: { uniqueWithinBatch: true } }), true);
+  assert.equal(shouldRejectUniqueReplacement(results, 'a', replacement, { mode: 'pin', config: { uniqueWithinBatch: false } }), false);
+  assert.equal(shouldRejectUniqueReplacement(results, 'a', replacement, { mode: 'password', config: {} }), false);
+  assert.equal(shouldRejectUniqueReplacement(results, 'a', { value: '' }, { mode: 'randomBytes', config: {} }), false);
 });
 
 test('模式聚合区分分析中、已完成、风险和失败行', () => {
