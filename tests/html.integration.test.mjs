@@ -131,6 +131,7 @@ test('右下角依次提供 GitHub、X 与按语言选择文案的分享本站�
   assert.match(html, /\.site-floating-star-badge \{[\s\S]*?background: #172033/);
   const floatingActions = app.slice(app.indexOf('className: "site-floating-actions"'), app.indexOf('function RootApp'));
   assert.match(floatingActions, /"aria-label": "在 X 关注 Betaer"/);
+  assert.match(floatingActions, /className: "site-floating-button-label" \}, "@Betaer"/);
   assert.match(floatingActions, /target: "_blank", rel: "noopener noreferrer"/);
   assert.ok(floatingActions.indexOf('site-floating-github') < floatingActions.indexOf('site-floating-x'), 'X 应位于 GitHub 下方');
   assert.ok(floatingActions.indexOf('site-floating-x') < floatingActions.indexOf('site-floating-copy'), 'X 应位于复制分享上方');

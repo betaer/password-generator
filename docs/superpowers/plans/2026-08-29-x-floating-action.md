@@ -83,7 +83,7 @@ React.createElement(Button, {
   rel: 'noopener noreferrer',
   icon: React.createElement(XOutlined, null),
   'aria-label': '在 X 关注 Betaer',
-}, React.createElement('span', { className: 'site-floating-button-label' }, 'X'));
+}, React.createElement('span', { className: 'site-floating-button-label' }, '@Betaer'));
 ```
 
 - [ ] **Step 2: Include the X class in the V1.7.5 shared neutral-button selector**
@@ -97,7 +97,7 @@ React.createElement(Button, {
 - [ ] **Step 3: Add the semantic V2.1 X link between GitHub and copy**
 
 ```html
-<a class="site-floating-button site-floating-x" href="https://x.com/Betaer" target="_blank" rel="noopener noreferrer" aria-label="在 X 关注 Betaer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 16M20 4 4 20" /></svg><span class="site-floating-button-label">X</span></a>
+<a class="site-floating-button site-floating-x" href="https://x.com/Betaer" target="_blank" rel="noopener noreferrer" aria-label="在 X 关注 Betaer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 16M20 4 4 20" /></svg><span class="site-floating-button-label">@Betaer</span></a>
 ```
 
 - [ ] **Step 4: Build and run focused tests to verify GREEN**

@@ -49,6 +49,7 @@ test('V2.1 右下角在 GitHub 与复制分享之间提供安全的新窗口 X �
   assert.match(actions, /href="https:\/\/x\.com\/Betaer"/u);
   assert.match(actions, /target="_blank" rel="noopener noreferrer"/u);
   assert.match(actions, /aria-label="在 X 关注 Betaer"/u);
+  assert.match(actions, /<span class="site-floating-button-label">@Betaer<\/span>/u);
   assert.ok(actions.indexOf('site-floating-github') < actions.indexOf('site-floating-x'));
   assert.ok(actions.indexOf('site-floating-x') < actions.indexOf('site-floating-copy'));
 });
