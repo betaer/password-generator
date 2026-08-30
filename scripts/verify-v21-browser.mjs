@@ -538,6 +538,7 @@ try {
   assert.equal(await xLink.getAttribute('target'), '_blank');
   assert.equal(await xLink.getAttribute('rel'), 'noopener noreferrer');
   assert.equal(await xLink.locator('.site-floating-button-label').isVisible(), true, '桌面端 X 文字必须可见');
+  assert.equal(await xLink.locator('.site-floating-button-label').textContent(), '@Betaer', '桌面端 X 入口应显示账号名');
   const [xPopup] = await Promise.all([context.waitForEvent('page'), xLink.click()]);
   await xPopup.waitForLoadState('domcontentloaded');
   assert.equal(xPopup.url(), 'https://x.com/Betaer');
@@ -872,6 +873,7 @@ try {
   const archiveDesktopSizes = await archivePage.locator('.site-floating-github, .site-floating-x, .site-floating-copy').evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().width));
   assert.deepEqual(archiveDesktopSizes, [120, 120, 120]);
   assert.equal(await archiveXLink.locator('.site-floating-button-label').isVisible(), true, 'V1.7.5 桌面端 X 文字必须可见');
+  assert.equal(await archiveXLink.locator('.site-floating-button-label').textContent(), '@Betaer', 'V1.7.5 桌面端 X 入口应显示账号名');
   assert.equal(await archivePage.locator('.site-floating-actions').evaluate((node) => getComputedStyle(node).position), 'fixed');
   const [archiveXPopup] = await Promise.all([archiveContext.waitForEvent('page'), archiveXLink.click()]);
   await archiveXPopup.waitForLoadState('domcontentloaded');
