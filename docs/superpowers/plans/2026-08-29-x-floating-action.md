@@ -41,7 +41,7 @@ assert.match(page, /aria-label="在 X 关注 Betaer"/u);
 
 ```js
 const xLink = page.getByRole('link', { name: '在 X 关注 Betaer' });
-assert.equal(await xLink.getAttribute('href'), 'https://x.com/Betaer');
+assert.equal(await xLink.getAttribute('href'), 'https://x.com/intent/user?screen_name=betaer');
 assert.equal(await xLink.getAttribute('target'), '_blank');
 assert.equal(await xLink.getAttribute('rel'), 'noopener noreferrer');
 const desktopSizes = await page.locator('.site-floating-github, .site-floating-x, .site-floating-copy')
@@ -55,7 +55,7 @@ assert.deepEqual(await xLink.evaluate((node) => ({ width: node.getBoundingClient
 
 Run: `node --test tests/html.integration.test.mjs tests/v21/web-contract.test.mjs`
 
-Expected: FAIL because neither page contains `site-floating-x` or `https://x.com/Betaer` yet.
+Expected: FAIL because neither page contains `site-floating-x` or `https://x.com/intent/user?screen_name=betaer` yet.
 
 ### Task 2: Implement both X links and rebuild V2.1
 
@@ -74,7 +74,7 @@ Expected: FAIL because neither page contains `site-floating-x` or `https://x.com
 const XOutlined = createInlineIcon([
   { d: 'M4 4l16 16M20 4 4 20', stroke: 'currentColor', strokeWidth: 2.1, strokeLinecap: 'round' },
 ]);
-const X_PROFILE_URL = 'https://x.com/Betaer';
+const X_PROFILE_URL = 'https://x.com/intent/user?screen_name=betaer';
 
 React.createElement(Button, {
   className: 'site-floating-button site-floating-x',
@@ -97,7 +97,7 @@ React.createElement(Button, {
 - [ ] **Step 3: Add the semantic V2.1 X link between GitHub and copy**
 
 ```html
-<a class="site-floating-button site-floating-x" href="https://x.com/Betaer" target="_blank" rel="noopener noreferrer" aria-label="在 X 关注 Betaer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 16M20 4 4 20" /></svg><span class="site-floating-button-label">@Betaer</span></a>
+<a class="site-floating-button site-floating-x" href="https://x.com/intent/user?screen_name=betaer" target="_blank" rel="noopener noreferrer" aria-label="在 X 关注 Betaer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 16M20 4 4 20" /></svg><span class="site-floating-button-label">@Betaer</span></a>
 ```
 
 - [ ] **Step 4: Build and run focused tests to verify GREEN**
@@ -150,5 +150,5 @@ gh run watch "$(gh run list --branch main --workflow v201-pages.yml --limit 1 --
 ```text
 Open https://betaer.github.io/password-generator/
 Open https://betaer.github.io/password-generator/index-v1.75.html
-Confirm the X link is between GitHub and copy, opens https://x.com/Betaer in a new tab, is equal-width on desktop, and is 44 × 44px with a visually hidden label at 390px.
+Confirm the X link is between GitHub and copy, opens https://x.com/intent/user?screen_name=betaer in a new tab, is equal-width on desktop, and is 44 × 44px with a visually hidden label at 390px.
 ```

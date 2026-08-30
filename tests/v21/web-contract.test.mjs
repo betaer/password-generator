@@ -46,7 +46,7 @@ test('V2.1 右下角在 GitHub 与复制分享之间提供安全的新窗口 X �
   const page = await read('src/v21/web/page.v21.html');
   const actions = page.match(/<div class="site-floating-actions"[\s\S]*?<\/div>/u)?.[0] ?? '';
   assert.match(actions, /class="site-floating-button site-floating-x"/u);
-  assert.match(actions, /href="https:\/\/x\.com\/Betaer"/u);
+  assert.match(actions, /href="https:\/\/x\.com\/intent\/user\?screen_name=betaer"/u);
   assert.match(actions, /target="_blank" rel="noopener noreferrer"/u);
   assert.match(actions, /aria-label="在 X 关注 Betaer"/u);
   assert.match(actions, /<span class="site-floating-button-label">@Betaer<\/span>/u);
