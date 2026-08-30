@@ -62,7 +62,7 @@ try {
     gaRequests.push({ url: request.url(), body: request.postData() || '', headers: await request.allHeaders() });
     await route.fulfill({ status: 204, body: '' });
   });
-  await context.route('https://x.com/Betaer', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Betaer on X</title>' }));
+  await context.route('https://x.com/intent/user?screen_name=betaer', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Follow Betaer on X</title>' }));
 
   const page = await context.newPage();
   const pageErrors = [];
@@ -534,14 +534,14 @@ try {
     { width: 124, height: 42 },
   ], '桌面端 GitHub、X 与复制分享必须保持等宽完整文字按钮');
   const xLink = page.getByRole('link', { name: '在 X 关注 Betaer' });
-  assert.equal(await xLink.getAttribute('href'), 'https://x.com/Betaer');
+  assert.equal(await xLink.getAttribute('href'), 'https://x.com/intent/user?screen_name=betaer');
   assert.equal(await xLink.getAttribute('target'), '_blank');
   assert.equal(await xLink.getAttribute('rel'), 'noopener noreferrer');
   assert.equal(await xLink.locator('.site-floating-button-label').isVisible(), true, '桌面端 X 文字必须可见');
   assert.equal(await xLink.locator('.site-floating-button-label').textContent(), '@Betaer', '桌面端 X 入口应显示账号名');
   const [xPopup] = await Promise.all([context.waitForEvent('page'), xLink.click()]);
   await xPopup.waitForLoadState('domcontentloaded');
-  assert.equal(xPopup.url(), 'https://x.com/Betaer');
+  assert.equal(xPopup.url(), 'https://x.com/intent/user?screen_name=betaer');
   await xPopup.close();
   await page.setViewportSize({ width: 390, height: 844 });
   const mobileXState = await xLink.evaluate((node) => {
@@ -862,12 +862,12 @@ try {
 
   const archiveContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   await archiveContext.route(/google-analytics\.com|googletagmanager\.com/u, (route) => route.fulfill({ status: 204, body: '' }));
-  await archiveContext.route('https://x.com/Betaer', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Betaer on X</title>' }));
+  await archiveContext.route('https://x.com/intent/user?screen_name=betaer', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Follow Betaer on X</title>' }));
   const archivePage = await archiveContext.newPage();
   await archivePage.goto(`${baseUrl}/index-v1.75.html`, { waitUntil: 'domcontentloaded' });
   const archiveXLink = archivePage.getByRole('link', { name: '在 X 关注 Betaer' });
   await archiveXLink.waitFor({ state: 'visible' });
-  assert.equal(await archiveXLink.getAttribute('href'), 'https://x.com/Betaer');
+  assert.equal(await archiveXLink.getAttribute('href'), 'https://x.com/intent/user?screen_name=betaer');
   assert.equal(await archiveXLink.getAttribute('target'), '_blank');
   assert.equal(await archiveXLink.getAttribute('rel'), 'noopener noreferrer');
   const archiveDesktopSizes = await archivePage.locator('.site-floating-github, .site-floating-x, .site-floating-copy').evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().width));
@@ -877,7 +877,7 @@ try {
   assert.equal(await archivePage.locator('.site-floating-actions').evaluate((node) => getComputedStyle(node).position), 'fixed');
   const [archiveXPopup] = await Promise.all([archiveContext.waitForEvent('page'), archiveXLink.click()]);
   await archiveXPopup.waitForLoadState('domcontentloaded');
-  assert.equal(archiveXPopup.url(), 'https://x.com/Betaer');
+  assert.equal(archiveXPopup.url(), 'https://x.com/intent/user?screen_name=betaer');
   await archiveXPopup.close();
   for (const viewport of [
     { width: 1280, height: 900 },

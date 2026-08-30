@@ -111,7 +111,7 @@ test('右下角依次提供 GitHub、X 与按语言选择文案的分享本站�
   assert.match(app, /const GitHubOutlined = createInlineIcon/);
   assert.match(app, /const XOutlined = createInlineIcon/);
   assert.match(app, /const GITHUB_REPOSITORY_URL = 'https:\/\/github\.com\/betaer\/password-generator'/);
-  assert.match(app, /const X_PROFILE_URL = 'https:\/\/x\.com\/Betaer'/);
+  assert.match(app, /const X_PROFILE_URL = 'https:\/\/x\.com\/intent\/user\?screen_name=betaer'/);
   assert.match(app, /const GITHUB_PAGES_URL = 'https:\/\/betaer\.github\.io\/password-generator\/index-v1\.75\.html'/);
   assert.match(app, /const GITHUB_STAR_DISPLAY = '999\+'/);
   assert.match(app, /const SHARE_PROMOTION_TEXTS = Object\.freeze/);
