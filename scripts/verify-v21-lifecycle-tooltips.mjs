@@ -206,12 +206,17 @@ export async function verifyTouchTooltips(browser, baseUrl) {
     const tip = page.locator('.compact-result-row > .result-tooltip');
     await expect(tip).toBeVisible();
     await expect.poll(() => page.evaluate(() => __lifecycleCopies.length)).toBe(1);
+    assert.equal(await page.locator('#toast').evaluate(el => getComputedStyle(el).pointerEvents), 'none', '纯状态通知不能拦截气泡滚动和触屏点击');
     const bounds = await tip.boundingBox();
     const client = await context.newCDPSession(page);
     const x = bounds.x + bounds.width / 2;
     const startY = bounds.y + bounds.height * 0.8;
     const distance = Math.min(120, bounds.height * 0.6);
-    assert.equal(await tip.evaluate((el, point) => el.contains(document.elementFromPoint(point.x, point.y)), { x, y: startY }), true, '触屏手势必须命中气泡');
+    const hit = await tip.evaluate((el, point) => {
+      const target = document.elementFromPoint(point.x, point.y);
+      return { matched: el.contains(target), target: target?.className, point, rect: el.getBoundingClientRect().toJSON() };
+    }, { x, y: startY });
+    assert.equal(hit.matched, true, `触屏手势必须命中气泡：${JSON.stringify(hit)}`);
     const nextFrame = () => page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
     await nextFrame();
     await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: startY }] });
