@@ -55,6 +55,22 @@ test('secureRandomBytes rejects invalid lengths and unavailable Web Crypto', () 
   assert.throws(() => secureRandomBytes(1, null), /Web Crypto/);
 });
 
+test('随机源在任意分块部分写入后失败，整个缓冲区都必须清零', () => {
+  for (const failedCall of [1, 2, 3]) {
+    let calls = 0; let buffer;
+    const failure = new Error('injected random source failure');
+    const cryptoLike = { getRandomValues(target) {
+      buffer = target.buffer;
+      target.fill(119);
+      if (++calls === failedCall) throw failure;
+      return target;
+    } };
+    assert.throws(() => secureRandomBytes(131073, cryptoLike), error => error === failure);
+    assert.equal(calls, failedCall);
+    assert.equal(new Uint8Array(buffer).every(byte => byte === 0), true, `第 ${failedCall} 块失败后未清零`);
+  }
+});
+
 test('secureInt rejects the biased tail', () => {
   const cryptoLike = queuedCrypto([Uint8Array.of(255), Uint8Array.of(4)]);
   assert.equal(secureInt(10, cryptoLike), 4);

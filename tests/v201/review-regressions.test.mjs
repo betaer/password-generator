@@ -85,6 +85,25 @@ test('同步采样异常也清理已生成的原始字节，并停止启动后�
   assert.equal(raw.every(bytes => bytes.every(byte => byte === 0)), true);
 });
 
+test('大随机字节批次在第二块填充失败时清理未形成结果的缓冲区', async () => {
+  let calls = 0; let buffer; let digestCalls = 0;
+  const cryptoLike = {
+    getRandomValues(target) {
+      buffer = target.buffer; target.fill(119);
+      if (++calls === 2) throw new Error('second chunk failure');
+      return target;
+    },
+    subtle: { digest() { digestCalls += 1; assert.fail('失败的随机材料不得进入摘要或结果'); } },
+  };
+  await assert.rejects(generateAtomicBatch({
+    job: { id: 2, mode: 'randomBytes', config: { byteLength: 65537, encoding: 'hex' }, quantity: 1 },
+    isCurrent: () => true, clearResult: clearGenerationResult,
+    compile: (mode, config) => compileGenerator(mode, config, { cryptoLike }),
+  }), /second chunk failure/u);
+  assert.equal(new Uint8Array(buffer).every(byte => byte === 0), true);
+  assert.equal(digestCalls, 0);
+});
+
 test('模式分析单条失败标为失败并继续，已删除结果不再交给分析器', async () => {
   const seen = []; const updates = new Map();
   const coordinator = createPatternAnalysisCoordinator({ analyze: async value => {

@@ -123,6 +123,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
   let analyzerSequence = 0;
   let toastTimer = 0;
   let mnemonicRequestEpoch = 0;
+  let activeTooltip = null;
 
   const state = {
     mode: HASH_MODE[location.hash.toLowerCase()] || 'password',
@@ -1136,6 +1137,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
   function updateSecretPresentation(id) {
     const hidden = state.hidden.has(id);
     document.querySelectorAll(`.compact-result-row[data-result-id="${CSS.escape(id)}"]`).forEach((card) => {
+      closeActiveTooltip(card);
       const value = card.querySelector('.compact-result-value');
       const toggle = card.querySelector('[data-secret-toggle]');
       if (value) {
@@ -1155,25 +1157,102 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     });
   }
 
+  function closeActiveTooltip(container) {
+    if (!container || (activeTooltip && container.contains(activeTooltip.trigger))) activeTooltip?.hide();
+  }
+
   function installTooltip(container, trigger, text, tooltipId, { toggleOnClick = false, tooltipClass = '' } = {}) {
     let focusOpened = false;
+    let suppressFocus = false;
+    let closeTimer = null;
+    let tooltip = null;
     trigger.removeAttribute('title');
-    const show = () => {
-      if (container.querySelector(`#${CSS.escape(tooltipId)}`)) return;
-      const tooltip = document.createElement(container.tagName === 'SUMMARY' ? 'span' : 'div'); tooltip.className = `result-tooltip ${tooltipClass}`.trim(); tooltip.id = tooltipId;
-      tooltip.setAttribute('role', 'tooltip'); tooltip.textContent = typeof text === 'function' ? text() : text;
-      trigger.setAttribute('aria-describedby', tooltipId); container.append(tooltip);
+    const cancelClose = () => { clearTimeout(closeTimer); closeTimer = null; };
+    const hide = (restoreFocus = false) => {
+      cancelClose();
+      const returnFocus = restoreFocus && tooltip?.contains(document.activeElement);
+      tooltip?.remove(); tooltip = null;
+      trigger.removeAttribute('aria-describedby');
+      if (activeTooltip?.trigger === trigger) activeTooltip = null;
+      focusOpened = false;
+      if (returnFocus && trigger.isConnected) {
+        suppressFocus = true; trigger.focus({ preventScroll: true }); suppressFocus = false;
+      }
     };
-    const hide = () => { container.querySelector(`#${CSS.escape(tooltipId)}`)?.remove(); trigger.removeAttribute('aria-describedby'); };
-    trigger.addEventListener('mouseenter', show); trigger.addEventListener('mouseleave', hide);
-    trigger.addEventListener('focus', () => { show(); focusOpened = true; });
-    trigger.addEventListener('blur', () => { focusOpened = false; hide(); });
+    const position = () => {
+      if (!tooltip) return;
+      if (!trigger.isConnected) { hide(); return; }
+      const anchor = trigger.getBoundingClientRect();
+      const scroll = container.closest('.result-scroll')?.getBoundingClientRect();
+      const left = Math.max(8, (scroll?.left ?? 0) + 8);
+      const right = Math.min(innerWidth - 8, (scroll?.right ?? innerWidth) - 8);
+      const top = Math.max(8, (scroll?.top ?? 0) + 8);
+      const bottom = Math.min(innerHeight - 8, (scroll?.bottom ?? innerHeight) - 8);
+      if (anchor.bottom <= top || anchor.top >= bottom || anchor.right <= left || anchor.left >= right) { hide(); return; }
+      const preview = trigger.matches('.compact-result-value, .history-preview');
+      tooltip.style.position = 'fixed'; tooltip.style.right = 'auto'; tooltip.style.bottom = 'auto';
+      tooltip.style.maxWidth = `${Math.max(32, Math.min(preview ? 560 : 440, right - left))}px`;
+      tooltip.style.width = preview ? tooltip.style.maxWidth : 'max-content';
+      tooltip.style.maxHeight = `${Math.max(32, Math.min(190, bottom - top))}px`;
+      const size = tooltip.getBoundingClientRect();
+      tooltip.style.left = `${Math.max(left, Math.min(anchor.right - size.width, right - size.width))}px`;
+      const preferredTop = anchor.bottom + 6 + size.height <= bottom ? anchor.bottom + 6 : anchor.top - size.height - 6;
+      tooltip.style.top = `${Math.max(top, Math.min(preferredTop, bottom - size.height))}px`;
+    };
+    const scheduleClose = () => {
+      cancelClose();
+      closeTimer = setTimeout(() => {
+        closeTimer = null;
+        if (tooltip?.matches(':hover') || tooltip?.contains(document.activeElement) || document.activeElement === trigger) return;
+        hide();
+      }, 160);
+    };
+    const keydown = (event) => {
+      if (!tooltip) return;
+      if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); hide(true); return; }
+      if (tooltip.scrollHeight <= tooltip.clientHeight) return;
+      const positions = {
+        ArrowDown: tooltip.scrollTop + 40, ArrowUp: tooltip.scrollTop - 40,
+        PageDown: tooltip.scrollTop + tooltip.clientHeight, PageUp: tooltip.scrollTop - tooltip.clientHeight,
+        Home: 0, End: tooltip.scrollHeight,
+      };
+      if (Object.hasOwn(positions, event.key)) { event.preventDefault(); event.stopPropagation(); tooltip.scrollTop = positions[event.key]; }
+    };
+    const show = () => {
+      cancelClose();
+      if (tooltip) return;
+      closeActiveTooltip();
+      tooltip = document.createElement(container.tagName === 'SUMMARY' ? 'span' : 'div'); tooltip.className = `result-tooltip ${tooltipClass}`.trim(); tooltip.id = tooltipId;
+      tooltip.tabIndex = 0;
+      tooltip.setAttribute('role', 'tooltip'); tooltip.textContent = typeof text === 'function' ? text() : text;
+      tooltip.addEventListener('mouseenter', cancelClose); tooltip.addEventListener('mouseleave', scheduleClose);
+      tooltip.addEventListener('focus', cancelClose); tooltip.addEventListener('blur', scheduleClose);
+      tooltip.addEventListener('keydown', keydown);
+      tooltip.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); });
+      trigger.setAttribute('aria-describedby', tooltipId); container.append(tooltip);
+      activeTooltip = { trigger, tooltip, hide, position }; position();
+    };
+    trigger.addEventListener('mouseenter', show); trigger.addEventListener('mouseleave', scheduleClose);
+    trigger.addEventListener('focus', () => { if (!suppressFocus) { show(); focusOpened = true; } });
+    trigger.addEventListener('blur', () => { focusOpened = false; scheduleClose(); });
+    trigger.addEventListener('keydown', keydown);
     if (toggleOnClick) trigger.addEventListener('click', (event) => {
       event.preventDefault(); event.stopPropagation();
       if (focusOpened) { focusOpened = false; return; }
-      if (container.querySelector(`#${CSS.escape(tooltipId)}`)) hide(); else show();
+      if (tooltip) hide(); else show();
     });
   }
+
+  document.addEventListener('pointerdown', (event) => {
+    if (activeTooltip && !activeTooltip.trigger.contains(event.target) && !activeTooltip.tooltip.contains(event.target)) closeActiveTooltip();
+  }, true);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && activeTooltip) { event.preventDefault(); activeTooltip.hide(true); }
+  });
+  document.addEventListener('scroll', (event) => {
+    if (activeTooltip && event.target !== activeTooltip.tooltip) activeTooltip.position();
+  }, true);
+  addEventListener('resize', () => activeTooltip?.position());
 
   function passwordComposition(value) {
     const characters = [...value];
@@ -1230,7 +1309,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     button.removeAttribute('title');
     const openTooltipId = button.getAttribute('aria-describedby');
     const openTooltip = openTooltipId ? document.getElementById(openTooltipId) : null;
-    if (openTooltip) openTooltip.textContent = patternTooltipText(result);
+    if (openTooltip) { openTooltip.textContent = patternTooltipText(result); activeTooltip?.position(); }
   }
 
   function buildCompactResultRow(result, index) {
@@ -1319,6 +1398,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
   }
 
   function renderResults() {
+    closeActiveTooltip(resultContainer);
     resultToolbar.hidden = state.results.length === 0;
     if (!state.results.length) {
       const empty = document.createElement('div'); empty.className = 'empty-state'; const inner = document.createElement('div');
@@ -1336,15 +1416,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
   function historyDisplayText(result) { return result.type === 'random-bytes' ? result.preview : result.value; }
 
   function installHistoryTooltip(row, trigger, result) {
-    const tooltipId = `history-tooltip-${result.id}`;
-    const show = () => {
-      if (row.querySelector('.history-tooltip')) return;
-      const tip = document.createElement('div'); tip.className = 'history-tooltip'; tip.id = tooltipId; tip.setAttribute('role', 'tooltip'); tip.textContent = historyDisplayText(result);
-      trigger.setAttribute('aria-describedby', tooltipId); row.append(tip);
-    };
-    const hide = () => { row.querySelector('.history-tooltip')?.remove(); trigger.removeAttribute('aria-describedby'); };
-    trigger.addEventListener('mouseenter', show); trigger.addEventListener('mouseleave', hide);
-    trigger.addEventListener('focus', show); trigger.addEventListener('blur', hide);
+    installTooltip(row, trigger, () => historyDisplayText(result), `history-tooltip-${result.id}`, { tooltipClass: 'history-tooltip' });
   }
 
   function buildHistoryRow(result, index) {
@@ -1358,6 +1430,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
   }
 
   function renderHistory() {
+    closeActiveTooltip(historyContainer);
     const entries = historyBudget.entries;
     const summaryCount = document.getElementById('history-summary-count');
     const toggle = document.getElementById('history-toggle');
@@ -1459,7 +1532,17 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     updateBackToTop();
     if (state.mode === 'password') ['complexity', 'length', 'quantity'].forEach(revealActiveSliderMark);
   }, { passive: true });
-  addEventListener('pagehide', () => { cancelActiveGeneration('页面离开'); releaseCurrentResults(); historyBudget.clear(); disposeAnalyzer('页面离开'); });
+  addEventListener('pagehide', () => {
+    cancelActiveGeneration('页面离开');
+    closeActiveTooltip();
+    releaseCurrentResults();
+    historyBudget.clear();
+    state.patterns.clear();
+    state.historyEnabled = false;
+    renderHistory();
+    document.getElementById('history-panel').open = false;
+    disposeAnalyzer('页面离开');
+  });
   addEventListener('pageshow', (event) => { if (event.persisted) initializeAnalyzer(); });
 
   initializePassphrase(); initializePinRisk(); initializeAnalyzer(); ensureMnemonicLanguage('english');

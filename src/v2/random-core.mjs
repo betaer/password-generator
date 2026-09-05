@@ -33,9 +33,15 @@ export function secureRandomBytes(length, cryptoLike = globalThis.crypto) {
   const randomSource = requireCrypto(cryptoLike);
   const output = new Uint8Array(length);
 
-  for (let offset = 0; offset < length; offset += WEB_CRYPTO_MAX_BYTES_PER_CALL) {
-    const end = Math.min(length, offset + WEB_CRYPTO_MAX_BYTES_PER_CALL);
-    randomSource.getRandomValues(output.subarray(offset, end));
+  try {
+    for (let offset = 0; offset < length; offset += WEB_CRYPTO_MAX_BYTES_PER_CALL) {
+      const end = Math.min(length, offset + WEB_CRYPTO_MAX_BYTES_PER_CALL);
+      randomSource.getRandomValues(output.subarray(offset, end));
+    }
+  } catch (error) {
+    // A source can fail after partially filling a chunk, before any result exists.
+    output.fill(0);
+    throw error;
   }
 
   return output;
