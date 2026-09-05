@@ -4,6 +4,8 @@ import { readFile, stat } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
+import { verifyReviewRegressions } from './verify-v21-review-regressions.mjs';
+import { verifyLiveAnalytics } from './verify-v21-ga-live.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const manifest = JSON.parse(await readFile(resolve(ROOT, 'assets/v2.1/manifest.json'), 'utf8'));
@@ -43,6 +45,7 @@ const baseUrl = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch({ headless: true });
 
 try {
+  await verifyReviewRegressions(browser, baseUrl);
   const gaRequests = [];
   const googleRequestUrls = [];
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
@@ -568,12 +571,9 @@ try {
   assert.equal(await page.locator('.history-row').count(), 0, '关闭记录立即清除当前页面内存记录');
 
   await page.locator('.mode-link[data-mode="randomBytes"]').click();
-  await page.locator('input[name="byteLength"]').fill('1048576');
   await page.locator('input[name="quantity"]').fill('2');
-  await page.getByRole('button', { name: '生成', exact: true }).click();
-  await page.waitForFunction(() => document.getElementById('toast').textContent.includes('64 KiB'));
-  assert.match(await page.locator('#toast').textContent(), /64 KiB.*quantity.*1/u);
-  await page.locator('input[name="quantity"]').fill('1');
+  await page.locator('input[name="byteLength"]').fill('1048576');
+  assert.equal(await page.locator('input[name="quantity"]').inputValue(), '1', '大随机字节自动调整数量');
   await clickGenerate(page);
   assert.match(await page.locator('#result-container').textContent(), /2\^8,388,608/u);
   const randomBytesToggle = page.locator('#result-container [data-secret-toggle]');
@@ -943,7 +943,8 @@ try {
   assert.match(await noCryptoPage.locator('#crypto-status-chip').textContent(), /已停止/u);
   await noCryptoContext.close();
 
-  process.stdout.write('V2.1 browser verification passed: BIP39 readiness, three synchronized preset sliders, embedded History, nine profiles, privacy, GA isolation, and responsive layouts.\n');
+  await verifyLiveAnalytics(browser, baseUrl);
+  process.stdout.write('V2.1 browser verification passed: BIP39 readiness, three synchronized preset sliders, embedded History, nine profiles, privacy, live GA isolation, and responsive layouts.\n');
 } finally {
   await browser.close();
   await new Promise((resolveClose, rejectClose) => server.close((error) => error ? rejectClose(error) : resolveClose()));

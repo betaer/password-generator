@@ -47,16 +47,18 @@ test('分析输入严格截断到 512 字符且结果不包含明文 token', asy
 
 test('stale epoch 或已删除结果的回调被丢弃', async () => {
   let release;
+  let live = true;
   const coordinator = createPatternAnalysisCoordinator({
     analyze: () => new Promise((resolve) => { release = resolve; }),
   });
   const updates = [];
   const pending = coordinator.analyze([{ id: 'stale', type: 'password', value: 'secret' }], {
     epoch: 1,
-    isLive: () => false,
+    isLive: () => live,
     onUpdate: (...args) => updates.push(args),
   });
   await Promise.resolve();
+  live = false;
   release({ patternGuesses: 2, sequence: [{ pattern: 'dictionary' }] });
   await pending;
   assert.deepEqual(updates, []);
@@ -79,4 +81,3 @@ test('分析器 late-ready 后重分析仍存活的当前结果与 History', asy
   }), true);
   assert.deepEqual(updates, ['current', 'history']);
 });
-

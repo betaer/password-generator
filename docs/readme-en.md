@@ -42,7 +42,9 @@ Password and Passphrase show three explicit assumptions: an online rate-limited 
 
 GA is retained as an isolated cookieless page view. Google JavaScript runs only inside an iframe with `sandbox="allow-scripts"`, without `allow-same-origin`, referrer data, or a message bridge. The parent page does not execute Google JavaScript and never sends generator type, config, input, prefix, result, or mnemonic to the iframe.
 
-Cookieless measurement requests can still carry standard browser and network metadata, so the project does not claim complete anonymity. Playwright intercepts the actual `g/collect` URL, body, and headers and verifies the fixed page fields, absence of Cookie, and absence of a high-entropy secret sentinel.
+Before loading Google, the secret-free frame installs a local cookie facade: reads always return an empty string and writes are discarded. This avoids opaque-origin cookie access errors silently stopping GA; it does not grant same-origin access or expose parent data.
+
+Cookieless measurement requests can still carry standard browser and network metadata, so the project does not claim complete anonymity. Verification separates deterministic mocked GA contract tests from an integration test loading the unmodified Google script. The latter reloads the isolated frame after the parent generates a distinctive test secret, intercepts real `g/collect` requests without sending test visits to Analytics, and checks query parameters, multiline POST bodies and headers for fixed page fields, empty/absent referrer, no Cookie and no test secret. It reports the executed Google script's SHA-256. Missing script or collect requests fail verification; this checks that script and scenario, not all future third-party behavior.
 
 For an independent check, open DevTools → Network, generate/reveal/copy sample values, and confirm that no request contains a `generated_value` parameter or generated plaintext.
 

@@ -5,8 +5,15 @@
   <meta name="referrer" content="no-referrer" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src '__V21_ANALYTICS_HASH__' https://www.googletagmanager.com; connect-src https://www.google-analytics.com https://region1.google-analytics.com; img-src https://www.google-analytics.com; object-src 'none'; base-uri 'none'; form-action 'none'" />
   <title>Password Generator V2.1 isolated cookieless page view</title>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-DWZ72TFWQF"></script>
   <script id="v21-analytics-config">
+    // Opaque-origin document.cookie normally throws. Google checks AMP_TOKEN
+    // even with consent denied. Expose an always-empty, non-storing facade only
+    // on this secret-free frame; do not grant origin access or share parent data.
+    Object.defineProperty(document, 'cookie', {
+      configurable: false,
+      get: function () { return ''; },
+      set: function () {}
+    });
     globalThis.dataLayer = [];
     function gtag() { globalThis.dataLayer.push(arguments); }
     gtag('consent', 'default', {
@@ -25,11 +32,11 @@
       page_title: 'Password Generator V2.1',
       page_referrer: '',
       send_page_view: true,
-      client_storage: 'none',
       allow_google_signals: false,
       allow_ad_personalization_signals: false
     });
   </script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-DWZ72TFWQF"></script>
 </head>
 <body></body>
 </html>

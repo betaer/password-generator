@@ -18,7 +18,7 @@ import { generateUuidV4, generateUuidV7 } from '../v2/uuid-model.mjs';
 import { generateApiSecret } from './api-secret.mjs';
 import { generateMnemonic } from './bip39-model.mjs';
 import { createIntegerSearchSpace } from './probability-contract.mjs';
-import { createGenerationResult } from './result-model.mjs';
+import { createGenerationResult, clearGenerationResult } from './result-model.mjs';
 import { generateLazyRandomBytes } from './random-bytes.mjs';
 import {
   describePinPolicy,
@@ -31,8 +31,21 @@ function freezeCompiled(value) {
   return Object.freeze(value);
 }
 
-function sampleLoop(quantity, sampleOne) {
-  return Promise.all(Array.from({ length: quantity }, (_, index) => sampleOne(index)));
+function assertBatchQuantity(quantity) {
+  if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > 100) throw new RangeError('quantity must be between 1 and 100');
+}
+
+async function sampleLoop(quantity, sampleOne) {
+  assertBatchQuantity(quantity);
+  const results = [];
+  try {
+    // 顺序采样限制峰值内存；失败时没有脱离本批次的在途结果。
+    for (let index = 0; index < quantity; index += 1) results.push(await sampleOne(index));
+    return results;
+  } catch (error) {
+    for (const result of results) clearGenerationResult(result);
+    throw error;
+  }
 }
 
 function pinResult(model, value, config, policy, collisionProbability) {
@@ -78,17 +91,15 @@ export async function compileGenerator(mode, config, dependencies = {}) {
     case 'pin': {
       const model = createPinModel(config, pinRiskIndex);
       const policy = config.blockWeak ? describePinPolicy(model, pinRiskIndex) : null;
-      const sampleOne = () => upgradeLegacyResult(generatePinFromModel(model, cryptoLike), {
-        extraConfig: { uniqueWithinBatch: config.uniqueWithinBatch !== false },
-        extraModel: policy ? { commonPinPolicy: policy } : {},
-      });
+      const sampleOne = (collision = 0) => pinResult(model, generatePinFromModel(model, cryptoLike).value, config, policy, collision);
       const sampleBatch = async (quantity) => {
+        assertBatchQuantity(quantity);
         const collision = independentBatchCollisionProbability(model.searchSpace, quantity);
         if (quantity > 1 && config.uniqueWithinBatch !== false) {
           return sampleUniquePinBatch(model, quantity, cryptoLike)
             .map((value) => pinResult(model, value, config, policy, collision));
         }
-        return sampleLoop(quantity, () => sampleOne());
+        return sampleLoop(quantity, () => sampleOne(collision));
       };
       return freezeCompiled({ mode, model, sampleOne, sampleBatch });
     }
@@ -122,4 +133,3 @@ export async function compileGenerator(mode, config, dependencies = {}) {
       throw new RangeError(`unsupported generation mode: ${String(mode)}`);
   }
 }
-

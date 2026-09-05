@@ -401,6 +401,9 @@ input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgb
 .compact-result-value[data-secret-state="masked"] { color: transparent; user-select: none; }
 .compact-result-value[data-secret-state="masked"]::before { position: absolute; inset: 0; display: flex; align-items: center; color: #82958d; font: 650 12px/1.45 var(--mono); letter-spacing: .18em; content: "••••••••••••••••••••••••"; }
 .compact-result-meta { min-width: 0; overflow: hidden; color: #84958e; font-size: 9px; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+.result-file-details { position: relative; min-width: 0; font-size: 11px; color: var(--muted); }
+.result-file-details summary { cursor: pointer; color: var(--blue-deep); }
+.result-file-details code { display: block; padding-top: 6px; overflow-wrap: anywhere; user-select: text; font: 11px/1.6 var(--mono); }
 .compact-result-actions { position: relative; display: flex; align-items: center; gap: 1px; }
 .result-pattern-indicator { position: relative; display: inline-grid; }
 .result-icon-button { width: 32px; min-width: 32px; height: 32px; display: inline-grid; place-items: center; padding: 0; border: 0; border-radius: 8px; color: var(--muted); background: transparent; cursor: pointer; }

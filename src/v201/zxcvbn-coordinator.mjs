@@ -42,10 +42,16 @@ export function createPatternAnalysisCoordinator(options = {}) {
     if (!analyzer) return Promise.resolve(false);
     const task = async () => {
       for (const result of results) {
-        if (!result || !['password', 'passphrase'].includes(result.type)) continue;
-        const analysis = await analyzer(String(result.value ?? '').slice(0, MAX_ANALYZER_CHARACTERS));
+        if (!result || !['password', 'passphrase'].includes(result.type) || !isLive(result.id, epoch)) continue;
+        let analysis;
+        try {
+          analysis = normalizeAnalysis(await analyzer(String(result.value ?? '').slice(0, MAX_ANALYZER_CHARACTERS)));
+        } catch {
+          // 不把可能含秘密的分析器错误对象带入结果、DOM 或日志。
+          analysis = Object.freeze({ status: 'error', guessBits: null, sequences: Object.freeze([]) });
+        }
         if (!isLive(result.id, epoch)) continue;
-        onUpdate(result.id, normalizeAnalysis(analysis), epoch);
+        onUpdate(result.id, analysis, epoch);
       }
       return true;
     };
@@ -69,4 +75,3 @@ export function createPatternAnalysisCoordinator(options = {}) {
     get ready() { return Boolean(analyzer); },
   });
 }
-

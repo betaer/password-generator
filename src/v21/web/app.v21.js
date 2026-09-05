@@ -1,4 +1,5 @@
 import { shouldCommitMnemonicResourceState } from '../mnemonic-resource-state.mjs';
+import { createPasswordWorkerBatch } from '../password-worker-batch.mjs';
 import {
   DEFAULT_PASSWORD_SYMBOL_POOL,
   PASSWORD_COMPLEXITY_PRESETS,
@@ -86,6 +87,10 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
   const ENCODING_LABELS = Object.freeze({
     'base64url-nopad': 'Base64URL（无填充）', base64url: 'Base64URL', base64: 'Base64', hex: '十六进制', uuid: 'UUID 格式',
   });
+  const CAPITALIZATION_LABELS = Object.freeze({
+    lowercase: '全部小写', 'first-word': '首词首字母大写',
+    'every-word': '每词首字母大写', 'random-uppercase': '随机一个词全大写',
+  });
   const PATTERN_LABELS = Object.freeze({
     dictionary: '字典词', repeat: '重复结构', sequence: '连续序列', spatial: '键盘路径', date: '日期', regex: '正则模式',
   });
@@ -122,7 +127,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
   const state = {
     mode: HASH_MODE[location.hash.toLowerCase()] || 'password',
     results: [], hidden: new Set(), patterns: new Map(), historyEnabled: false,
-    busy: false, activePasswordWorker: null, pinRiskIndex: null, analysisEpoch: 0,
+    busy: false, generationIntent: 0, activePasswordWorker: null, pinRiskIndex: null, analysisEpoch: 0,
     resultBatchRequest: null, resultBatchSource: null,
     settings: loadSettings(),
     resources: {
@@ -554,10 +559,12 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     document.getElementById('config-description').textContent = meta.description;
     document.getElementById('model-badge').textContent = meta.badge;
     configBody.innerHTML = CONFIG_TEMPLATES[state.mode]();
+    configBody.querySelectorAll('input[type="number"]').forEach(input => { input.required = true; });
     if (state.mode === 'passphrase') populatePassphrasePacks();
     applySettings();
     if (state.mode === 'password') syncPasswordControls();
     if (state.mode === 'apiSecret') syncApiTemplate();
+    syncRandomBytesQuantity();
     if (state.mode === 'mnemonic') { updateMnemonicWarning(); ensureMnemonicLanguage(form.elements.language.value); }
     updateAvailability();
   }
@@ -578,6 +585,15 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     configBody.querySelectorAll('.api-generic input').forEach((input) => { input.disabled = synthetic; });
   }
 
+  function syncRandomBytesQuantity() {
+    if (state.mode !== 'randomBytes') return;
+    const large = Number(form.elements.byteLength.value) >= runtime.budgets.LARGE_RANDOM_BYTES_THRESHOLD;
+    const quantity = form.elements.quantity;
+    quantity.max = large ? '1' : '10';
+    quantity.readOnly = large;
+    if (large) quantity.value = '1';
+  }
+
   function updateMnemonicWarning() {
     const language = form.elements.language?.value || 'english';
     const notice = runtime.bip39.bip39CompatibilityNotice(language);
@@ -588,13 +604,11 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
   function modeFromLocation() { return HASH_MODE[location.hash.toLowerCase()] || 'password'; }
 
   function cancelActiveGeneration(reason) {
+    state.generationIntent += 1;
     coordinator.cancel(reason);
     const active = state.activePasswordWorker;
-    if (active) {
-      active.worker.terminate();
-      active.reject(Object.assign(new Error(`生成任务已取消：${reason}`), { name: 'GenerationCancelledError' }));
-      state.activePasswordWorker = null;
-    }
+    state.activePasswordWorker = null;
+    active?.cancel(reason);
     state.busy = false; updateAvailability();
   }
 
@@ -678,15 +692,28 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     worker.onmessage = ({ data }) => {
       const pending = analyzerRequests.get(data?.requestId);
       if (!pending) return;
+      clearTimeout(pending.timer);
       analyzerRequests.delete(data.requestId);
       if (data.ok) pending.resolve(data.result); else pending.reject(new Error(data.error || '模式分析失败'));
     };
     worker.onerror = () => {
-      for (const pending of analyzerRequests.values()) pending.reject(new Error('模式分析工作线程失效'));
-      analyzerRequests.clear(); worker.terminate(); analyzerWorker = null;
+      if (analyzerWorker !== worker) return;
+      disposeAnalyzer('模式分析工作线程失效');
       setResource('zxcvbn', 'degraded', '观察模式分析工作线程');
     };
+    worker.onmessageerror = worker.onerror;
     return worker;
+  }
+
+  function disposeAnalyzer(reason) {
+    if (analyzerWorker) {
+      analyzerWorker.onmessage = null; analyzerWorker.onerror = null; analyzerWorker.onmessageerror = null;
+      analyzerWorker.terminate(); analyzerWorker = null;
+    }
+    for (const pending of analyzerRequests.values()) {
+      clearTimeout(pending.timer); pending.reject(new Error(reason));
+    }
+    analyzerRequests.clear();
   }
 
   async function initializeAnalyzer() {
@@ -694,9 +721,17 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     try {
       analyzerWorker = analyzerWorker || createAnalyzerWorker();
       patterns.setAnalyzer((value) => new Promise((resolve, reject) => {
+        if (!analyzerWorker) { reject(new Error('模式分析工作线程不可用')); return; }
+        const worker = analyzerWorker;
         const requestId = `analysis:${++analyzerSequence}`;
-        analyzerRequests.set(requestId, { resolve, reject });
-        analyzerWorker.postMessage({ requestId, epoch: state.analysisEpoch, value });
+        const timer = setTimeout(() => {
+          if (analyzerWorker !== worker) return;
+          disposeAnalyzer('模式分析超时');
+          setResource('zxcvbn', 'degraded', '观察模式分析工作线程');
+        }, 15000);
+        analyzerRequests.set(requestId, { resolve, reject, timer });
+        try { worker.postMessage({ requestId, epoch: state.analysisEpoch, value }); }
+        catch { clearTimeout(timer); analyzerRequests.delete(requestId); reject(new Error('模式分析请求发送失败')); }
       }));
       setResource('zxcvbn', 'ready', '观察模式分析工作线程');
       await analyzeLiveResults(true);
@@ -766,24 +801,13 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
   function compilePasswordWorker(config, job) {
     if (!globalThis.Worker) return runtime.compileGenerator('password', config, { cryptoLike: globalThis.crypto });
     const worker = new Worker(`./assets/v2.1/${ASSETS.passwordWorker}`);
-    let completed = false;
-    return Promise.resolve({
-      mode: 'password', model: Object.freeze({ jobId: job.id }),
-      sampleBatch(quantity) {
-        return new Promise((resolve, reject) => {
-          const timer = setTimeout(() => { worker.terminate(); state.activePasswordWorker = null; reject(new Error('密码概率模型计算超时。')); }, 180000);
-          state.activePasswordWorker = { worker, reject };
-          worker.onmessage = ({ data }) => {
-            clearTimeout(timer); completed = true; state.activePasswordWorker = null; worker.terminate();
-            if (!data?.ok || data.jobId !== job.id) { reject(new Error(data?.error || '工作线程回包无效。')); return; }
-            try { resolve(data.results.map(deserializeWorkerResult)); } catch (error) { reject(error); }
-          };
-          worker.onerror = () => { clearTimeout(timer); state.activePasswordWorker = null; worker.terminate(); reject(new Error('密码工作线程启动失败。')); };
-          worker.postMessage({ jobId: job.id, config, quantity });
-        });
-      },
-      dispose() { if (!completed) worker.terminate(); },
+    const batch = createPasswordWorkerBatch({
+      worker, jobId: job.id, config, deserialize: deserializeWorkerResult,
+      clearResult: runtime.results.clearGenerationResult,
+      onSettled() { if (state.activePasswordWorker === batch) state.activePasswordWorker = null; },
     });
+    state.activePasswordWorker = batch;
+    return batch;
   }
 
   async function compileForJob(mode, config, job) {
@@ -794,14 +818,21 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
   async function generateResults(event) {
     event?.preventDefault();
     if (state.resources.crypto.status !== 'ready') return;
+    syncRandomBytesQuantity();
+    if (!form.reportValidity()) return;
+    // 意图编号与忙碌状态必须早于配置中的第一次 await。
+    cancelActiveGeneration('新生成请求');
+    const intent = state.generationIntent;
+    const mode = state.mode;
+    state.busy = true; updateAvailability();
     saveNonSecretSettings();
     let job = null;
     let next = null;
     let accepted = false;
     try {
-      const mode = state.mode; const { quantity, config } = await readConfig(mode);
-      if (state.mode !== mode) throw Object.assign(new Error('配置读取期间已切换生成器。'), { name: 'GenerationCancelledError' });
-      job = coordinator.begin(mode, config, quantity); state.busy = true; updateAvailability();
+      const { quantity, config } = await readConfig(mode);
+      if (state.generationIntent !== intent || state.mode !== mode) throw Object.assign(new Error('配置读取期间请求已取消。'), { name: 'GenerationCancelledError' });
+      job = coordinator.begin(mode, config, quantity);
       next = await runtime.batch.generateAtomicBatch({ job, compile: compileForJob, isCurrent: coordinator.isCurrent, clearResult: runtime.results.clearGenerationResult });
       if (!coordinator.isCurrent(job) || state.mode !== job.mode) {
         for (const result of next) runtime.results.clearGenerationResult(result);
@@ -833,10 +864,10 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
       renderResults(); renderHistory(); analyzeLiveResults(false);
     } catch (error) {
       if (next && !accepted) for (const result of next) runtime.results.clearGenerationResult(result);
-      if (error?.name !== 'GenerationCancelledError') showToast(error instanceof Error ? error.message : String(error), 'error');
+      if (intent === state.generationIntent && error?.name !== 'GenerationCancelledError') showToast(error instanceof Error ? error.message : String(error), 'error');
     } finally {
       if (job && coordinator.isCurrent(job)) coordinator.cancel('completed');
-      state.busy = false; updateAvailability();
+      if (intent === state.generationIntent) { state.busy = false; updateAvailability(); }
     }
   }
 
@@ -845,6 +876,8 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     const request = state.resultBatchRequest;
     const original = state.results.find((result) => result.id === id);
     if (!original || request.mode !== state.mode) return;
+    cancelActiveGeneration('单条重新生成');
+    const intent = state.generationIntent;
     state.busy = true; updateAvailability();
     let replacement = null; let commitStarted = false; let committed = false;
     let previousResults = null; let previousHidden = null; let previousPatterns = null; let previousEpoch = null;
@@ -922,7 +955,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
       }
       if (error?.name !== 'GenerationCancelledError') showToast(error instanceof Error ? error.message : String(error), 'error');
     } finally {
-      state.busy = false; updateAvailability();
+      if (intent === state.generationIntent) { state.busy = false; updateAvailability(); }
     }
   }
 
@@ -1027,7 +1060,8 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
       metrics.append(metric('熵位数 / 校验位数', `${result.generationModel.entropyBits} / ${result.generationModel.checksumBits} 比特`), metric('单词数 / 词表语言', `${result.generationModel.wordCount} / ${LANGUAGE_LABELS[result.generationModel.language] || result.generationModel.language}`), metric('校验和', result.checksumValid ? '有效' : '无效'), metric('词表 SHA-256', result.generationModel.wordlistSha256));
     } else if (profile === 'pin') {
       const policy = result.generationModel.commonPinPolicy;
-      metrics.append(metric('批内唯一', result.configSnapshot.uniqueWithinBatch ? '是（无放回）' : '否（独立有放回）'), metric('独立批次碰撞概率', `${((result.generationModel.independentBatchCollisionProbability || 0) * 100).toPrecision(4)}%`), metric('常见 PIN 码排除策略', policy ? '启发式常见 PIN 码排除策略 v1' : '未启用'), metric('过滤数量', policy ? `${policy.blockedCount.toLocaleString('zh-CN')} / ${policy.baseSearchSpace.toLocaleString('zh-CN')}` : '0'));
+      const collision = result.generationModel.independentBatchCollisionProbability;
+      metrics.append(metric('批内唯一', result.configSnapshot.uniqueWithinBatch ? '是（无放回）' : '否（独立有放回）'), metric(result.configSnapshot.uniqueWithinBatch ? '独立批次碰撞概率（假设独立，非本批）' : '独立批次碰撞概率', Number.isFinite(collision) ? `${(collision * 100).toPrecision(4)}%` : '未提供'), metric('常见 PIN 码排除策略', policy ? '启发式常见 PIN 码排除策略 v1' : '未启用'), metric('过滤数量', policy ? `${policy.blockedCount.toLocaleString('zh-CN')} / ${policy.baseSearchSpace.toLocaleString('zh-CN')}` : '0'));
     }
     fragment.append(metrics);
     if (includeObserved && ['password', 'passphrase'].includes(profile)) {
@@ -1153,7 +1187,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
       const composition = passwordComposition(result.value);
       return `${composition.length} 位 · 小写 ${composition.lower} / 大写 ${composition.upper} / 数字 ${composition.digit} / 符号 ${composition.symbol}`;
     }
-    if (result.type === 'passphrase') return `${model.wordCount} 个词 · ${model.separatorChoices?.length > 1 ? '随机分隔符' : '固定分隔符'} · ${model.capitalization || '固定大小写'}`;
+    if (result.type === 'passphrase') return `${model.wordCount} 个词 · ${model.separatorGapCount === 0 ? '无分隔符' : model.separatorChoicesPerGap > 1 ? '随机分隔符' : '固定分隔符'} · ${CAPITALIZATION_LABELS[model.capitalization] || '未标明大小写'}`;
     if (result.type === 'pin') return `${result.value.length} 位 · ${result.configSnapshot.uniqueWithinBatch ? '批内唯一' : '独立抽样'}`;
     if (['token', 'api-secret', 'hex'].includes(result.type)) return `${model.nominalCsprngOutputBits} 个随机位 · ${ENCODING_LABELS[model.encoding] || '编码输出'}`;
     if (result.type === 'random-bytes') return `${result.bytes.byteLength.toLocaleString('zh-CN')} 字节 · ${ENCODING_LABELS[result.configSnapshot.encoding] || '编码输出'} · SHA-256 ${result.sha256.slice(0, 12)}…`;
@@ -1210,6 +1244,17 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     value.addEventListener('click', () => copyResults([result]).catch((error) => showToast(error.message, 'error')));
     const meta = document.createElement('div'); meta.className = 'compact-result-meta'; meta.textContent = compactResultMeta(result);
     content.append(value, meta); installTooltip(row, value, () => state.hidden.has(result.id) ? '内容已隐藏；请先使用显示按钮再查看完整结果。' : resultDisplayText(result), `result-value-tooltip-${result.id}`);
+    if (result.type === 'random-bytes') {
+      const fileDetails = document.createElement('details'); fileDetails.className = 'result-file-details';
+      const summary = document.createElement('summary'); summary.textContent = '文件 SHA-256';
+      const hash = document.createElement('code'); hash.dataset.fileSha256 = 'true'; hash.textContent = result.sha256;
+      const copyHash = iconButton(`复制第 ${index + 1} 条文件 SHA-256`, RESULT_ICONS.copy, () => {
+        copyText(result.sha256).then(success => showToast(success ? '已复制文件 SHA-256。' : '浏览器拒绝复制摘要。', success ? 'info' : 'error'))
+          .catch(() => showToast('浏览器拒绝复制摘要。', 'error'));
+      });
+      installTooltip(fileDetails, copyHash, '复制完整文件 SHA-256，用于下载后核验。', `file-hash-tooltip-${result.id}`);
+      fileDetails.append(summary, hash, copyHash); content.append(fileDetails);
+    }
     const actions = document.createElement('div'); actions.className = 'compact-result-actions';
     if (['password', 'passphrase'].includes(result.type)) actions.append(buildPatternIndicator(result, index, row));
     const hidden = state.hidden.has(result.id);
@@ -1339,7 +1384,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     if (!state.results.length) { state.resultBatchRequest = null; state.resultBatchSource = null; }
     renderResults(); renderHistory();
   }
-  function clearCurrentResults() { for (const id of state.results.map((result) => result.id)) deleteResult(id); }
+  function clearCurrentResults() { cancelActiveGeneration('清空结果'); for (const id of state.results.map((result) => result.id)) deleteResult(id); }
   function clearHistory() { historyBudget.clear(); renderResults(); renderHistory(); }
   function setHistoryEnabled(enabled) { state.historyEnabled = enabled; if (!enabled) clearHistory(); renderHistory(); }
 
@@ -1348,6 +1393,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
   form.addEventListener('submit', generateResults);
   form.addEventListener('reset', (event) => {
     event.preventDefault();
+    cancelActiveGeneration('恢复默认');
     delete state.settings.modes[state.mode];
     persistSettings();
     renderConfig();
@@ -1381,6 +1427,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     }
   });
   form.addEventListener('input', (event) => {
+    syncRandomBytesQuantity();
     if (state.mode !== 'password') return;
     if (event.target.matches?.('[data-slider-input]')) {
       applySliderIndex(event.target.dataset.sliderInput, event.target.value);
@@ -1391,6 +1438,7 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     if (event.target.name === 'length' || event.target.name === 'quantity') syncPasswordControls();
   });
   form.addEventListener('change', (event) => {
+    syncRandomBytesQuantity();
     if (state.mode === 'password' && [
       'length', 'lowercase', 'uppercaseLetters', 'digits', 'symbols', 'allowSpace', 'symbolPool',
       'symbolMin', 'symbolMax', 'requireEach', 'allowRepeated', 'startsWith', 'endsWith',
@@ -1411,7 +1459,8 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
     updateBackToTop();
     if (state.mode === 'password') ['complexity', 'length', 'quantity'].forEach(revealActiveSliderMark);
   }, { passive: true });
-  addEventListener('pagehide', () => { cancelActiveGeneration('页面离开'); releaseCurrentResults(); historyBudget.clear(); analyzerWorker?.terminate(); }, { once: true });
+  addEventListener('pagehide', () => { cancelActiveGeneration('页面离开'); releaseCurrentResults(); historyBudget.clear(); disposeAnalyzer('页面离开'); });
+  addEventListener('pageshow', (event) => { if (event.persisted) initializeAnalyzer(); });
 
   initializePassphrase(); initializePinRisk(); initializeAnalyzer(); ensureMnemonicLanguage('english');
   setMode(state.mode, true); renderResults(); renderHistory(); renderResources(); updateBackToTop(); root.dataset.passwordGeneratorReady = 'true';
