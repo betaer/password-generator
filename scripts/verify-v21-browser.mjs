@@ -6,13 +6,14 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 import { verifyReviewRegressions } from './verify-v21-review-regressions.mjs';
 import { verifyLiveAnalytics } from './verify-v21-ga-live.mjs';
+import { verifyLifecycleRegressions, verifyTooltipRegressions, verifyTouchTooltips } from './verify-v21-lifecycle-tooltips.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const manifest = JSON.parse(await readFile(resolve(ROOT, 'assets/v2.1/manifest.json'), 'utf8'));
 const MIME_TYPES = Object.freeze({
   '.css': 'text/css; charset=utf-8', '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8',
-  '.png': 'image/png', '.svg': 'image/svg+xml',
+  '.png': 'image/png', '.svg': 'image/svg+xml', '.txt': 'text/plain; charset=utf-8',
 });
 
 function startStaticServer() {
@@ -23,7 +24,7 @@ function startStaticServer() {
       if (target !== ROOT && !target.startsWith(`${ROOT}${sep}`)) { response.writeHead(403).end('Forbidden'); return; }
       if ((await stat(target)).isDirectory()) target = resolve(target, 'index.html');
       const body = await readFile(target);
-      response.writeHead(200, { 'Cache-Control': 'no-store', 'Content-Type': MIME_TYPES[extname(target)] || 'application/octet-stream' });
+      response.writeHead(200, { 'Cache-Control': 'no-cache', 'Content-Type': MIME_TYPES[extname(target)] || 'application/octet-stream' });
       response.end(body);
     } catch { response.writeHead(404).end('Not found'); }
   });
@@ -42,9 +43,12 @@ async function clickGenerate(page) {
 
 const server = await startStaticServer();
 const baseUrl = `http://127.0.0.1:${server.address().port}`;
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ channel: 'chromium', headless: true, ignoreDefaultArgs: ['--disable-back-forward-cache'] });
 
 try {
+  await verifyLifecycleRegressions(browser, baseUrl);
+  await verifyTooltipRegressions(browser, baseUrl);
+  await verifyTouchTooltips(browser, baseUrl);
   await verifyReviewRegressions(browser, baseUrl);
   const gaRequests = [];
   const googleRequestUrls = [];
@@ -242,6 +246,7 @@ try {
   assert.equal(await batchTooltip.isVisible(), true, '批次说明气泡必须在折叠状态下真正可见');
   assert.match(await batchTooltip.textContent(), /同一批次使用同一份冻结配置与生成模型/u);
   await page.mouse.move(0, 0);
+  await page.waitForFunction(() => !document.querySelector('.batch-assessment-summary > [role="tooltip"]'));
   assert.equal(await batchTooltip.count(), 0, '移开鼠标后批次说明气泡必须关闭');
   await batchInfo.click();
   assert.equal(await batchAssessment.getAttribute('open'), null, '点击说明气泡不得误展开批次详情');
@@ -270,6 +275,7 @@ try {
   const firstCopyAction = page.locator('.compact-result-row').first().getByRole('button', { name: '复制第 1 条生成结果' }).last();
   await firstCopyAction.hover();
   assert.equal(await page.locator('.compact-result-actions > .result-tooltip').textContent(), '复制第 1 条生成结果');
+  await page.locator('.compact-result-actions > .result-tooltip').hover();
   await page.mouse.move(0, 0);
 
   const beforeRegenerate = await page.locator('.compact-result-row').evaluateAll((rows) => rows.map((row) => ({

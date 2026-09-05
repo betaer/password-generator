@@ -1,6 +1,6 @@
 'use strict';
 
-importScripts(`./${"runtime.43378b5eb7b9.js"}`);
+importScripts(`./${"runtime.2b2a24b64333.js"}`);
 
 self.onmessage = async ({ data }) => {
   const jobId = data?.jobId;
