@@ -49,8 +49,19 @@ export function upgradeLegacyResult(result, { extraConfig = {}, extraModel = {} 
       encoding: legacy.encoding ?? null,
       prefix: legacy.prefix ?? '',
       standard: legacy.standard ?? null,
+      ...(result.type === 'uuid' ? {
+        version: legacy.version,
+        variant: legacy.variant,
+        timestampUnixMs: legacy.timestampUnixMs,
+      } : {}),
+      ...(result.type === 'passphrase' ? {
+        wordCount: legacy.wordCount,
+        capitalization: legacy.capitalization,
+        separator: legacy.separator,
+        separatorGapCount: legacy.separatorGapCount,
+        separatorChoicesPerGap: legacy.separatorChoicesPerGap,
+      } : {}),
       ...extraModel,
     },
   });
 }
-

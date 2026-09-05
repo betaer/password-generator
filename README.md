@@ -108,11 +108,12 @@ GA 保留，但只作为“隔离、无本站 Analytics Cookie 的页面访问�
 
 - Google JS 不在生成器父页面执行；父页面 CSP 不信任 Google 域；
 - iframe 只有 `sandbox="allow-scripts"`，没有 `allow-same-origin`、消息桥、referrer 或父页面 URL 数据；
+- 统计帧在加载 Google 脚本前安装仅作用于自身的无 Cookie 兼容层：读取恒为空、写入不保存，避免不透明来源的 Cookie 访问异常使 GA 静默停止；这不会开放同源访问权限；
 - 只配置固定的 `https://betaer.github.io/password-generator/index.html`、固定 path/title 和空 referrer；
 - 不向 iframe 发送生成器类型、配置、输入、prefix、结果或 BIP39；
 - `analytics_storage='denied'` 下仍会发送 cookieless measurement ping，Google 仍可能收到 User-Agent、IP、时间等标准浏览器/网络层元数据，因此不使用“完全匿名”表述。
 
-Playwright 验收会拦截实际 `g/collect`，解析 URL、body 和 headers，以高辨识 sentinel 验证生成内容不会进入统计请求，并确认没有 Cookie header。
+Playwright 验收分为两层：确定性的模拟 GA 契约回归，以及加载未替换的真实 Google 脚本的网络集成验收。后者在父页面生成高辨识测试秘密后再次加载隔离帧，拦截实际 `g/collect`（不把测试访问发送到统计后台），解析查询、多行 POST 与 headers，检查固定页面字段、空／省略 referrer、无 Cookie 和无测试秘密。输出记录所执行 Google 脚本的 SHA-256；无法加载脚本或观测请求时验收失败，不视为通过。这是对当次实际脚本与测试场景的检查，不是对所有未来第三方行为的保证。
 
 也可以在浏览器 DevTools → Network 中自行复核：生成、显示和复制若干结果，请求不应包含 `generated_value` 或任何生成内容。History 不会跨浏览器会话持久保存，且启用后可随时清空。
 
