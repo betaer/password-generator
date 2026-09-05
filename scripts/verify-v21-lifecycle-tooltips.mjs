@@ -209,13 +209,27 @@ export async function verifyTouchTooltips(browser, baseUrl) {
     const bounds = await tip.boundingBox();
     const client = await context.newCDPSession(page);
     const x = bounds.x + bounds.width / 2;
-    const startY = bounds.y + bounds.height - 25;
+    const startY = bounds.y + bounds.height * 0.8;
+    const distance = Math.min(120, bounds.height * 0.6);
+    assert.equal(await tip.evaluate((el, point) => el.contains(document.elementFromPoint(point.x, point.y)), { x, y: startY }), true, '触屏手势必须命中气泡');
+    const nextFrame = () => page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
+    await nextFrame();
     await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: startY }] });
     for (let step = 1; step <= 6; step++) {
-      await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: startY - step * 20 }] });
+      // Keep the whole swipe inside the dynamically-sized popup and give the compositor real frames.
+      await nextFrame();
+      await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: startY - step * distance / 6 }] });
     }
+    await nextFrame();
     await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    await expect.poll(() => tip.evaluate(el => el.scrollTop > 0)).toBe(true);
+    await expect.poll(() => tip.evaluate(el => el.scrollTop > 0)).toBe(true).catch(async error => {
+      // No generated text in diagnostics: only geometry and focus/hit targets.
+      process.stderr.write(JSON.stringify(await page.evaluate(() => {
+        const popup = document.querySelector('.compact-result-row > .result-tooltip');
+        return { popup: popup && { rect: popup.getBoundingClientRect().toJSON(), scrollTop: popup.scrollTop, scrollHeight: popup.scrollHeight, clientHeight: popup.clientHeight }, focus: document.activeElement?.className };
+      })) + '\n');
+      throw error;
+    });
     await page.locator('[data-secret-toggle]').tap();
     await expect(page.locator('.compact-result-row > .result-tooltip')).toHaveCount(0);
     assert.equal(await page.evaluate(() => __lifecycleCopies.length), 1, '滑动和隐藏不能再次复制');
