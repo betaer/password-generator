@@ -108,6 +108,18 @@ export async function verifyTooltipRegressions(browser, baseUrl) {
     await page.locator('#history-toggle').check();
     await generate(page);
     const value = page.locator('.compact-result-value');
+    // Keep the trigger near the viewport bottom: neither side can fit a 190px popup.
+    await value.scrollIntoViewIfNeeded();
+    await value.evaluate(el => scrollBy(0, el.getBoundingClientRect().bottom - (innerHeight - 80)));
+    await value.focus();
+    const edgeTip = page.locator('.compact-result-row > .result-tooltip');
+    await expect(edgeTip).toBeVisible();
+    assert.equal(await edgeTip.evaluate(el => {
+      const popup = el.getBoundingClientRect();
+      const anchor = document.querySelector('.compact-result-value').getBoundingClientRect();
+      return popup.top < anchor.bottom && popup.bottom > anchor.top && popup.left < anchor.right && popup.right > anchor.left;
+    }), false, '气泡空间不足时应缩短滚动区，不得覆盖触发按钮并吞掉触屏点击');
+    await page.keyboard.press('Escape'); await value.blur();
     for (const width of [1280, 390, 320]) {
       await page.setViewportSize({ width, height: 900 });
       await value.hover();

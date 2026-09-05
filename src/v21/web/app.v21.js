@@ -1189,15 +1189,26 @@ V2.1：精确生成空间、独立模式分析与明确攻击假设。
       const top = Math.max(8, (scroll?.top ?? 0) + 8);
       const bottom = Math.min(innerHeight - 8, (scroll?.bottom ?? innerHeight) - 8);
       if (anchor.bottom <= top || anchor.top >= bottom || anchor.right <= left || anchor.left >= right) { hide(); return; }
+      let below = Math.max(0, bottom - anchor.bottom - 6);
+      let above = Math.max(0, anchor.top - top - 6);
+      // A popup must not intercept the click/tap that is still targeting its trigger.
+      let availableHeight = Math.max(below, above);
+      if (availableHeight < 48) {
+        // At the viewport edge, escape the scroll box instead of covering the trigger.
+        const viewportTop = Math.max(8, (document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0) + 8);
+        below = Math.max(0, innerHeight - 8 - anchor.bottom - 6);
+        above = Math.max(0, anchor.top - viewportTop - 6);
+        availableHeight = Math.max(below, above);
+      }
+      if (availableHeight < 32) { hide(); return; }
       const preview = trigger.matches('.compact-result-value, .history-preview');
       tooltip.style.position = 'fixed'; tooltip.style.right = 'auto'; tooltip.style.bottom = 'auto';
       tooltip.style.maxWidth = `${Math.max(32, Math.min(preview ? 560 : 440, right - left))}px`;
       tooltip.style.width = preview ? tooltip.style.maxWidth : 'max-content';
-      tooltip.style.maxHeight = `${Math.max(32, Math.min(190, bottom - top))}px`;
+      tooltip.style.maxHeight = `${Math.min(190, availableHeight)}px`;
       const size = tooltip.getBoundingClientRect();
       tooltip.style.left = `${Math.max(left, Math.min(anchor.right - size.width, right - size.width))}px`;
-      const preferredTop = anchor.bottom + 6 + size.height <= bottom ? anchor.bottom + 6 : anchor.top - size.height - 6;
-      tooltip.style.top = `${Math.max(top, Math.min(preferredTop, bottom - size.height))}px`;
+      tooltip.style.top = `${below >= size.height ? anchor.bottom + 6 : anchor.top - size.height - 6}px`;
     };
     const scheduleClose = () => {
       cancelClose();

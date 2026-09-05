@@ -275,6 +275,7 @@ try {
   const firstCopyAction = page.locator('.compact-result-row').first().getByRole('button', { name: '复制第 1 条生成结果' }).last();
   await firstCopyAction.hover();
   assert.equal(await page.locator('.compact-result-actions > .result-tooltip').textContent(), '复制第 1 条生成结果');
+  await page.locator('.compact-result-actions > .result-tooltip').hover();
   await page.mouse.move(0, 0);
 
   const beforeRegenerate = await page.locator('.compact-result-row').evaluateAll((rows) => rows.map((row) => ({
