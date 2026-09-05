@@ -819,6 +819,7 @@ try {
     { width: 960, height: 900 },
     { width: 1160, height: 900 },
     { width: 1161, height: 900 },
+    { width: 1279, height: 900 },
     { width: 1280, height: 900 },
     { width: 1500, height: 900 },
     { width: 1560, height: 900 },
@@ -841,8 +842,13 @@ try {
         const targets = [...document.querySelectorAll('main button, main a, main input, main select, main summary')]
           .filter((node) => !node.closest('.site-floating-actions') && visible(node));
         const overlaps = [];
+        const unreachable = [];
         for (const action of floating) {
           const actionRect = action.getBoundingClientRect();
+          if (actionRect.top >= 0 && actionRect.bottom <= innerHeight) {
+            const hit = document.elementFromPoint(actionRect.left + actionRect.width / 2, actionRect.top + actionRect.height / 2);
+            if (!action.contains(hit)) unreachable.push(action.getAttribute('aria-label'));
+          }
           for (const target of targets) {
             const targetRect = target.getBoundingClientRect();
             const width = Math.min(actionRect.right, targetRect.right) - Math.max(actionRect.left, targetRect.left);
@@ -853,17 +859,46 @@ try {
         return {
           overflow: document.documentElement.scrollWidth > innerWidth,
           actionPosition: getComputedStyle(document.querySelector('.site-floating-actions')).position,
+          page: document.querySelector('.page').getBoundingClientRect().toJSON(),
+          result: document.querySelector('.result-panel').getBoundingClientRect().toJSON(),
+          floatingBounds: floating.map((node) => node.getBoundingClientRect().toJSON()),
           configOffsetLeft: document.querySelector('.config-panel').offsetLeft,
           resultOffsetLeft: document.querySelector('.result-panel').offsetLeft,
           overlaps,
+          unreachable,
         };
       });
       assert.equal(state.overflow, false, `${viewport.width}px ${position} 不得横向溢出`);
-      assert.deepEqual(state.overlaps, [], `${viewport.width}px ${position} 浮动操作不得遮挡交互元素`);
+      assert.ok(Math.abs(state.page.left - (viewport.width - state.page.right)) <= 1, `${viewport.width}px 正文两侧留白必须对称，不为浮动操作留右侧栏`);
+      assert.ok(Math.abs(state.result.right - state.page.right) <= 1, `${viewport.width}px 生成结果必须用满正文剩余宽度`);
+      assert.deepEqual(state.unreachable, [], `${viewport.width}px ${position} 浮动按钮必须处于可点击的上层`);
+      if (viewport.width <= 1279) assert.deepEqual(state.overlaps, [], `${viewport.width}px ${position} 窄屏行内操作不得遮挡交互元素`);
+      for (const rect of state.floatingBounds) {
+        assert.ok(rect.left >= 0 && rect.right <= viewport.width, `${viewport.width}px 快捷按钮不得超出屏幕左右边缘`);
+        if (viewport.width >= 1280) assert.ok(rect.top >= 0 && rect.bottom <= viewport.height, '桌面浮动按钮必须始终完整显示');
+      }
       assert.equal(state.actionPosition, viewport.width <= 1279 ? 'static' : 'fixed', `${viewport.width}px 快捷操作定位策略`);
       assert.equal(state.resultOffsetLeft > state.configOffsetLeft, viewport.width > 1560, `${viewport.width}px ${position} 策略与结果面板响应式排布`);
     }
   }
+  await layoutPage.setViewportSize({ width: 1600, height: 600 });
+  await layoutPage.locator('.result-panel').evaluate((node) => node.scrollIntoView({ block: 'end' }));
+  const overlay = await layoutPage.evaluate(() => {
+    const github = document.querySelector('.site-floating-github');
+    const xLink = document.querySelector('.site-floating-x');
+    const githubRect = github.getBoundingClientRect();
+    const xRect = xLink.getBoundingClientRect();
+    const x = xRect.left + xRect.width / 2;
+    const y = xRect.top + xRect.height / 2;
+    const layers = document.elementsFromPoint(x, y);
+    const gapHit = document.elementFromPoint(x, (githubRect.bottom + xRect.top) / 2);
+    return {
+      buttonOnTop: xLink.contains(layers[0]),
+      resultUnderneath: layers.some((node) => node.matches('.result-panel')),
+      gapReachesResult: Boolean(gapHit?.closest('.result-panel')),
+    };
+  });
+  assert.deepEqual(overlay, { buttonOnTop: true, resultUnderneath: true, gapReachesResult: true }, '浮动操作必须可覆盖结果面板，按钮间隙不得拦截底层操作');
   await layoutContext.close();
 
   const archiveContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });

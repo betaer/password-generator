@@ -54,6 +54,16 @@ test('V2.1 右下角在 GitHub 与复制分享之间提供安全的新窗口 X �
   assert.ok(actions.indexOf('site-floating-x') < actions.indexOf('site-floating-copy'));
 });
 
+test('正式页不为浮动操作预留侧栏，结果用满可用宽度而配置保持紧凑', async () => {
+  const css = await read('src/v21/web/app.v21.css');
+  assert.match(css, /\.page\s*\{[^}]*width:\s*min\(1800px,\s*calc\(100% - 40px\)\);[^}]*margin:\s*0 auto;/su);
+  assert.doesNotMatch(css, /margin-right:\s*max\(150px/u);
+  assert.match(css, /@media\s*\(max-width:\s*1560px\)\s*\{\s*\.workspace\s*\{[^}]*grid-template-columns:\s*220px\s+minmax\(0,\s*1fr\)/su);
+  assert.match(css, /\.config-panel\s*\{[^}]*width:\s*100%;[^}]*max-width:\s*900px;/su);
+  assert.match(css, /\.site-floating-actions\s*\{[^}]*position:\s*fixed;[^}]*z-index:\s*40;[^}]*pointer-events:\s*none;/su);
+  assert.match(css, /\.site-floating-button\s*\{[^}]*pointer-events:\s*auto;/su);
+});
+
 test('生成记录位于生成结果底部并使用默认折叠的原生 details', async () => {
   const [page, app, css] = await Promise.all([
     read('src/v21/web/page.v21.html'),

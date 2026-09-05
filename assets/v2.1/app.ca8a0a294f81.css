@@ -93,7 +93,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .status-chip[data-state="error"]::before { background: var(--danger); box-shadow: 0 0 0 4px rgba(189, 44, 54, .1); }
 .version-chip { color: var(--ink); background: var(--signal); border-color: #9ed12e; }
 
-.page { max-width: 1800px; margin-right: max(150px, calc((100% - 1800px) / 2)); margin-left: max(20px, calc((100% - 1800px) / 2)); padding: 26px 0 64px; }
+/* Floating shortcuts overlay content; they do not own a separate layout column. */
+.page { width: min(1800px, calc(100% - 40px)); margin: 0 auto; padding: 26px 0 64px; }
 .intro {
   margin-bottom: 22px;
   animation: rise .42s ease both;
@@ -520,7 +521,8 @@ input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgb
 .seo-shell-grid section:nth-child(n + 4) { border-top: 1px dashed #d4ded9; }
 .toast { position: fixed; z-index: 50; right: 158px; bottom: 20px; max-width: min(390px, calc(100% - 190px)); padding: 13px 15px; border: 1px solid #a9b9b2; border-radius: 12px; background: #10211b; color: #fff; box-shadow: 0 16px 44px rgba(16,33,27,.24); font-size: 12px; line-height: 1.5; animation: reveal .2s ease both; pointer-events: none; }
 .toast[data-tone="error"] { background: #761c24; }
-.site-floating-actions { position: fixed; right: max(18px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom)); z-index: 40; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.site-floating-actions { position: fixed; right: max(18px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom)); z-index: 40; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; pointer-events: none; }
+.site-floating-button { pointer-events: auto; }
 .site-floating-button { position: relative; width: 124px; min-width: 124px; min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 14px; border: 1px solid rgba(23, 48, 39, .2); border-radius: 999px; color: var(--ink); background: rgba(255, 255, 255, .95); box-shadow: 0 8px 24px rgba(15, 23, 42, .13); font-size: 11px; font-weight: 750; text-decoration: none; cursor: pointer; backdrop-filter: blur(12px); }
 .site-floating-button:hover { border-color: var(--ink); color: var(--ink); background: #f7faf8; }
 .site-floating-button svg { width: 18px; height: 18px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -536,11 +538,13 @@ input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgb
 @keyframes pulse { 50% { opacity: .3; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
 @media (max-width: 1560px) {
-  .workspace { grid-template-columns: 220px minmax(0, 900px); justify-content: start; }
+  .workspace { grid-template-columns: 220px minmax(0, 1fr); }
+  .config-panel { width: 100%; max-width: 900px; }
   .result-panel { position: relative; top: auto; max-height: none; grid-column: 2; }
 }
 @media (max-width: 1160px) {
   .workspace { grid-template-columns: 1fr; }
+  .config-panel { max-width: none; }
   .mode-panel { position: relative; top: auto; }
   .mode-panel-title { padding: 15px 16px 10px; }
   .mode-groups { display: flex; overflow-x: auto; padding: 8px; }
